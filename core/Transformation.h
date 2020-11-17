@@ -6,7 +6,7 @@
 #define MESHCORE_TRANSFORMATION_H
 #include <glm/glm.hpp>
 #include <iostream>
-#include "Vector.h"
+#include "Vertex.h"
 
 typedef glm::dmat4 TMatrix;
 
@@ -20,9 +20,11 @@ public:
     explicit Transformation();
     explicit Transformation(TMatrix matrix);
     explicit Transformation(TMatrix matrix, TMatrix inverseMatrix);
+
+    // These can all be done trough glm transformations => only interesting to cache inverse?
     static Transformation fromScaleFactor(double scaleFactor);
     static Transformation fromEulerAngles(double yaw, double pitch, double roll);
-    static Transformation fromTranslationVector(Vector shift);
+    static Transformation fromTranslationVector(Vertex shift);
     static Transformation fromTranslation(double dx, double dy, double dz);
     Transformation operator*(const double & multiplier) const;
     Transformation operator*(const Transformation & multiplier) const;

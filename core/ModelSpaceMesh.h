@@ -7,17 +7,16 @@
 
 
 #include <vector>
-#include <ostream>
-#include "Vector.h"
+#include "Vertex.h"
 #include "Triangle.h"
 
 
 class ModelSpaceMesh {
-private:
-    std::vector<Vector> vertices;
-    std::vector<Triangle> triangles;
 public:
-    ModelSpaceMesh(const std::vector<Vector> & vertices, const std::vector<Triangle> & triangles);
+    ModelSpaceMesh(const std::vector<Vertex> & vertices, const std::vector<Triangle> & triangles);
+
+    std::vector<Vertex> vertices;
+    std::vector<Triangle> triangles;
 };
 
 

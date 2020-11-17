@@ -4,7 +4,7 @@
 
 #include "ModelSpaceMesh.h"
 
-ModelSpaceMesh::ModelSpaceMesh(const std::vector<Vector> & vertices, const std::vector<Triangle> & triangles) {
-    this->vertices = std::vector<Vector>(vertices);
+ModelSpaceMesh::ModelSpaceMesh(const std::vector<Vertex> & vertices, const std::vector<Triangle> & triangles) {
+    this->vertices = std::vector<Vertex>(vertices);
     this->triangles = std::vector<Triangle>(triangles);
 }

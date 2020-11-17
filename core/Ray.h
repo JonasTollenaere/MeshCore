@@ -7,17 +7,17 @@
 
 #include <glm/glm.hpp>
 #include <iostream>
-#include "Vector.h"
-#include "Triangle.h"
+#include "Vertex.h"
+#include "MeshTriangle.h"
 
 class Ray {
 private:
-    Vector origin{};
-    Vector direction{};
+    Vertex origin{};
+    Vertex direction{};
 public:
-    Ray(Vector origin, Vector direction);
+    Ray(Vertex origin, Vertex direction);
     friend std::ostream & operator<<(std::ostream & os, const Ray& ray);
-    double intersects(const Triangle &triangle);
+    double intersects(const MeshTriangle &triangle);
 };
 
 #endif //OPTIX_SAMPLES_RAY_H

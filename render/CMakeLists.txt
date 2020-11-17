@@ -1,8 +1,8 @@
+file(GLOB SOURCES ../core/*.cpp *.cpp)
 
-file(GLOB SOURCES *.cpp)
 add_executable(meshGUI ${SOURCES})
 
-message(Sources: ${SOURCES})
+message((GUI) Sources: ${SOURCES})
 
 ### OpenGL ###
 find_package(OpenGL REQUIRED)

@@ -18,20 +18,38 @@ bool GLLogCall(const char* function, const char* file, int line){
     return true;
 }
 
-void Renderer::draw(const VertexArray &vertexArray, const IndexBuffer &indexBuffer, const Shader &shader) const {
+void Renderer::drawTriangles(const VertexArray &vertexArray, const IndexBuffer &indexBuffer, const Shader &shader) const {
+
+    ASSERT(sizeof(GLuint) == sizeof(unsigned int));
 
     shader.bind();
-    indexBuffer.bind();
     vertexArray.bind();
+    indexBuffer.bind();
     GLCall(glDrawElements(GL_TRIANGLES, indexBuffer.getCount(), GL_UNSIGNED_INT, nullptr));
 
 }
 
+void Renderer::drawLines(const VertexArray &vertexArray, const IndexBuffer &indexBuffer, const Shader &shader) const {
+
+    shader.bind();
+    indexBuffer.bind();
+    vertexArray.bind();
+    GLCall(glDrawElements(GL_LINES, indexBuffer.getCount(), GL_UNSIGNED_INT, nullptr));
+
+}
+
 void Renderer::clear() {
-    GLCall(glClear(GL_COLOR_BUFFER_BIT));
+    GLCall(glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT));
 }
 
 Renderer::Renderer() {
+    GLCall(glEnable(GL_DEPTH_TEST));
+    GLCall(glDepthFunc(GL_LESS));
     GLCall(glEnable(GL_BLEND))
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GLCall(glEnable(GL_MULTISAMPLE));
+
+    // Options
+//    GLCall(glClearColor(100.0f/255.0f, 149.0f/255.0f, 237.0f/255.0f, 1.0f));
+    GLCall(glEnable(GL_CULL_FACE));
 }

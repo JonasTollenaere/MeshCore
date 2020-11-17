@@ -13,13 +13,13 @@ class WorldSpaceMesh {
 private:
     ModelSpaceMesh modelSpaceMesh;
     Transformation transformation;
-    std::vector<Vector> transformedVertices;
+    std::vector<Vertex> transformedVertices;
     std::vector<Triangle> transformedTriangles;
 public:
     explicit WorldSpaceMesh(ModelSpaceMesh & modelSpaceMesh);
-//    void transform(const Transformation &t);
-//    void setTransformation(const Transformation &t);
-//    Transformation getTransformation();
+    void transform(const Transformation &t);
+    void setTransformation(const Transformation &t);
+    Transformation getTransformation();
 };
 
 

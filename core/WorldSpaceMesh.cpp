@@ -6,15 +6,15 @@
 
 WorldSpaceMesh::WorldSpaceMesh(ModelSpaceMesh& modelSpaceMesh): modelSpaceMesh(modelSpaceMesh), transformation(Transformation()) {
 }
-//
-//void WorldSpaceMesh::transform(const Transformation &t) {
-////    this->transformation = this->transformation * t;
-//}
-//
-//void WorldSpaceMesh::setTransformation(const Transformation &t) {
-//    // TODO
-//}
-//
-//Transformation WorldSpaceMesh::getTransformation() {
-//    // TODO
-//}
+
+void WorldSpaceMesh::transform(const Transformation &t) {
+//    this->transformation = this->transformation * t;
+}
+
+void WorldSpaceMesh::setTransformation(const Transformation &t) {
+    // TODO
+}
+
+Transformation WorldSpaceMesh::getTransformation() {
+    return this->transformation;
+}

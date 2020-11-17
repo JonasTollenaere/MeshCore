@@ -22,7 +22,8 @@ class Renderer {
 public:
     Renderer();
     void clear();
-    void draw(const VertexArray& vertexArray, const IndexBuffer& indexBuffer, const Shader& shader) const;
+    void drawTriangles(const VertexArray& vertexArray, const IndexBuffer& indexBuffer, const Shader& shader) const;
+    void drawLines(const VertexArray &vertexArray, const IndexBuffer &indexBuffer, const Shader &shader) const;
 };
 
 

@@ -5,14 +5,33 @@
 #include "IndexBuffer.h"
 #include "Renderer.h"
 
-IndexBuffer::IndexBuffer(const unsigned int *data, unsigned int count): m_Count(count), m_RendererId(0) {
+IndexBuffer::IndexBuffer(const unsigned int *indices, unsigned int count): m_Count(count), m_RendererId(0) {
 
     ASSERT(sizeof(unsigned int) == sizeof(GLuint));
 
     GLCall(glGenBuffers(1, &m_RendererId));
     bind();
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(unsigned int), data, GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(unsigned int), indices, GL_STATIC_DRAW));
 }
+
+IndexBuffer::IndexBuffer(const std::vector<Triangle> &triangles) {
+    ASSERT(sizeof(unsigned int) == sizeof(GLuint));
+    GLCall(glGenBuffers(1, &m_RendererId));
+    bind();
+
+    std::vector<unsigned int> data;
+    for(Triangle t: triangles){
+        data.emplace_back(t.vertexIndex0);
+        data.emplace_back(t.vertexIndex1);
+        data.emplace_back(t.vertexIndex2);
+    }
+
+    std::cout << "#Indices data size: " << data.size() << std::endl;
+    m_Count = data.size();
+
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.size()*sizeof(unsigned int), &data.front(), GL_STATIC_DRAW));
+}
+
 
 IndexBuffer::~IndexBuffer() {
         GLCall(glDeleteBuffers(1, &m_RendererId));

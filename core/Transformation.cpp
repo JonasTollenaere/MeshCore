@@ -41,7 +41,7 @@ Transformation Transformation::fromEulerAngles(double yaw, double pitch, double 
 }
 
 /// Constructs a transformation from a given translation vector
-Transformation Transformation::fromTranslationVector(Vector shift){
+Transformation Transformation::fromTranslationVector(Vertex shift){
     TMatrix matrix = TMatrix (1,0,0,shift.x,
                               0,1,0,shift.y,
                               0,0,1,shift.z,

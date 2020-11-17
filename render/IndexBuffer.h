@@ -9,12 +9,16 @@
 //#define INDEXTYPE = GL_UNSIGNED_INT;
 //typedef unsigned int indexType;
 
+#include "../core/Triangle.h"
+#include <vector>
+
 class IndexBuffer {
 private:
     unsigned int m_RendererId;
     unsigned int m_Count;
 public:
-    IndexBuffer(const unsigned int* data, unsigned int count);
+    IndexBuffer(const unsigned int* indices, unsigned int count);
+    IndexBuffer(const std::vector<Triangle>& triangles);
     ~IndexBuffer();
 
     void bind() const;

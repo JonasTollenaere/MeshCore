@@ -6,11 +6,15 @@
 #define MESHCORE_VERTEXBUFFER_H
 
 
+#include <vector>
+#include "../core/Vertex.h"
+
 class VertexBuffer {
 private:
     unsigned int m_RendererId;
 public:
     VertexBuffer(const void* data, unsigned int size);
+    VertexBuffer(const std::vector<Vertex>& vertices, const glm::vec4& color);
     ~VertexBuffer();
 
     void bind() const;

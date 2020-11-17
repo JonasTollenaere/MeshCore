@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 
-Shader::Shader(const std::string& filepath): m_FilePath(filepath) {
+Shader::Shader(const std::string& filepath): m_FilePath(filepath), m_RendererId(0) {
     this->m_Source = ParseShader(filepath);
     this->m_RendererId = CreateShader(this->m_Source.VertexSource, this->m_Source.FragmentSource);
 }
@@ -18,7 +18,6 @@ Shader::Shader(const std::string& filepath): m_FilePath(filepath) {
 Shader::Shader(const Shader& shader): m_FilePath(shader.m_FilePath) {
     this->m_Source = shader.m_Source;
     this->m_RendererId = CreateShader(this->m_Source.VertexSource, this->m_Source.FragmentSource);
-    this->m_UniformLocationCache = std::unordered_map(shader.m_UniformLocationCache);
 }
 
 Shader::~Shader() {
@@ -104,6 +103,11 @@ void Shader::setUniform4f(const std::string &name, float v0, float v1, float v2,
     GLCall(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
 }
 
+void Shader::setUniformMat4f(const std::string& name, const glm::mat4& matrix) {
+    GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
+}
+
+
 unsigned int Shader::getUniformLocation(const std::string &name) {
 
     if(m_UniformLocationCache.find(name) != m_UniformLocationCache.end()){
@@ -118,6 +122,3 @@ unsigned int Shader::getUniformLocation(const std::string &name) {
     return location;
 }
 
-void Shader::setUniformMat4f(const std::string& name, const glm::mat4& matrix) {
-    GLCall(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
-}

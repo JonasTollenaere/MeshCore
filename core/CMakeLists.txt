@@ -1,2 +1,5 @@
 file(GLOB SOURCES *.cpp)
-add_executable(meshMain ${SOURCES})
+message(Sources: ${SOURCES})
+#add_executable(meshMain ${SOURCES})
+
+add_executable(meshMain Main.cpp Triangle.h ModelSpaceMesh.cpp Vertex.cpp FileParser.cpp)
