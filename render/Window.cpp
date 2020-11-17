@@ -147,6 +147,11 @@ glm::mat4 Window::getProjectionViewMatrix() {
     return projectionMatrix * viewMatrix;
 }
 
+glm::mat4 Window::getViewMatrix() {
+    return viewMatrix;
+}
+
+
 void Window::update() {
     /* Swap front and back buffers */
     glfwSwapBuffers(window);

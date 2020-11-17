@@ -23,8 +23,7 @@ public:
     void processInput();
     void update();
     glm::mat4 getProjectionViewMatrix();
-
-    void mouseInput(GLFWwindow *window2, double xPosition, double yPosition);
+    glm::mat4 getViewMatrix();
 };
 
 

@@ -15,7 +15,7 @@ int main() {
     std::string path = "../../data/models/DIAMCADbr1.obj";
     ModelSpaceMesh brilliantMesh = FileParser::parseFile(path);
 
-    std::string path2 = "../../data/models/DIAMCADrough.obj";
+    std::string path2 = "../../data/models/dragon.obj";
     ModelSpaceMesh roughMesh = FileParser::parseFile(path2);
 
     std::string path3 = "../../data/models/DIAMCADbr2.obj";
@@ -86,39 +86,38 @@ int main() {
 
         // Vertex Buffer and Vertex Array
         VertexArray roughVertexArray;
-        VertexBuffer roughVertexBuffer(roughMesh.vertices, glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.5f));
+        VertexBuffer roughVertexBuffer(roughMesh, glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.5f));
 //        VertexBuffer roughVertexBuffer(brMesh.vertices, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         VertexBufferLayout roughLayout;
+        roughLayout.push<float>(3);
         roughLayout.push<float>(3);
         roughLayout.push<float>(4);
         roughVertexArray.addBuffer(roughVertexBuffer, roughLayout);
         IndexBuffer roughIndexBuffer(roughMesh.triangles);
 
         VertexArray brilliantVertexArray;
-        VertexBuffer brilliantVertexBuffer(brilliantMesh.vertices, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        VertexBuffer brilliantVertexBuffer(brilliantMesh, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         VertexBufferLayout brilliantLayout;
+        brilliantLayout.push<float>(3);
         brilliantLayout.push<float>(3);
         brilliantLayout.push<float>(4);
         brilliantVertexArray.addBuffer(brilliantVertexBuffer, brilliantLayout);
         IndexBuffer brilliantIndexBuffer(brilliantMesh.triangles);
 
         VertexArray brilliantVertexArray2;
-        VertexBuffer brilliantVertexBuffer2(brilliantMesh2.vertices, glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
+        VertexBuffer brilliantVertexBuffer2(brilliantMesh2, glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
         VertexBufferLayout brilliantLayout2;
+        brilliantLayout2.push<float>(3);
         brilliantLayout2.push<float>(3);
         brilliantLayout2.push<float>(4);
         brilliantVertexArray2.addBuffer(brilliantVertexBuffer2, brilliantLayout2);
         IndexBuffer brilliantIndexBuffer2(brilliantMesh2.triangles);
 
-
-
         // Shader
         Shader shader("../../render/res/shaders/Basic.shader");
+        Shader shader2("../../render/res/shaders/Intermediate.shader");
 
         Renderer renderer;
-
-        float r = 0.0f;
-        float increment = 0.005f;
 
         /* Loop until the user closes the window */
         while (window.shouldClose()) {
@@ -134,26 +133,29 @@ int main() {
 
             // 1. DRAW STATIC SOLID (includes axis?)
             // 2. DYNAMIC SOLID
-            // 3. STATIC TRANSPARENT -- after sorting by depth
-            // 4. DYNAMIC TRANSPARENT -- after sorting by depth
+            // 3. STATIC TRANSPARENT -- after sorting by depth?
+            // 4. DYNAMIC TRANSPARENT -- after sorting by depth?
 
 
             shader.bind();
             shader.setUniformMat4f("u_ViewProjectionMatrix", projectionViewMatrix);
 
+            shader2.setUniformMat4f("u_ViewProjectionMatrix", projectionViewMatrix);
+            glm::vec3 lightSource = glm::vec4(glm::vec3(0,-0,-200), 1.0f) *  window.getViewMatrix();
+            shader2.setUniform3fv("u_LightSource", lightSource);
+            shader2.setUniform1f("u_Ambient", 0.15);
+
             renderer.drawLines(axisVertexArray, axisIndexBuffer, shader);
-//
+
 //            renderer.drawTriangles(triangleVertexArray, triangleIndexBuffer, shader);
 //
 //            renderer.drawTriangles(triangleVertexArray, triangleIndexBufffer2, shader);
 
-            renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader);
+//            renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader2);
+//
+//            renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader2);
 
-            renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader);
-
-            renderer.drawTriangles(roughVertexArray, roughIndexBuffer, shader);
-
-            r += increment;
+            renderer.drawTriangles(roughVertexArray, roughIndexBuffer, shader2);
 
             window.update();
 

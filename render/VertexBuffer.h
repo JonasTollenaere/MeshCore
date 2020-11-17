@@ -8,13 +8,14 @@
 
 #include <vector>
 #include "../core/Vertex.h"
+#include "../core/ModelSpaceMesh.h"
 
 class VertexBuffer {
 private:
     unsigned int m_RendererId;
 public:
     VertexBuffer(const void* data, unsigned int size);
-    VertexBuffer(const std::vector<Vertex>& vertices, const glm::vec4& color);
+    VertexBuffer(const ModelSpaceMesh& mesh, const glm::vec4& color);
     ~VertexBuffer();
 
     void bind() const;
