@@ -10,14 +10,12 @@
 #include "Vertex.h"
 #include "Triangle.h"
 
-
 class ModelSpaceMesh {
 public:
     ModelSpaceMesh(const std::vector<Vertex> & vertices, const std::vector<Triangle> & triangles);
 
-    std::vector<Vertex> vertices;
-    std::vector<Triangle> triangles;
+    const std::vector<Vertex> vertices;
+    const std::vector<Triangle> triangles;
 };
-
 
 #endif //OPTIX_SAMPLES_MODELSPACEMESH_H

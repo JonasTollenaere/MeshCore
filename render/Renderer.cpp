@@ -49,7 +49,12 @@ Renderer::Renderer() {
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     GLCall(glEnable(GL_MULTISAMPLE));
 
-    // Options
+    // Options (should be available in GUI, per model)
 //    GLCall(glClearColor(100.0f/255.0f, 149.0f/255.0f, 237.0f/255.0f, 1.0f));
     GLCall(glEnable(GL_CULL_FACE));
+//    GLCall(glDisable(GL_CULL_FACE));
+    GLCall(glCullFace(GL_BACK));
+//    GLCall(glPolygonMode(GL_FRONT_AND_BACK,GL_LINE));
+
+//    GLCall(glDisable(GL_POLYGON_SMOOTH));
 }

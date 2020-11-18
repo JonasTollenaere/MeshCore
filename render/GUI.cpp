@@ -15,7 +15,7 @@ int main() {
     std::string path = "../../data/models/DIAMCADbr1.obj";
     ModelSpaceMesh brilliantMesh = FileParser::parseFile(path);
 
-    std::string path2 = "../../data/models/dragon.obj";
+    std::string path2 = "../../data/models/DIAMCADrough.obj";
     ModelSpaceMesh roughMesh = FileParser::parseFile(path2);
 
     std::string path3 = "../../data/models/DIAMCADbr2.obj";
@@ -86,7 +86,7 @@ int main() {
 
         // Vertex Buffer and Vertex Array
         VertexArray roughVertexArray;
-        VertexBuffer roughVertexBuffer(roughMesh, glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.5f));
+        VertexBuffer roughVertexBuffer(roughMesh, glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.3f));
 //        VertexBuffer roughVertexBuffer(brMesh.vertices, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         VertexBufferLayout roughLayout;
         roughLayout.push<float>(3);
@@ -151,9 +151,9 @@ int main() {
 //
 //            renderer.drawTriangles(triangleVertexArray, triangleIndexBufffer2, shader);
 
-//            renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader2);
-//
-//            renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader2);
+            renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader2);
+
+            renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader2);
 
             renderer.drawTriangles(roughVertexArray, roughIndexBuffer, shader2);
 
