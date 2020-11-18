@@ -8,13 +8,13 @@ message((GUI) Sources: ${SOURCES})
 find_package(OpenGL REQUIRED)
 message (STATUS "OPENGL_INCLUDE_DIR=${OPENGL_INCLUDE_DIR}")
 include_directories(${OPENGL_INCLUDE_DIR})
+link_libraries(OpenGL::GL)
 
-### GLEW ###
+### GLEW ###  TODO get find_package to work to make this a robust project
 add_definitions(-DGLEW_STATIC)
-include_directories(glew-2.1.0/include)
-link_libraries("C:/Users/tolle/CLionProjects/OptiXSandBox/meshJonas/glew-2.1.0/lib/Release/x64/glew32s.lib")
+include_directories(${GLEW_DIR}/include)
+link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
-### GLFW ###
+### GLFW ### TODO get find_package to work to make this a robust project
 add_subdirectory(glfw)
 target_link_libraries(meshGUI glfw)
-target_link_libraries(meshGUI OpenGL::GL)
