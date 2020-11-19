@@ -7,14 +7,18 @@
 
 
 #include "VertexBuffer.h"
+#include "../core/WorldSpaceMesh.h"
+#include <vector>
 
 class VertexBufferLayout;
 
 class VertexArray {
 private:
     unsigned int m_RendererId;
+//    VertexBuffer vertexBuffer;
 public:
     VertexArray();
+    explicit VertexArray(const VertexBuffer &vertexBuffer);
     ~VertexArray();
 
     void addBuffer(const VertexBuffer& vertexBuffer, const VertexBufferLayout& layout);

@@ -7,19 +7,19 @@
 
 
 #include "ModelSpaceMesh.h"
-#include "Transformation.h"
 
 class WorldSpaceMesh {
 private:
-    ModelSpaceMesh modelSpaceMesh;
-    Transformation transformation;
-    std::vector<Vertex> transformedVertices;
-    std::vector<Triangle> transformedTriangles;
+    glm::mat4 modelTransformationMatrix;
+//    std::vector<Vertex> transformedVertices; // TODO should these be cached?
 public:
-    explicit WorldSpaceMesh(ModelSpaceMesh & modelSpaceMesh);
-    void transform(const Transformation &t);
-    void setTransformation(const Transformation &t);
-    Transformation getTransformation();
+    const ModelSpaceMesh modelSpaceMesh;
+    explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh);
+    explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const glm::mat4& modelTransformationMatrix);
+
+    void setModelTransformationMatrix(const glm::mat4& modelTransformationMatrix);
+    glm::mat4 getModelTransformationMatrix() const;
+    void transform(const glm::mat4& transformationMatrix);
 };
 
 

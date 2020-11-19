@@ -4,17 +4,29 @@
 
 #include "WorldSpaceMesh.h"
 
-WorldSpaceMesh::WorldSpaceMesh(ModelSpaceMesh& modelSpaceMesh): modelSpaceMesh(modelSpaceMesh), transformation(Transformation()) {
+WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
+        modelSpaceMesh(modelSpaceMesh),
+        modelTransformationMatrix() // This defaults to the identity matrix
+{
+
 }
 
-void WorldSpaceMesh::transform(const Transformation &t) {
-//    this->transformation = this->transformation * t;
+WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh, const glm::mat4 &modelTransformationMatrix):
+        modelSpaceMesh(modelSpaceMesh),
+        modelTransformationMatrix(modelTransformationMatrix)
+{
+
 }
 
-void WorldSpaceMesh::setTransformation(const Transformation &t) {
-    // TODO
+void WorldSpaceMesh::setModelTransformationMatrix(const glm::mat4 &newModelTransformationMatrix) {
+    this->modelTransformationMatrix = newModelTransformationMatrix;
 }
 
-Transformation WorldSpaceMesh::getTransformation() {
-    return this->transformation;
+glm::mat4 WorldSpaceMesh::getModelTransformationMatrix() const {
+    return modelTransformationMatrix;
+}
+
+void WorldSpaceMesh::transform(const glm::mat4 &transformationMatrix) {
+    // TODO check if this is the right order glm tends to do things backwards
+    this->modelTransformationMatrix *= transformationMatrix;
 }

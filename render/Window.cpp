@@ -54,7 +54,12 @@ Window::Window():
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1280, 720, "MeshCore", nullptr, nullptr);
+    const int width = 1280;
+    const int height = 720;
+    const float aspectRatio = float(width)/height;
+    window = glfwCreateWindow(width, height, "MeshCore", nullptr, nullptr);
+    Window::projectionMatrix = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 10000.0f);
+
     if (!window) {
         glfwTerminate();
         std::cout << "Error while creating the window" << std::endl;

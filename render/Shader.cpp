@@ -99,9 +99,10 @@ void Shader::unbind() const {
     GLCall(glUseProgram(0));
 }
 
-//void Shader::setUniform4f(const std::string &name, float v0, float v1, float v2, float v3) {
-//    GLCall(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
-//}
+void Shader::setUniform4fv(const std::string &name, const glm::vec4& vector) {
+    bind();
+    GLCall(glUniform4fv(getUniformLocation(name), 1, &vector[0]));
+}
 
 void Shader::setUniformMat4f(const std::string& name, const glm::mat4& matrix) {
     bind();

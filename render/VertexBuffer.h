@@ -8,21 +8,22 @@
 
 #include <vector>
 #include "../core/Vertex.h"
-#include "../core/ModelSpaceMesh.h"
+#include "../core/WorldSpaceMesh.h"
 
 class VertexBuffer {
 private:
     unsigned int m_RendererId;
 public:
-    VertexBuffer(const void* data, unsigned int size);
-    VertexBuffer(const ModelSpaceMesh& mesh, const glm::vec4& color);
+    VertexBuffer();
+    VertexBuffer(const VertexBuffer& other);
+    VertexBuffer(VertexBuffer&& other) noexcept ;
+    VertexBuffer& operator=(VertexBuffer&& other);
     ~VertexBuffer();
 
+    VertexBuffer(const void* data, unsigned int size);
+    explicit VertexBuffer(const WorldSpaceMesh& worldSpaceMesh);
+
     void bind() const;
-    void unbind() const;
-
-
 };
-
 
 #endif //MESHCORE_VERTEXBUFFER_H

@@ -5,19 +5,47 @@
 #include "VertexBuffer.h"
 #include "Renderer.h"
 #include <glm/gtx/normal.hpp>
-#include <glm/gtx/component_wise.hpp>
 
-VertexBuffer::VertexBuffer(const void *data, unsigned int size): m_RendererId(0) {
-    GLCall(glGenBuffers(1, &m_RendererId));
-    bind();
-    GLCall(glBufferData(GL_ARRAY_BUFFER,size, data, GL_STATIC_DRAW));
+VertexBuffer::VertexBuffer(): m_RendererId(0) {
+    // This is a hollow object, 0-value as a buffer name is always implicitly ignored in OpenGL
 }
 
-VertexBuffer::VertexBuffer(const ModelSpaceMesh& mesh, const glm::vec4& color): m_RendererId(0) {
-    GLCall(glGenBuffers(1, &m_RendererId));
+VertexBuffer::VertexBuffer(const VertexBuffer& other): m_RendererId(0) {
+    int size;
+    GLCall(glGenBuffers(1, &this->m_RendererId))
+    GLCall(glBindBuffer(GL_COPY_READ_BUFFER, other.m_RendererId))
+    GLCall(glBindBuffer(GL_COPY_WRITE_BUFFER, this->m_RendererId))
+    GLCall(glGetBufferParameteriv(GL_COPY_READ_BUFFER, GL_BUFFER_SIZE, &size))
+    GLCall(glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, GL_STATIC_DRAW))
+    GLCall(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size))
+}
+
+VertexBuffer::VertexBuffer(const void *data, unsigned int size): m_RendererId(0) {
+    GLCall(glGenBuffers(1, &m_RendererId))
     bind();
-    const std::vector<Vertex> vertices = mesh.vertices;
-    const std::vector<Triangle> triangles = mesh.triangles;
+    GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW))
+}
+
+VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept {
+    this->m_RendererId = other.m_RendererId;
+    other.m_RendererId = 0;
+}
+
+VertexBuffer &VertexBuffer::operator=(VertexBuffer&& other) {
+    if(this != &other){
+        GLCall(glDeleteBuffers(1, &this->m_RendererId))
+        this->m_RendererId = other.m_RendererId;
+        other.m_RendererId = 0;
+    }
+    return *this;
+}
+
+VertexBuffer::VertexBuffer(const WorldSpaceMesh& worldSpaceMesh): m_RendererId(0) {
+
+    GLCall(glGenBuffers(1, &m_RendererId))
+    bind();
+    const std::vector<Vertex> vertices = worldSpaceMesh.modelSpaceMesh.vertices;
+    const std::vector<Triangle> triangles = worldSpaceMesh.modelSpaceMesh.triangles;
 
     // Calculate normals
     std::vector<glm::vec3> normals(vertices.size(), glm::vec3(0.0f));
@@ -29,9 +57,7 @@ VertexBuffer::VertexBuffer(const ModelSpaceMesh& mesh, const glm::vec4& color): 
         normals[triangle.vertexIndex0] += glm::vec3(glm::triangleNormal(v0, v1, v2));
     }
 
-
     std::vector<float> data;
-//    for(Vertex v: vertices){
     for(int i=0; i<vertices.size(); i++) {
         Vertex v = vertices[i];
         glm::vec3 n= normals[i];
@@ -41,23 +67,19 @@ VertexBuffer::VertexBuffer(const ModelSpaceMesh& mesh, const glm::vec4& color): 
         data.emplace_back(n.x);
         data.emplace_back(n.y);
         data.emplace_back(n.z);
-        data.emplace_back(color.r);
-        data.emplace_back(color.g);
-        data.emplace_back(color.b);
-        data.emplace_back(color.a);
     }
-
-    GLCall(glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data.front(), GL_STATIC_DRAW))
 }
 
 VertexBuffer::~VertexBuffer() {
-    GLCall(glDeleteBuffers(1, &m_RendererId));
+    GLCall(glDeleteBuffers(1, &m_RendererId))
 }
 
 void VertexBuffer::bind() const {
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_RendererId));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_RendererId))
 }
 
-void VertexBuffer::unbind() const {
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-}
+//void VertexBuffer::unbind() const {
+//    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0))
+//}
+

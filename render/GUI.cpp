@@ -8,6 +8,7 @@
 #include "VertexBufferLayout.h"
 #include "Window.h"
 #include "../core/FileParser.h"
+#include "RenderModel.h"
 
 
 int main() {
@@ -16,35 +17,13 @@ int main() {
     ModelSpaceMesh brilliantMesh = FileParser::parseFile(path);
 
     std::string path2 = "../../data/models/DIAMCADrough.obj";
-    ModelSpaceMesh roughMesh = FileParser::parseFile(path2);
+    const ModelSpaceMesh roughMesh = FileParser::parseFile(path2);
 
     std::string path3 = "../../data/models/DIAMCADbr2.obj";
     ModelSpaceMesh brilliantMesh2 = FileParser::parseFile(path3);
 
     Window window;
     {
-        float positions[]{
-                -50.0f, -50.0f, 50.0f, 0.6627f, 0.6627f, 0.6627f, 0.5f,
-                +50.0f, -50.0f, 50.0f, 0.6627f, 0.6627f, 0.6627f, 0.5f,
-                +50.0f, +50.0f, 50.0f, 0.6627f, 0.6627f, 0.6627f, 0.5f,
-                -50.0f, +50.1f, 50.0f, 0.6627f, 0.6627f, 0.6627f, 0.5f,
-                +150.0f, +50.0f,50.0f, 0.6627f, 0.6627f, 0.6627f, 0.5f,
-                0.0f, 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.8f,
-                0.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f,
-                100.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f,
-                000.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f,
-        };
-
-        unsigned int indices[] = {
-                0, 1, 2,
-                2, 3, 0,
-                1, 2, 4,
-                5, 6, 7,
-        };
-        unsigned int indices2[] = {
-                0, 1, 2,
-        };
-
         /// Axis
         float axisPositions[]{
                 0.0f, 0.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f,
@@ -52,29 +31,11 @@ int main() {
                 0.0f, 200.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
                 200.0f, 0.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f,
         };
-
-//        unsigned int axisIndices[]{
-//                5,8,
-//                6,8,
-//                8,7,
-//        };
         unsigned int axisIndices[]{
                 0,1,
                 0,2,
                 0,3,
         };
-
-        // Vertex Buffer and Vertex Array
-        VertexArray triangleVertexArray;
-        VertexBuffer triangleVertexBuffer(positions, sizeof(positions));
-        VertexBufferLayout triangleLayout;
-        triangleLayout.push<float>(3);
-        triangleLayout.push<float>(4);
-        triangleVertexArray.addBuffer(triangleVertexBuffer, triangleLayout);
-
-        // Index Buffer
-        IndexBuffer triangleIndexBuffer(indices, std::size(indices));
-        IndexBuffer triangleIndexBufffer2(indices2, std::size(indices2));
 
         VertexArray axisVertexArray;
         VertexBuffer axisVertexBuffer(axisPositions, sizeof(axisPositions));
@@ -82,36 +43,39 @@ int main() {
         axisLayout.push<float>(3);
         axisLayout.push<float>(4);
         axisVertexArray.addBuffer(axisVertexBuffer, axisLayout);
-        IndexBuffer axisIndexBuffer(axisIndices, std::size(axisIndices));
+        IndexBuffer axisIndexBuffer(axisIndices, (unsigned int) std::size(axisIndices));
+
+        const WorldSpaceMesh roughWorldSpaceMesh(roughMesh);
+//        RenderModel roughRenderModel(roughWorldSpaceMesh);
+//        roughRenderModel.setColor(glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.3f));
+
 
         // Vertex Buffer and Vertex Array
         VertexArray roughVertexArray;
-        VertexBuffer roughVertexBuffer(roughMesh, glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.3f));
-//        VertexBuffer roughVertexBuffer(brMesh.vertices, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        VertexBuffer roughVertexBuffer(roughWorldSpaceMesh);
         VertexBufferLayout roughLayout;
         roughLayout.push<float>(3);
         roughLayout.push<float>(3);
-        roughLayout.push<float>(4);
         roughVertexArray.addBuffer(roughVertexBuffer, roughLayout);
-        IndexBuffer roughIndexBuffer(roughMesh.triangles);
+        IndexBuffer roughIndexBuffer(roughWorldSpaceMesh.modelSpaceMesh.triangles);
 
         VertexArray brilliantVertexArray;
-        VertexBuffer brilliantVertexBuffer(brilliantMesh, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        VertexBuffer brilliantVertexBuffer((WorldSpaceMesh(brilliantMesh)));
         VertexBufferLayout brilliantLayout;
         brilliantLayout.push<float>(3);
         brilliantLayout.push<float>(3);
-        brilliantLayout.push<float>(4);
         brilliantVertexArray.addBuffer(brilliantVertexBuffer, brilliantLayout);
         IndexBuffer brilliantIndexBuffer(brilliantMesh.triangles);
 
         VertexArray brilliantVertexArray2;
-        VertexBuffer brilliantVertexBuffer2(brilliantMesh2, glm::vec4(0.0f, 0.5f, 0.0f, 1.0f));
+//        VertexBuffer brilliantVertexBuffer2((WorldSpaceMesh(brilliantMesh2)));
+        VertexBuffer brilliantVertexBuffer2(brilliantVertexBuffer);
+        IndexBuffer brilliantIndexBuffer2(brilliantIndexBuffer);
         VertexBufferLayout brilliantLayout2;
         brilliantLayout2.push<float>(3);
         brilliantLayout2.push<float>(3);
-        brilliantLayout2.push<float>(4);
         brilliantVertexArray2.addBuffer(brilliantVertexBuffer2, brilliantLayout2);
-        IndexBuffer brilliantIndexBuffer2(brilliantMesh2.triangles);
+//        IndexBuffer brilliantIndexBuffer2(brilliantMesh2.triangles);
 
         // Shader
         Shader shader("../../render/res/shaders/Basic.shader");
@@ -123,39 +87,43 @@ int main() {
         while (window.shouldClose()) {
 
             window.processInput();
+            glm::mat4 modelTransformationMatrix = glm::mat4(1.0f);
+            modelTransformationMatrix = glm::scale(modelTransformationMatrix, glm::vec3(2,2,2));
+            modelTransformationMatrix = glm::translate(modelTransformationMatrix, glm::vec3(10,10,10));
+            modelTransformationMatrix = glm::rotate(modelTransformationMatrix, 50.0f, glm::vec3(0,1,0));
+
             glm::mat4 projectionViewMatrix = window.getProjectionViewMatrix();
+            glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * modelTransformationMatrix;
             renderer.clear();
 
-            // TODO: 4 draw calls from some rendering class
-
-            // static and dynamic are a seperate vertex buffer
-            // transparent and dynamic should be seperate indexbuffer (because solids should be drawn first, then transparent in order)
-
             // 1. DRAW STATIC SOLID (includes axis?)
-            // 2. DYNAMIC SOLID
-            // 3. STATIC TRANSPARENT -- after sorting by depth?
-            // 4. DYNAMIC TRANSPARENT -- after sorting by depth?
+            // 2. DRAW STATIC TRANSPARENT -- after sorting by depth?
+            // No dynamic buffers needed
 
+            shader.setUniform4fv("u_Color", glm::vec4(1, 1, 1, 1));
+            shader.setUniformMat4f("u_ModelViewProjectionMatrix", projectionViewMatrix);
 
-            shader.bind();
-            shader.setUniformMat4f("u_ViewProjectionMatrix", projectionViewMatrix);
-
-            shader2.setUniformMat4f("u_ViewProjectionMatrix", projectionViewMatrix);
-            glm::vec3 lightSource = glm::vec4(glm::vec3(0,-0,-200), 1.0f) *  window.getViewMatrix();
+            // Bring the light source in model space
+            glm::vec3 lightSource = glm::vec4(glm::vec3(0,-0,-200), 1.0f) *  window.getViewMatrix() * modelTransformationMatrix;
             shader2.setUniform3fv("u_LightSource", lightSource);
-            shader2.setUniform1f("u_Ambient", 0.15);
+            shader2.setUniform1f("u_Ambient", 0.15f);
+            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", modelViewProjectionMatrix);
 
             renderer.drawLines(axisVertexArray, axisIndexBuffer, shader);
 
-//            renderer.drawTriangles(triangleVertexArray, triangleIndexBuffer, shader);
-//
-//            renderer.drawTriangles(triangleVertexArray, triangleIndexBufffer2, shader);
-
+            shader2.setUniform4fv("u_Color", glm::vec4(1, 0, 0, 1));
             renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader2);
 
+            shader2.setUniform4fv("u_Color", glm::vec4(0, 0.5, 0, 1));
+            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", glm::translate(modelViewProjectionMatrix, glm::vec3(0,15,0)));
             renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader2);
-
+//
+            shader2.setUniform4fv("u_Color", glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.4f));
+            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", modelViewProjectionMatrix);
             renderer.drawTriangles(roughVertexArray, roughIndexBuffer, shader2);
+
+//            roughRenderModel.setColor(glm::vec4(0.6627f, 0.6627f, 0.6627f, 1.0f));
+//            roughRenderModel.draw(shader2);
 
             window.update();
 
