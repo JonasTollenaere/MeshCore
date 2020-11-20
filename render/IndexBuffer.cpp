@@ -26,7 +26,7 @@ IndexBuffer::IndexBuffer(IndexBuffer &&other) noexcept {
     other.m_Count = 0;
 }
 
-IndexBuffer &IndexBuffer::operator=(IndexBuffer &&other) {
+IndexBuffer &IndexBuffer::operator=(IndexBuffer &&other) noexcept {
     if(this != &other){
         GLCall(glDeleteBuffers(1, &this->m_RendererId))
         this->m_RendererId = other.m_RendererId;
@@ -42,11 +42,11 @@ IndexBuffer::~IndexBuffer() {
 }
 
 IndexBuffer::IndexBuffer(const unsigned int *indices, unsigned int count): m_Count(count), m_RendererId(0) {
-    ASSERT(sizeof(unsigned int) == sizeof(GLuint));
+    ASSERT(sizeof(unsigned int) == sizeof(GLuint))
 
-    GLCall(glGenBuffers(1, &m_RendererId));
+    GLCall(glGenBuffers(1, &m_RendererId))
     bind();
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(unsigned int), indices, GL_STATIC_DRAW))
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_Count*sizeof(unsigned int), indices, GL_STATIC_DRAW))
 }
 
 IndexBuffer::IndexBuffer(const std::vector<Triangle> &triangles): m_RendererId(0) {
@@ -62,17 +62,10 @@ IndexBuffer::IndexBuffer(const std::vector<Triangle> &triangles): m_RendererId(0
     }
 
     m_Count = (unsigned int) data.size();
-
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.size()*sizeof(unsigned int), &data.front(), GL_STATIC_DRAW))
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_Count*sizeof(unsigned int), &data.front(), GL_STATIC_DRAW))
 }
 
 
 void IndexBuffer::bind() const {
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererId))
 }
-
-
-
-//void IndexBuffer::unbind() const {
-//    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-//}

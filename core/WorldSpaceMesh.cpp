@@ -6,7 +6,7 @@
 
 WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
         modelSpaceMesh(modelSpaceMesh),
-        modelTransformationMatrix() // This defaults to the identity matrix
+        modelTransformationMatrix(1.0f) // This defaults to the identity matrix
 {
 
 }
@@ -27,6 +27,5 @@ glm::mat4 WorldSpaceMesh::getModelTransformationMatrix() const {
 }
 
 void WorldSpaceMesh::transform(const glm::mat4 &transformationMatrix) {
-    // TODO check if this is the right order glm tends to do things backwards
     this->modelTransformationMatrix *= transformationMatrix;
 }

@@ -20,24 +20,24 @@ VertexBuffer::VertexBuffer(const VertexBuffer& other): m_RendererId(0) {
     GLCall(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size))
 }
 
-VertexBuffer::VertexBuffer(const void *data, unsigned int size): m_RendererId(0) {
-    GLCall(glGenBuffers(1, &m_RendererId))
-    bind();
-    GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW))
-}
-
 VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept {
     this->m_RendererId = other.m_RendererId;
     other.m_RendererId = 0;
 }
 
-VertexBuffer &VertexBuffer::operator=(VertexBuffer&& other) {
+VertexBuffer &VertexBuffer::operator=(VertexBuffer&& other) noexcept {
     if(this != &other){
         GLCall(glDeleteBuffers(1, &this->m_RendererId))
         this->m_RendererId = other.m_RendererId;
         other.m_RendererId = 0;
     }
     return *this;
+}
+
+VertexBuffer::VertexBuffer(const void *data, unsigned int size): m_RendererId(0) {
+    GLCall(glGenBuffers(1, &m_RendererId))
+    bind();
+    GLCall(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW))
 }
 
 VertexBuffer::VertexBuffer(const WorldSpaceMesh& worldSpaceMesh): m_RendererId(0) {
@@ -54,7 +54,7 @@ VertexBuffer::VertexBuffer(const WorldSpaceMesh& worldSpaceMesh): m_RendererId(0
         Vertex v1 = vertices[triangle.vertexIndex1];
         Vertex v2 = vertices[triangle.vertexIndex2];
 
-        normals[triangle.vertexIndex0] += glm::vec3(glm::triangleNormal(v0, v1, v2));
+        normals[triangle.vertexIndex0] += glm::triangleNormal(v0, v1, v2);
     }
 
     std::vector<float> data;
@@ -78,8 +78,3 @@ VertexBuffer::~VertexBuffer() {
 void VertexBuffer::bind() const {
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_RendererId))
 }
-
-//void VertexBuffer::unbind() const {
-//    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0))
-//}
-

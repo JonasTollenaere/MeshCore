@@ -2,8 +2,6 @@
 // Created by Jonas on 10/11/2020.
 //
 
-#include <iostream>
-
 #include "Renderer.h"
 #include "VertexBufferLayout.h"
 #include "Window.h"
@@ -13,14 +11,18 @@
 
 int main() {
 
-    std::string path = "../../data/models/DIAMCADbr1.obj";
-    ModelSpaceMesh brilliantMesh = FileParser::parseFile(path);
+    const std::string path = "../../data/models/DIAMCADbr1.obj";
+    const ModelSpaceMesh brilliantMesh = FileParser::parseFile(path);
 
-    std::string path2 = "../../data/models/DIAMCADrough.obj";
+    const std::string path2 = "../../data/models/DIAMCADrough.obj";
     const ModelSpaceMesh roughMesh = FileParser::parseFile(path2);
 
-    std::string path3 = "../../data/models/DIAMCADbr2.obj";
-    ModelSpaceMesh brilliantMesh2 = FileParser::parseFile(path3);
+    const std::string path3 = "../../data/models/DIAMCADbr2.obj";
+    const ModelSpaceMesh brilliantMesh2 = FileParser::parseFile(path3);
+
+    const std::string path4 = "../../data/models/dragon.obj";
+    const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
+    const WorldSpaceMesh dragonWorldSpaceMesh(dragonMesh);
 
     Window window;
     {
@@ -45,38 +47,19 @@ int main() {
         axisVertexArray.addBuffer(axisVertexBuffer, axisLayout);
         IndexBuffer axisIndexBuffer(axisIndices, (unsigned int) std::size(axisIndices));
 
-        const WorldSpaceMesh roughWorldSpaceMesh(roughMesh);
-//        RenderModel roughRenderModel(roughWorldSpaceMesh);
-//        roughRenderModel.setColor(glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.3f));
+        WorldSpaceMesh roughWorldSpaceMesh(roughMesh);
+        RenderModel roughRenderModel(roughWorldSpaceMesh);
+        roughRenderModel.setColor(glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.4f));
 
+        WorldSpaceMesh brilliantWorldSpaceMesh(brilliantMesh);
+        RenderModel brilliantModel = RenderModel(brilliantWorldSpaceMesh);
+        brilliantModel.setColor(Color(1,0,0,1));
 
-        // Vertex Buffer and Vertex Array
-        VertexArray roughVertexArray;
-        VertexBuffer roughVertexBuffer(roughWorldSpaceMesh);
-        VertexBufferLayout roughLayout;
-        roughLayout.push<float>(3);
-        roughLayout.push<float>(3);
-        roughVertexArray.addBuffer(roughVertexBuffer, roughLayout);
-        IndexBuffer roughIndexBuffer(roughWorldSpaceMesh.modelSpaceMesh.triangles);
+        WorldSpaceMesh brilliantWorldSpaceMesh2(brilliantMesh2);
+        RenderModel brilliant2Model = RenderModel(brilliantWorldSpaceMesh2);
+        brilliant2Model.setColor(Color(0,0.5,0,1));
 
-        VertexArray brilliantVertexArray;
-        VertexBuffer brilliantVertexBuffer((WorldSpaceMesh(brilliantMesh)));
-        VertexBufferLayout brilliantLayout;
-        brilliantLayout.push<float>(3);
-        brilliantLayout.push<float>(3);
-        brilliantVertexArray.addBuffer(brilliantVertexBuffer, brilliantLayout);
-        IndexBuffer brilliantIndexBuffer(brilliantMesh.triangles);
-
-        VertexArray brilliantVertexArray2;
-//        VertexBuffer brilliantVertexBuffer2((WorldSpaceMesh(brilliantMesh2)));
-        VertexBuffer brilliantVertexBuffer2(brilliantVertexBuffer);
-        IndexBuffer brilliantIndexBuffer2(brilliantIndexBuffer);
-        VertexBufferLayout brilliantLayout2;
-        brilliantLayout2.push<float>(3);
-        brilliantLayout2.push<float>(3);
-        brilliantVertexArray2.addBuffer(brilliantVertexBuffer2, brilliantLayout2);
-//        IndexBuffer brilliantIndexBuffer2(brilliantMesh2.triangles);
-
+        RenderModel dragonRenderModel = RenderModel(dragonWorldSpaceMesh);
         // Shader
         Shader shader("../../render/res/shaders/Basic.shader");
         Shader shader2("../../render/res/shaders/Intermediate.shader");
@@ -87,43 +70,26 @@ int main() {
         while (window.shouldClose()) {
 
             window.processInput();
-            glm::mat4 modelTransformationMatrix = glm::mat4(1.0f);
-            modelTransformationMatrix = glm::scale(modelTransformationMatrix, glm::vec3(2,2,2));
-            modelTransformationMatrix = glm::translate(modelTransformationMatrix, glm::vec3(10,10,10));
-            modelTransformationMatrix = glm::rotate(modelTransformationMatrix, 50.0f, glm::vec3(0,1,0));
+//            glm::mat4 modelTransformationMatrix = glm::mat4(1.0f);
+//            modelTransformationMatrix = glm::scale(modelTransformationMatrix, glm::vec3(2,2,2));
+//            modelTransformationMatrix = glm::translate(modelTransformationMatrix, glm::vec3(10,10,10));
+//            modelTransformationMatrix = glm::rotate(modelTransformationMatrix, 50.0f, glm::vec3(0,1,0));
 
-            glm::mat4 projectionViewMatrix = window.getProjectionViewMatrix();
-            glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * modelTransformationMatrix;
-            renderer.clear();
-
-            // 1. DRAW STATIC SOLID (includes axis?)
-            // 2. DRAW STATIC TRANSPARENT -- after sorting by depth?
-            // No dynamic buffers needed
+            glm::mat4 projectionViewMatrix = window.getProjectionViewMatrix();renderer.clear();
 
             shader.setUniform4fv("u_Color", glm::vec4(1, 1, 1, 1));
             shader.setUniformMat4f("u_ModelViewProjectionMatrix", projectionViewMatrix);
-
-            // Bring the light source in model space
-            glm::vec3 lightSource = glm::vec4(glm::vec3(0,-0,-200), 1.0f) *  window.getViewMatrix() * modelTransformationMatrix;
-            shader2.setUniform3fv("u_LightSource", lightSource);
-            shader2.setUniform1f("u_Ambient", 0.15f);
-            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", modelViewProjectionMatrix);
-
             renderer.drawLines(axisVertexArray, axisIndexBuffer, shader);
 
-            shader2.setUniform4fv("u_Color", glm::vec4(1, 0, 0, 1));
-            renderer.drawTriangles(brilliantVertexArray, brilliantIndexBuffer, shader2);
+            glm::vec3 viewSpaceLightDirection = glm::vec4(glm::vec3(0, 0, 1), 1.0f) * window.getViewMatrix();
 
-            shader2.setUniform4fv("u_Color", glm::vec4(0, 0.5, 0, 1));
-            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", glm::translate(modelViewProjectionMatrix, glm::vec3(0,15,0)));
-            renderer.drawTriangles(brilliantVertexArray2, brilliantIndexBuffer2, shader2);
-//
-            shader2.setUniform4fv("u_Color", glm::vec4(0.6627f, 0.6627f, 0.6627f, 0.4f));
-            shader2.setUniformMat4f("u_ModelViewProjectionMatrix", modelViewProjectionMatrix);
-            renderer.drawTriangles(roughVertexArray, roughIndexBuffer, shader2);
+//            brilliantWorldSpaceMesh.transform(glm::rotate(glm::mat4(1.0f), 0.005f, glm::vec3(1.0f,0,0)));
 
-//            roughRenderModel.setColor(glm::vec4(0.6627f, 0.6627f, 0.6627f, 1.0f));
-//            roughRenderModel.draw(shader2);
+            dragonRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+
+            brilliantModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+            brilliant2Model.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+            roughRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection); // Drawing transparent objects last stays inmportant
 
             window.update();
 

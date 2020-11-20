@@ -27,12 +27,12 @@ in vec3 v_Position;
 in vec3 v_Normal;
 in vec4 v_Color;
 
-uniform vec3 u_LightSource;
+uniform vec3 u_LightDirection;
 uniform float u_Ambient;
 
 void main(){
     // All vectors reside in model space
-    vec3 light = - normalize(u_LightSource);
+    vec3 light = normalize(u_LightDirection);
     vec3 normal = normalize(v_Normal);
     float diffuse = max(dot(normal, light), 0.0);
     o_Color = (u_Ambient + diffuse * (1-u_Ambient)) * v_Color;
