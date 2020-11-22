@@ -13,7 +13,14 @@ private:
     glm::mat4 modelTransformationMatrix;
 //    std::vector<Vertex> transformedVertices; // TODO should these be cached?
 public:
-    const ModelSpaceMesh modelSpaceMesh;
+    const ModelSpaceMesh& modelSpaceMesh;
+public:
+//    WorldSpaceMesh();
+//    WorldSpaceMesh(const WorldSpaceMesh& other);
+//    WorldSpaceMesh(WorldSpaceMesh&& other) noexcept ;
+//    WorldSpaceMesh& operator=(WorldSpaceMesh&& other) noexcept ;
+//    ~WorldSpaceMesh();
+
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh);
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const glm::mat4& modelTransformationMatrix);
 

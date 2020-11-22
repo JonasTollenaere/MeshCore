@@ -66,7 +66,6 @@ Window::Window():
     }
 
     glfwMakeContextCurrent(window);
-
     glfwSwapInterval(1);
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

@@ -17,8 +17,6 @@ private:
     const ModelSpaceMesh mesh;
 public:
     MeshTriangle(const int vertexIndex0, const int vertexIndex1, const int vertexIndex2, const ModelSpaceMesh& mesh);
-    friend std::ostream & operator<<(std::ostream & os, const MeshTriangle& meshTriangle);
-    std::string toString() const;
 };
 
 

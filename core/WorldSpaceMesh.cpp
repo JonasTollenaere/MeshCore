@@ -6,7 +6,7 @@
 
 WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
         modelSpaceMesh(modelSpaceMesh),
-        modelTransformationMatrix(1.0f) // This defaults to the identity matrix
+        modelTransformationMatrix(1.0f)
 {
 
 }

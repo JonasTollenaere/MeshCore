@@ -41,9 +41,9 @@ color(Color(1,1,1,1))
     layout.push<float>(3);
     layout.push<float>(3);
 
-    this->vertexBuffer = VertexBuffer(&data.front(), data.size()*sizeof(float));
+    this->vertexBuffer = VertexBuffer(&data.front(), (unsigned int) data.size()*sizeof(float));
     this->vertexArray.addBuffer(vertexBuffer, layout);
-    this->indexBuffer = IndexBuffer(&indices.front(), indices.size());
+    this->indexBuffer = IndexBuffer(&indices.front(), (unsigned int) indices.size());
 }
 
 void RenderModel::draw(Shader& shader, const glm::mat4& projectionViewMatrix, const glm::vec3& viewSpaceLightDirection) const {

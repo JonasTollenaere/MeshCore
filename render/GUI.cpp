@@ -24,6 +24,10 @@ int main() {
     const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
     const WorldSpaceMesh dragonWorldSpaceMesh(dragonMesh);
 
+    const std::string path5 = "../../data/models/dagger.stl";
+    const ModelSpaceMesh appleMesh = FileParser::parseFile(path5);
+    const WorldSpaceMesh appleWorldSpaceMesh(appleMesh);
+
     Window window;
     {
         /// Axis
@@ -60,6 +64,7 @@ int main() {
         brilliant2Model.setColor(Color(0,0.5,0,1));
 
         RenderModel dragonRenderModel = RenderModel(dragonWorldSpaceMesh);
+        RenderModel appleRenderModel = RenderModel(appleWorldSpaceMesh);
         // Shader
         Shader shader("../../render/res/shaders/Basic.shader");
         Shader shader2("../../render/res/shaders/Intermediate.shader");
@@ -85,11 +90,14 @@ int main() {
 
 //            brilliantWorldSpaceMesh.transform(glm::rotate(glm::mat4(1.0f), 0.005f, glm::vec3(1.0f,0,0)));
 
-            dragonRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+            dragonRenderModel.setColor(Color(1.0, 0.6, 0.6, 1));
+//            dragonRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+//
+//            brilliantModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+//            brilliant2Model.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
+//            roughRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection); // Drawing transparent objects last stays inmportant
 
-            brilliantModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
-            brilliant2Model.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
-            roughRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection); // Drawing transparent objects last stays inmportant
+            appleRenderModel.draw(shader2, projectionViewMatrix, viewSpaceLightDirection);
 
             window.update();
 
