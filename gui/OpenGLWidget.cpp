@@ -6,7 +6,6 @@
 #include "../core/FileParser.h"
 #include "ShaderProgramSource.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 #include <QOpenGLShaderProgram>
 
 OpenGLWidget::OpenGLWidget(QWidget *parent): QOpenGLWidget(parent) {}
@@ -17,8 +16,6 @@ void OpenGLWidget::initializeGL() {
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - distance));
 
     initializeOpenGLFunctions();
-
-    std::cout << glGetString(GL_VERSION) << std::endl;
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -32,17 +29,18 @@ void OpenGLWidget::initializeGL() {
 //    GLCall(glDisable(GL_CULL_FACE))
     glCullFace(GL_BACK);
 
-    const std::string path4 = "../../data/models/dragon.obj";
-    const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
-    const WorldSpaceMesh dragonWorldSpaceMesh(dragonMesh);
-    auto model = OpenGLModel(dragonWorldSpaceMesh);
-
     ShaderProgramSource shaderProgramSource = ShaderProgramSource::parseShader("../../render/res/shaders/Intermediate.shader");
     shader.addShaderFromSourceCode(QOpenGLShader::Vertex, shaderProgramSource.VertexSource);
     shader.addShaderFromSourceCode(QOpenGLShader::Fragment, shaderProgramSource.FragmentSource);
     shader.bindAttributeLocation("vertex", 0);
     shader.bindAttributeLocation("normal", 1);
     shader.link();
+
+
+    const std::string path4 = "../../data/models/dragon.obj";
+    const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
+    const WorldSpaceMesh* dragonWorldSpaceMesh = new WorldSpaceMesh(dragonMesh);
+    renderModels.emplace_back(OpenGLModel(dragonWorldSpaceMesh));
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
@@ -55,11 +53,6 @@ void OpenGLWidget::resizeGL(int w, int h) {
 void OpenGLWidget::paintGL() {
     std::cout << "Paint" << std::endl;
 
-    const std::string path4 = "../../data/models/dragon.obj";
-    const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
-    const WorldSpaceMesh dragonWorldSpaceMesh(dragonMesh);
-    auto model = OpenGLModel(dragonWorldSpaceMesh);
-
     this->clear();
 
     shader.bind();
@@ -68,10 +61,9 @@ void OpenGLWidget::paintGL() {
     const float ambientLighting = 0.05f;
     shader.setUniformValue("u_Ambient", ambientLighting);
 
-    model.draw(shader, viewMatrix, projectionMatrix);
-//    for(OpenGLModel& openGLModel: renderModels){
-//        openGLModel.draw(shader, viewMatrix, projectionMatrix);
-//    }
+    for(OpenGLModel& model: renderModels){
+        model.draw(shader, viewMatrix, projectionMatrix);
+    }
 }
 
 void OpenGLWidget::clear() {
@@ -93,7 +85,7 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void OpenGLWidget::wheelEvent(QWheelEvent *event) {
-
+    std::cout << event->angleDelta().y() << std::endl;
     auto factor = event->angleDelta().y() / 1200.0;
     auto distance = glm::length(glm::vec3(viewMatrix[3]));
     viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, factor * distance), 0.0f)));

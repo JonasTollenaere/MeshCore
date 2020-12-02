@@ -10,14 +10,15 @@
 #include "ShaderProgramSource.h"
 #include <QOpenGLShaderProgram>
 
-OpenGLModel::OpenGLModel(const WorldSpaceMesh &worldSpaceMesh):
+OpenGLModel::OpenGLModel(const WorldSpaceMesh* worldSpaceMesh):
         worldSpaceMesh(worldSpaceMesh),
         color(Color(1,1,1,1)),
         vertexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::VertexBuffer)),
-        indexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::IndexBuffer))
+        indexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::IndexBuffer)),
+        vertexArray(new QOpenGLVertexArrayObject())
 {
-    const std::vector<Vertex> vertices = worldSpaceMesh.modelSpaceMesh.vertices;
-    const std::vector<Triangle> triangles = worldSpaceMesh.modelSpaceMesh.triangles;
+    const std::vector<Vertex> vertices = worldSpaceMesh->modelSpaceMesh.vertices;
+    const std::vector<Triangle> triangles = worldSpaceMesh->modelSpaceMesh.triangles;
 
     std::vector<unsigned int> indices;
     std::vector<float> data;
@@ -68,18 +69,60 @@ OpenGLModel::OpenGLModel(const WorldSpaceMesh &worldSpaceMesh):
 }
 
 void OpenGLModel::draw(QOpenGLShaderProgram& shader, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+
+    initializeOpenGLFunctions();
     vertexArray->bind();
     indexBuffer->bind();
-    std::cout << "Size: " << indexBuffer->size() << std::endl;
 
     glm::mat4 projectionViewMatrix = projectionMatrix * viewMatrix;
     glm::vec3 viewSpaceLightDirection = glm::vec4(glm::vec3(0, 0, 1), 1.0f) * viewMatrix;
-    const glm::vec3 modelLightDirection = glm::vec3(glm::vec4(viewSpaceLightDirection, 1.0f) * this->worldSpaceMesh.getModelTransformationMatrix());
-    const glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * this->worldSpaceMesh.getModelTransformationMatrix();
+    const glm::vec3 modelLightDirection = glm::vec3(glm::vec4(viewSpaceLightDirection, 1.0f) * this->worldSpaceMesh->getModelTransformationMatrix());
+    const glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * this->worldSpaceMesh->getModelTransformationMatrix();
 
     shader.setUniformValue("u_ModelViewProjectionMatrix", QMatrix4x4(glm::value_ptr(modelViewProjectionMatrix)).transposed());
     shader.setUniformValue("u_Color", QVector4D(this->color.r, this->color.g, this->color.b, this->color.a));
     shader.setUniformValue("u_LightDirection", QVector3D(modelLightDirection.x, modelLightDirection.y, modelLightDirection.z));
-
     glDrawElements(GL_TRIANGLES, indexBuffer->size()/sizeof(unsigned int),  GL_UNSIGNED_INT, nullptr); // TODO pass amount of indices
+}
+
+OpenGLModel::~OpenGLModel() {
+    delete indexBuffer;
+    delete vertexBuffer;
+    delete vertexArray;
+}
+
+OpenGLModel::OpenGLModel(): color(Color(1,1,1,1)) {
+    this->vertexBuffer = nullptr;
+    this->indexBuffer = nullptr;
+    this->vertexArray = nullptr;
+    this->worldSpaceMesh = nullptr;
+}
+
+OpenGLModel &OpenGLModel::operator=(OpenGLModel &&other) noexcept {
+    if(this != &other){
+        this->worldSpaceMesh = other.worldSpaceMesh;
+        this->indexBuffer = other.indexBuffer;
+        this->vertexArray = other.vertexArray;
+        this->vertexBuffer = other.vertexBuffer;
+        this->color = other.color;
+
+        other.worldSpaceMesh = nullptr;
+        other.indexBuffer = nullptr;
+        other.vertexArray = nullptr;
+        other.vertexBuffer = nullptr;
+    }
+    return *this;
+}
+
+OpenGLModel::OpenGLModel(OpenGLModel &&other) noexcept {
+    this->worldSpaceMesh = other.worldSpaceMesh;
+    this->indexBuffer = other.indexBuffer;
+    this->vertexArray = other.vertexArray;
+    this->vertexBuffer = other.vertexBuffer;
+    this->color = other.color;
+
+    other.worldSpaceMesh = nullptr;
+    other.indexBuffer = nullptr;
+    other.vertexArray = nullptr;
+    other.vertexBuffer = nullptr;
 }
