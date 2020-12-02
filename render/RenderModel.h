@@ -18,10 +18,13 @@ private:
     const WorldSpaceMesh& worldSpaceMesh;
     VertexArray vertexArray;
     IndexBuffer indexBuffer;
-    VertexBuffer vertexBuffer;
     Color color;
 
 public:
+//    RenderModel();
+//    RenderModel(const RenderModel& other);
+    RenderModel(RenderModel&& other) noexcept;
+
     explicit RenderModel(const WorldSpaceMesh& worldSpaceMesh);
     void draw(Shader &shader, const glm::mat4 &projectionViewMatrix, const glm::vec3& viewSpaceLightDirection) const;
 

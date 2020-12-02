@@ -67,7 +67,7 @@ Window::Window():
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 16);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -79,7 +79,7 @@ Window::Window():
 }
 
 bool Window::shouldClose() {
-    return !glfwWindowShouldClose(window);
+    return glfwWindowShouldClose(window);
 }
 
 void Window::processInput() {
@@ -155,6 +155,10 @@ glm::mat4 Window::getViewMatrix() {
     return viewMatrix;
 }
 
+glm::mat4 Window::getProjectionMatrix() {
+    projectionMatrix = glm::perspective(glm::radians(fov), 1280.0f / 720.0f, 0.1f, 10000.0f);
+    return projectionMatrix;
+}
 
 void Window::update() {
     /* Swap front and back buffers */
@@ -162,4 +166,9 @@ void Window::update() {
 
     /* Poll for and process events */
     glfwPollEvents();
+}
+
+Window::~Window() {
+    std::cout << "ApplicationWindow destructor" << std::endl;
+    glfwTerminate();
 }

@@ -3,7 +3,6 @@
 //
 
 #include "Renderer.h"
-
 #include <iostream>
 
 void GLClearError(){
@@ -42,7 +41,10 @@ void Renderer::clear() {
     GLCall(glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT));
 }
 
-Renderer::Renderer() {
+Renderer::Renderer(): shader("../../render/res/shaders/Intermediate.shader"){
+
+    GLCall(std::cout << glGetString(GL_VERSION) << std::endl)
+
     GLCall(glEnable(GL_DEPTH_TEST));
     GLCall(glDepthFunc(GL_LESS));
     GLCall(glEnable(GL_BLEND))
@@ -54,7 +56,51 @@ Renderer::Renderer() {
     GLCall(glEnable(GL_CULL_FACE));
 //    GLCall(glDisable(GL_CULL_FACE));
     GLCall(glCullFace(GL_BACK));
-//    GLCall(glPolygonMode(GL_FRONT_AND_BACK,GL_LINE));
 
-//    GLCall(glDisable(GL_POLYGON_SMOOTH));
+}
+
+void Renderer::doRenderIteration() {
+    this->clear();
+    this->window.processInput();
+
+    glm::mat4 projectionMatrix = window.getProjectionMatrix();
+    glm::mat4 viewMatrix = window.getViewMatrix();
+    glm::mat4 projectionViewMatrix = projectionMatrix * viewMatrix;
+    glm::vec3 viewSpaceLightDirection = glm::vec4(glm::vec3(0, 0, 1), 1.0f) * viewMatrix;
+
+    for(RenderModel const& renderModel: renderModels){
+        renderModel.draw(shader, projectionViewMatrix, viewSpaceLightDirection);
+    }
+
+    this->window.update();
+}
+
+void Renderer::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh){
+    this->renderModels.emplace_back(RenderModel(worldSpaceMesh));
+}
+
+void Renderer::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
+    RenderModel renderModel = RenderModel(worldSpaceMesh);
+    renderModel.setColor(color);
+    this->renderModels.emplace_back(std::move(renderModel));
+}
+
+void Renderer::start() {
+    std::cout << "Start render thread" << std::endl;
+    this->renderThread = std::thread([this]{this->run();});
+    std::cout << "Continue main thread" << std::endl;
+}
+
+void Renderer::stop(){
+    this->renderThread.join();
+}
+
+void Renderer::run() {
+    int counter = 0;
+    std::cout << "Run called" << std::endl;
+    while(!window.shouldClose()){
+        doRenderIteration();
+        if(counter++%60 == 0) std::cout << "Render thread going" << std::endl;
+    }
+    std::cout << "end of run()" << std::endl;
 }

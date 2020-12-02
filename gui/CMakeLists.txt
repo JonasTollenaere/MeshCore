@@ -1,8 +1,12 @@
-file(GLOB SOURCES ../core/*.cpp *.cpp)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_executable(meshRenderer ${SOURCES})
+#set(CMAKE_AUTOMOC ON)
+#set(CMAKE_AUTORCC ON)
+#set(CMAKE_AUTOUIC ON)
 
-message((GUI) Sources: ${SOURCES})
+file(GLOB SOURCES *.cpp ../core/*.cpp)
+
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 ### OpenGL ###
 find_package(OpenGL REQUIRED)
@@ -15,7 +19,6 @@ add_definitions(-DGLEW_STATIC)
 include_directories(${GLEW_DIR}/include)
 link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
-### GLFW ### TODO get find_package to work to make this a robust project
-add_subdirectory(glfw)
-target_link_libraries(meshRenderer glfw)
-link_libraries(glfw)
+add_executable(app ${SOURCES})
+target_link_libraries(app Qt5::Widgets)
+

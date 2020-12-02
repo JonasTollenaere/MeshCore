@@ -15,8 +15,8 @@ private:
 public:
     IndexBuffer();
     IndexBuffer(const IndexBuffer& other);
-    IndexBuffer(IndexBuffer&& other) noexcept ;
-    IndexBuffer& operator=(IndexBuffer&& other) noexcept ;
+    IndexBuffer(IndexBuffer&& other) noexcept;
+    IndexBuffer& operator=(IndexBuffer&& other) noexcept;
     ~IndexBuffer();
 
     IndexBuffer(const unsigned int* indices, unsigned int count);

@@ -15,16 +15,18 @@ class VertexBufferLayout;
 class VertexArray {
 private:
     unsigned int m_RendererId;
-//    VertexBuffer vertexBuffer;
+    VertexBuffer vertexBuffer;
 public:
     VertexArray();
-    explicit VertexArray(const VertexBuffer &vertexBuffer);
+//    VertexArray(const VertexArray& other);
+//    VertexArray(VertexArray&& other) noexcept ;
+    VertexArray& operator=(VertexArray&& other) noexcept ;
+    explicit VertexArray(VertexBuffer vertexBuffer);
     ~VertexArray();
 
     void addBuffer(const VertexBuffer& vertexBuffer, const VertexBufferLayout& layout);
 
     void bind() const;
-    void unbind() const;
 };
 
 

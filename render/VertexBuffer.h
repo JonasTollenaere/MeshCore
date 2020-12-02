@@ -16,8 +16,8 @@ private:
 public:
     VertexBuffer();
     VertexBuffer(const VertexBuffer& other);
-    VertexBuffer(VertexBuffer&& other) noexcept ;
-    VertexBuffer& operator=(VertexBuffer&& other) noexcept ;
+    VertexBuffer(VertexBuffer&& other) noexcept;
+    VertexBuffer& operator=(VertexBuffer&& other) noexcept;
     ~VertexBuffer();
 
     VertexBuffer(const void* data, unsigned int size);

@@ -40,9 +40,8 @@ color(Color(1,1,1,1))
     VertexBufferLayout layout;
     layout.push<float>(3);
     layout.push<float>(3);
-
-    this->vertexBuffer = VertexBuffer(&data.front(), (unsigned int) data.size()*sizeof(float));
-    this->vertexArray.addBuffer(vertexBuffer, layout);
+    VertexBuffer vertexBuffer = VertexBuffer(&data.front(), (unsigned int) data.size()*sizeof(float));
+    this->vertexArray = VertexArray(std::move(vertexBuffer));
     this->indexBuffer = IndexBuffer(&indices.front(), (unsigned int) indices.size());
 }
 
@@ -65,4 +64,10 @@ void RenderModel::draw(Shader& shader, const glm::mat4& projectionViewMatrix, co
 
 void RenderModel::setColor(const Color &newColor) {
     this->color = newColor;
+}
+
+RenderModel::RenderModel(RenderModel &&other) noexcept: worldSpaceMesh(other.worldSpaceMesh) {
+    this->vertexArray = std::move(other.vertexArray);
+    this->indexBuffer = std::move(other.indexBuffer);
+    this->color = other.color;
 }

@@ -1,12 +1,11 @@
+////
+//// Created by Jonas on 15/11/2020.
+////
 //
-// Created by Jonas on 15/11/2020.
-//
-
 #ifndef MESHCORE2_WINDOW_H
 #define MESHCORE2_WINDOW_H
 
 #include <GL/glew.h>
-
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,12 +18,13 @@ private:
     glm::mat4 projectionMatrix;
 public:
     Window();
+    ~Window();
     bool shouldClose();
     void processInput();
     void update();
     glm::mat4 getProjectionViewMatrix();
+    glm::mat4 getProjectionMatrix();
     glm::mat4 getViewMatrix();
 };
-
 
 #endif //MESHCORE2_WINDOW_H
