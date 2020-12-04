@@ -18,6 +18,7 @@ private:
     float fieldOfView = 75.0f;
     int width;
     int height;
+    QPoint lastMousePosition;
 
     glm::dmat4 viewMatrix;
     glm::dmat4 projectionMatrix;
@@ -27,6 +28,8 @@ private:
 
 public:
     explicit OpenGLWidget(QWidget *parent = nullptr);
+    void resetView();
+    void addWorldSpaceMesh(const WorldSpaceMesh *worldspaceMesh);
 
 protected:
 
@@ -39,10 +42,6 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
-
-private:
-    void clear();
-    QPoint lastMousePosition;
 
 
 };

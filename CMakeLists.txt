@@ -8,8 +8,7 @@ find_package(glm 0.9.9 REQUIRED)
 message (STATUS "GLM_INCLUDE_DIRS=${GLM_INCLUDE_DIRS}")
 include_directories(${GLM_INCLUDE_DIRS})
 
-add_subdirectory(render)
+add_subdirectory(glfw)
 add_subdirectory(core)
 add_subdirectory(gui)
-add_subdirectory(guiTest)
 

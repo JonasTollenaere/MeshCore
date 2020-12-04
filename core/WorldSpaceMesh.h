@@ -19,7 +19,7 @@ public:
 //    WorldSpaceMesh(const WorldSpaceMesh& other);
 //    WorldSpaceMesh(WorldSpaceMesh&& other) noexcept ;
 //    WorldSpaceMesh& operator=(WorldSpaceMesh&& other) noexcept ;
-//    ~WorldSpaceMesh();
+    ~WorldSpaceMesh();
 
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh);
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const glm::mat4& modelTransformationMatrix);

@@ -13,7 +13,8 @@
 class ModelSpaceMesh {
 public:
     ModelSpaceMesh(const std::vector<Vertex> & vertices, const std::vector<Triangle> & triangles);
-
+    ModelSpaceMesh(const ModelSpaceMesh& other);
+    ~ModelSpaceMesh();
     const std::vector<Vertex> vertices;
     const std::vector<Triangle> triangles;
 };

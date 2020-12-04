@@ -33,7 +33,7 @@ OpenGLModel::OpenGLModel(const WorldSpaceMesh* worldSpaceMesh):
 
         // We push the vertices once for each triangle because the normal is different for each triangle
         // (Adding up the normals doesn't provide visually satisfying results
-        for(unsigned int j=0; j<3; j++){
+        for (unsigned int j = 0; j < 3; j++) {
             data.emplace_back(triangleVertices[j].x);
             data.emplace_back(triangleVertices[j].y);
             data.emplace_back(triangleVertices[j].z);
@@ -44,45 +44,46 @@ OpenGLModel::OpenGLModel(const WorldSpaceMesh* worldSpaceMesh):
         }
     }
 
-    vertexBuffer->create();
-    vertexBuffer->bind();
-    vertexBuffer->allocate(&data.front(), data.size() * sizeof(float));
+    this->vertexBuffer->create();
+    this->vertexBuffer->bind();
+    this->vertexBuffer->allocate(&data.front(), data.size() * sizeof(float));
 
-    vertexArray->create();
-    vertexArray->bind();
-    QOpenGLVertexArrayObject::Binder vaoBinder(vertexArray);
+    this->vertexArray->create();
+    this->vertexArray->bind();
 
-    initializeOpenGLFunctions();
+    this->initializeOpenGLFunctions();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    indexBuffer->create();
-    indexBuffer->bind();
-    indexBuffer->allocate(&indices.front(), indices.size() * sizeof(unsigned int));
+    this->indexBuffer->create();
+    this->indexBuffer->bind();
+    this->indexBuffer->allocate(&indices.front(), indices.size() * sizeof(unsigned int));
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
                              nullptr);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
                           (void*) (3 * sizeof(GLfloat)));
-
-    vertexBuffer->release();
 }
 
 void OpenGLModel::draw(QOpenGLShaderProgram& shader, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 
-    initializeOpenGLFunctions();
-    vertexArray->bind();
-    indexBuffer->bind();
+    this->initializeOpenGLFunctions();
+    this->vertexArray->bind();
+    this->indexBuffer->bind();
+    shader.bind();
 
     glm::mat4 projectionViewMatrix = projectionMatrix * viewMatrix;
-    glm::vec3 viewSpaceLightDirection = glm::vec4(glm::vec3(0, 0, 1), 1.0f) * viewMatrix;
+    glm::vec3 viewSpaceLightDirection = glm::vec4(0, 0, 1, 1) * viewMatrix;
     const glm::vec3 modelLightDirection = glm::vec3(glm::vec4(viewSpaceLightDirection, 1.0f) * this->worldSpaceMesh->getModelTransformationMatrix());
     const glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * this->worldSpaceMesh->getModelTransformationMatrix();
 
+    const float ambientLighting = 0.05f;
+    shader.setUniformValue("u_Ambient", ambientLighting);
     shader.setUniformValue("u_ModelViewProjectionMatrix", QMatrix4x4(glm::value_ptr(modelViewProjectionMatrix)).transposed());
     shader.setUniformValue("u_Color", QVector4D(this->color.r, this->color.g, this->color.b, this->color.a));
     shader.setUniformValue("u_LightDirection", QVector3D(modelLightDirection.x, modelLightDirection.y, modelLightDirection.z));
-    glDrawElements(GL_TRIANGLES, indexBuffer->size()/sizeof(unsigned int),  GL_UNSIGNED_INT, nullptr); // TODO pass amount of indices
+    glDrawElements(GL_TRIANGLES, this->indexBuffer->size()/sizeof(unsigned int),  GL_UNSIGNED_INT, nullptr);
+//    glDrawArrays(GL_TRIANGLES, 0, this->indexBuffer->size()/sizeof(unsigned int));
 }
 
 OpenGLModel::~OpenGLModel() {
@@ -114,12 +115,11 @@ OpenGLModel &OpenGLModel::operator=(OpenGLModel &&other) noexcept {
     return *this;
 }
 
-OpenGLModel::OpenGLModel(OpenGLModel &&other) noexcept {
+OpenGLModel::OpenGLModel(OpenGLModel &&other) noexcept: color(other.color) {
     this->worldSpaceMesh = other.worldSpaceMesh;
     this->indexBuffer = other.indexBuffer;
     this->vertexArray = other.vertexArray;
     this->vertexBuffer = other.vertexBuffer;
-    this->color = other.color;
 
     other.worldSpaceMesh = nullptr;
     other.indexBuffer = nullptr;

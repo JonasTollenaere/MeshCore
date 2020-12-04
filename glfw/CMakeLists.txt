@@ -1,6 +1,6 @@
 file(GLOB SOURCES ../core/*.cpp *.cpp)
 
-add_executable(meshRenderer ${SOURCES})
+add_executable(GLFWRenderer ${SOURCES})
 
 message((GUI) Sources: ${SOURCES})
 
@@ -17,5 +17,5 @@ link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
 ### GLFW ### TODO get find_package to work to make this a robust project
 add_subdirectory(glfw)
-target_link_libraries(meshRenderer glfw)
+target_link_libraries(GLFWRenderer glfw)
 link_libraries(glfw)

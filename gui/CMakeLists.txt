@@ -19,6 +19,6 @@ add_definitions(-DGLEW_STATIC)
 include_directories(${GLEW_DIR}/include)
 link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
-add_executable(app ${SOURCES})
-target_link_libraries(app Qt5::Widgets)
+add_executable(Application ${SOURCES})
+target_link_libraries(Application Qt5::Widgets)
 

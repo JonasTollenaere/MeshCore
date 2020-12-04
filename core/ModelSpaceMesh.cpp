@@ -9,3 +9,12 @@ ModelSpaceMesh::ModelSpaceMesh(const std::vector<Vertex>& vertices, const std::v
 {
 
 }
+
+ModelSpaceMesh::~ModelSpaceMesh() {
+
+}
+
+ModelSpaceMesh::ModelSpaceMesh(const ModelSpaceMesh &other):
+triangles(other.triangles),
+vertices(other.vertices){
+}

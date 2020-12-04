@@ -29,3 +29,7 @@ glm::mat4 WorldSpaceMesh::getModelTransformationMatrix() const {
 void WorldSpaceMesh::transform(const glm::mat4 &transformationMatrix) {
     this->modelTransformationMatrix *= transformationMatrix;
 }
+
+WorldSpaceMesh::~WorldSpaceMesh() {
+
+}

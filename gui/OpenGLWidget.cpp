@@ -3,17 +3,17 @@
 //
 
 #include "OpenGLWidget.h"
-#include "../core/FileParser.h"
 #include "ShaderProgramSource.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <QOpenGLShaderProgram>
+
+#define INITIAL_VIEW_DISTANCE 50.0f
 
 OpenGLWidget::OpenGLWidget(QWidget *parent): QOpenGLWidget(parent) {}
 
 void OpenGLWidget::initializeGL() {
 
-    double distance = 20.0f;
-    viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - distance));
+    viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 
     initializeOpenGLFunctions();
 
@@ -24,50 +24,32 @@ void OpenGLWidget::initializeGL() {
     glEnable(GL_MULTISAMPLE);
 
     // Options (should be available in GUI, per model)
-//    glClearColor(100.0f/255.0f, 149.0f/255.0f, 237.0f/255.0f, 1.0f);
     glEnable(GL_CULL_FACE);
-//    GLCall(glDisable(GL_CULL_FACE))
     glCullFace(GL_BACK);
 
-    ShaderProgramSource shaderProgramSource = ShaderProgramSource::parseShader("../../render/res/shaders/Intermediate.shader");
+    ShaderProgramSource shaderProgramSource = ShaderProgramSource::parseShader("../../glfw/res/shaders/Intermediate.shader");
     shader.addShaderFromSourceCode(QOpenGLShader::Vertex, shaderProgramSource.VertexSource);
     shader.addShaderFromSourceCode(QOpenGLShader::Fragment, shaderProgramSource.FragmentSource);
     shader.bindAttributeLocation("vertex", 0);
     shader.bindAttributeLocation("normal", 1);
     shader.link();
+}
 
-
-    const std::string path4 = "../../data/models/dragon.obj";
-    const ModelSpaceMesh dragonMesh = FileParser::parseFile(path4);
-    const WorldSpaceMesh* dragonWorldSpaceMesh = new WorldSpaceMesh(dragonMesh);
-    renderModels.emplace_back(OpenGLModel(dragonWorldSpaceMesh));
+void OpenGLWidget::resetView() {
+    viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
-    std::cout << "Resize" << std::endl;
     this->width = w;
     this->height = h;
     projectionMatrix = glm::perspective(glm::radians(fieldOfView), float(width)/float(height), 0.1f, 10000.0f);
 }
 
 void OpenGLWidget::paintGL() {
-    std::cout << "Paint" << std::endl;
 
-    this->clear();
-
-    shader.bind();
-    glm::vec3 viewSpaceLightDirection = glm::vec4(glm::vec3(0, 0, 1), 1.0f) * viewMatrix;
-
-    const float ambientLighting = 0.05f;
-    shader.setUniformValue("u_Ambient", ambientLighting);
-
-    for(OpenGLModel& model: renderModels){
+    for(OpenGLModel& model: this->renderModels){
         model.draw(shader, viewMatrix, projectionMatrix);
     }
-}
-
-void OpenGLWidget::clear() {
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void OpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -85,7 +67,6 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void OpenGLWidget::wheelEvent(QWheelEvent *event) {
-    std::cout << event->angleDelta().y() << std::endl;
     auto factor = event->angleDelta().y() / 1200.0;
     auto distance = glm::length(glm::vec3(viewMatrix[3]));
     viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, factor * distance), 0.0f)));
@@ -111,9 +92,6 @@ void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent *event) {
 }
 
 void OpenGLWidget::keyPressEvent(QKeyEvent* event){
-    printf("\nkey event in OpenGLWidget: %i", event->key());
-    std::cout << event->key() << std::endl;
-
     int key = event->key();
     if(key == Qt::Key_Plus){
         auto factor = 0.1;
@@ -127,4 +105,9 @@ void OpenGLWidget::keyPressEvent(QKeyEvent* event){
         viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, - factor * distance), 0.0f)));
         this->update();
     }
+}
+
+void OpenGLWidget::addWorldSpaceMesh(const WorldSpaceMesh* worldspaceMesh) {
+    this->makeCurrent();
+    this->renderModels.emplace_back(OpenGLModel(worldspaceMesh));
 }

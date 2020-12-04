@@ -41,7 +41,7 @@ void Renderer::clear() {
     GLCall(glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT));
 }
 
-Renderer::Renderer(): shader("../../render/res/shaders/Intermediate.shader"){
+Renderer::Renderer(): shader("../../glfw/res/shaders/Intermediate.shader"){
 
     GLCall(std::cout << glGetString(GL_VERSION) << std::endl)
 
@@ -86,7 +86,7 @@ void Renderer::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Col
 }
 
 void Renderer::start() {
-    std::cout << "Start render thread" << std::endl;
+    std::cout << "Start glfw thread" << std::endl;
     this->renderThread = std::thread([this]{this->run();});
     std::cout << "Continue main thread" << std::endl;
 }

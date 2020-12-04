@@ -11,24 +11,23 @@
 
 QT_BEGIN_NAMESPACE
 class QAction;
-class QDialogButtonBox;
-class QGroupBox;
-class QLabel;
-class QLineEdit;
 class QMenu;
 class QMenuBar;
-class QPushButton;
-class QTextEdit;
 QT_END_NAMESPACE
 
 class ApplicationWindow: public QMainWindow {
 private:
     QMenuBar *menuBar;
-    OpenGLWidget openGlWidget;
+    OpenGLWidget* openGlWidget;
 public:
     ApplicationWindow();
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+
+    void loadMesh();
+    void displayApplicationInfo();
+
+    void toggleMaximized();
 };
 
 
