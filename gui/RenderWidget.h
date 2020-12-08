@@ -2,18 +2,21 @@
 // Created by Jonas on 30/11/2020.
 //
 
-#ifndef MESHCORE_OPENGLWIDGET_H
-#define MESHCORE_OPENGLWIDGET_H
+#ifndef MESHCORE_RENDERWIDGET_H
+#define MESHCORE_RENDERWIDGET_H
 
-#include "OpenGLModel.h"
+#include "RenderModel.h"
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QMouseEvent>
 #include <QOpenGLShaderProgram>
 #include <glm/glm.hpp>
-#include <iostream>
+#include <unordered_map>
+#include <mutex>
+#include <shared_mutex>
 
-class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
+
+class RenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 private:
     float fieldOfView = 75.0f;
     int width;
@@ -23,13 +26,19 @@ private:
     glm::dmat4 viewMatrix;
     glm::dmat4 projectionMatrix;
 
-    std::vector<OpenGLModel> renderModels;
+    std::unordered_map<std::string, RenderModel> renderModelsMap;
+    std::shared_mutex sharedMutex;
+
+
     QOpenGLShaderProgram shader;
+//    QOpenGLShaderProgram axisShader;
 
 public:
-    explicit OpenGLWidget(QWidget *parent = nullptr);
+    explicit RenderWidget(QWidget *parent = nullptr);
     void resetView();
-    void addWorldSpaceMesh(const WorldSpaceMesh *worldspaceMesh);
+    void addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh);
+    void addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
+    void updateWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh);
 
 protected:
 
@@ -43,8 +52,6 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
-
 };
 
-
-#endif //MESHCORE_OPENGLWIDGET_H
+#endif //MESHCORE_RENDERWIDGET_H

@@ -44,8 +44,8 @@ VertexBuffer::VertexBuffer(const WorldSpaceMesh& worldSpaceMesh): m_RendererId(0
 
     GLCall(glGenBuffers(1, &m_RendererId))
     bind();
-    const std::vector<Vertex> vertices = worldSpaceMesh.modelSpaceMesh.vertices;
-    const std::vector<Triangle> triangles = worldSpaceMesh.modelSpaceMesh.triangles;
+    const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().vertices;
+    const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().triangles;
 
     // Calculate normals
     std::vector<glm::vec3> normals(vertices.size(), glm::vec3(0.0f));

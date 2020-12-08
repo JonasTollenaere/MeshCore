@@ -7,7 +7,7 @@
 
 #include <QMainWindow>
 #include <QDialog>
-#include "OpenGLWidget.h"
+#include "RenderWidget.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -18,16 +18,17 @@ QT_END_NAMESPACE
 class ApplicationWindow: public QMainWindow {
 private:
     QMenuBar *menuBar;
-    OpenGLWidget* openGlWidget;
+    RenderWidget* renderWidget;
 public:
     ApplicationWindow();
+
+    RenderWidget *getRenderWidget() const;
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
     void loadMesh();
     void displayApplicationInfo();
-
-    void toggleMaximized();
 };
 
 

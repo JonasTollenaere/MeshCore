@@ -2,16 +2,19 @@
 // Created by Jonas on 30/11/2020.
 //
 
-#include "OpenGLWidget.h"
+#include "RenderWidget.h"
 #include "ShaderProgramSource.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <QOpenGLShaderProgram>
 
 #define INITIAL_VIEW_DISTANCE 50.0f
 
-OpenGLWidget::OpenGLWidget(QWidget *parent): QOpenGLWidget(parent) {}
+RenderWidget::RenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
 
-void OpenGLWidget::initializeGL() {
+void RenderWidget::initializeGL() {
+
+    const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
+    std::cout << MAIN_THREAD_ID << std::endl;
 
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 
@@ -35,24 +38,26 @@ void OpenGLWidget::initializeGL() {
     shader.link();
 }
 
-void OpenGLWidget::resetView() {
+void RenderWidget::resetView() {
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 }
 
-void OpenGLWidget::resizeGL(int w, int h) {
+void RenderWidget::resizeGL(int w, int h) {
     this->width = w;
     this->height = h;
     projectionMatrix = glm::perspective(glm::radians(fieldOfView), float(width)/float(height), 0.1f, 10000.0f);
 }
 
-void OpenGLWidget::paintGL() {
+void RenderWidget::paintGL() {
 
-    for(OpenGLModel& model: this->renderModels){
+    std::shared_lock<std::shared_mutex> lock(sharedMutex); // Lock with destructor that releases the mutex
+    for(auto& [id, model]:  this->renderModelsMap){
         model.draw(shader, viewMatrix, projectionMatrix);
     }
+
 }
 
-void OpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
+void RenderWidget::mouseMoveEvent(QMouseEvent *event) {
     int dx = event->x() - lastMousePosition.x();
     int dy = event->y() - lastMousePosition.y();
     lastMousePosition = event->pos();
@@ -66,20 +71,20 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
     this->update();
 }
 
-void OpenGLWidget::wheelEvent(QWheelEvent *event) {
+void RenderWidget::wheelEvent(QWheelEvent *event) {
     auto factor = event->angleDelta().y() / 1200.0;
     auto distance = glm::length(glm::vec3(viewMatrix[3]));
     viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, factor * distance), 0.0f)));
     this->update();
 }
 
-void OpenGLWidget::mousePressEvent(QMouseEvent *event) {
+void RenderWidget::mousePressEvent(QMouseEvent *event) {
      lastMousePosition = event->pos();
      this->update();
      this->setFocus();
 }
 
-void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent *event) {
+void RenderWidget::mouseDoubleClickEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton)
     {
         if(!this->parentWidget()->isMaximized()){
@@ -91,7 +96,7 @@ void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent *event) {
     }
 }
 
-void OpenGLWidget::keyPressEvent(QKeyEvent* event){
+void RenderWidget::keyPressEvent(QKeyEvent* event){
     int key = event->key();
     if(key == Qt::Key_Plus){
         auto factor = 0.1;
@@ -107,7 +112,29 @@ void OpenGLWidget::keyPressEvent(QKeyEvent* event){
     }
 }
 
-void OpenGLWidget::addWorldSpaceMesh(const WorldSpaceMesh* worldspaceMesh) {
+void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh) {
+    this->addWorldSpaceMesh(worldSpaceMesh, Color(1,1,1,1));
+}
+
+void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Color& color) {
     this->makeCurrent();
-    this->renderModels.emplace_back(OpenGLModel(worldspaceMesh));
+    auto model = RenderModel(worldSpaceMesh);
+    model.setColor(color);
+    std::unique_lock<std::shared_mutex> lock(sharedMutex); // Unique lock for writing with destructor that releases the mutex
+    this->renderModelsMap[worldSpaceMesh.getId()] = std::move(model);
+    this->update();
+}
+
+void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
+    const std::string& id = worldSpaceMesh.getId();
+    std::unique_lock<std::shared_mutex> lock(sharedMutex); // Unique lock for writing with destructor that releases the mutex
+    if(renderModelsMap.find(id) != renderModelsMap.end()){
+        renderModelsMap[id].setTransformation(worldSpaceMesh.getModelTransformationMatrix());
+    }
+    else{
+        this->makeCurrent(); // TODO makeCurrent can only be executed on the GUI thread
+        auto model = RenderModel(worldSpaceMesh);
+        this->renderModelsMap[id] = std::move(model);
+    }
+    this->update();
 }

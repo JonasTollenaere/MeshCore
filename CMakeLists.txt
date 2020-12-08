@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ### GLM ###
-find_package(glm 0.9.9 REQUIRED)
+find_package(glm REQUIRED)
 message (STATUS "GLM_INCLUDE_DIRS=${GLM_INCLUDE_DIRS}")
 include_directories(${GLM_INCLUDE_DIRS})
 

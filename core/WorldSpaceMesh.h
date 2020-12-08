@@ -10,10 +10,12 @@
 
 class WorldSpaceMesh {
 private:
+    static int nextId;
+    std::string id;
     glm::mat4 modelTransformationMatrix;
-//    std::vector<Vertex> transformedVertices; // TODO should these be cached?
-public:
     const ModelSpaceMesh& modelSpaceMesh;
+//    std::vector<Vertex> transformedVertices; // TODO should these be cached?
+
 public:
 //    WorldSpaceMesh();
 //    WorldSpaceMesh(const WorldSpaceMesh& other);
@@ -27,6 +29,10 @@ public:
     void setModelTransformationMatrix(const glm::mat4& modelTransformationMatrix);
     glm::mat4 getModelTransformationMatrix() const;
     void transform(const glm::mat4& transformationMatrix);
+
+    const ModelSpaceMesh &getModelSpaceMesh() const;
+
+    const std::string &getId() const;
 };
 
 

@@ -13,20 +13,21 @@ ApplicationWindow::ApplicationWindow() {
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
+    format.setSamples(16);
     format.setVersion(3, 2);
     format.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(format);
 
-   this->openGlWidget = new OpenGLWidget(this);
+   this->renderWidget = new RenderWidget(this);
 
-    openGlWidget->setMinimumSize(200, 100);
-    openGlWidget->setFocus();
-    setCentralWidget(openGlWidget);
+    renderWidget->setMinimumSize(200, 100);
+    renderWidget->setFocus();
+    setCentralWidget(renderWidget);
 
     menuBar = new QMenuBar;
-    QMenu* fileMenu = new QMenu(QString("File"), this);
-    QMenu* viewMenu = new QMenu(QString("View"), this);
-    QMenu* helpMenu = new QMenu(QString("Help"), this);
+    auto* fileMenu = new QMenu(QString("File"), this);
+    auto* viewMenu = new QMenu(QString("View"), this);
+    auto* helpMenu = new QMenu(QString("Help"), this);
     menuBar->addMenu(fileMenu);
     menuBar->addMenu(viewMenu);
     menuBar->addMenu(helpMenu);
@@ -44,7 +45,7 @@ ApplicationWindow::ApplicationWindow() {
 //    zoomInAction->setShortcut(QKeySequence::ZoomIn);
 
     QAction* resetViewAction = viewMenu->addAction(QString("Reset view"));
-    connect(resetViewAction, &QAction::triggered, openGlWidget, &OpenGLWidget::resetView);
+    connect(resetViewAction, &QAction::triggered, renderWidget, &RenderWidget::resetView);
     resetViewAction->setShortcut(QKeySequence(QString("Ctrl+0")));
 
 
@@ -53,6 +54,10 @@ ApplicationWindow::ApplicationWindow() {
 
     setMinimumSize(640,360);
     setWindowTitle(tr("MeshCore"));
+}
+
+RenderWidget *ApplicationWindow::getRenderWidget() const {
+    return renderWidget;
 }
 
 void ApplicationWindow::keyPressEvent(QKeyEvent* event){
@@ -64,8 +69,8 @@ void ApplicationWindow::loadMesh(){
     QString fileName = QFileDialog::getOpenFileName(this, QString("Select mesh file"), R"(C:\Users\tolle\CLionProjects\MeshCore\data\models)", QString("Mesh Files (*.stl *.obj)"));
     if(std::filesystem::exists(fileName.toStdString())){
         const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile(fileName.toStdString());
-        const WorldSpaceMesh* worldSpaceMesh = new WorldSpaceMesh(modelSpaceMesh);
-        openGlWidget->addWorldSpaceMesh(worldSpaceMesh);
+        const WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh);
+        renderWidget->addWorldSpaceMesh(worldSpaceMesh);
     }
 //    else{
 //        auto messageBox = QMessageBox(this);

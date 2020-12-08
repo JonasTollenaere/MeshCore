@@ -1,0 +1,40 @@
+//
+// Created by Jonas on 1/12/2020.
+//
+
+#ifndef MESHCORE_RENDERMODEL_H
+#define MESHCORE_RENDERMODEL_H
+
+#include <glm/glm.hpp>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLFunctions>
+#include <QOpenGLShaderProgram>
+#include "../core/WorldSpaceMesh.h"
+
+typedef glm::vec4 Color;
+typedef glm::mat4 Transformation;
+
+class RenderModel: protected QOpenGLFunctions {
+private:
+    QOpenGLBuffer* indexBuffer;
+    QOpenGLBuffer* vertexBuffer;
+    QOpenGLVertexArrayObject* vertexArray;
+    Color color;
+    Transformation transformation;
+public:
+    void setTransformation(const Transformation &transformation);
+    void setColor(const Color& color);
+
+    RenderModel();
+//    RenderModel(const RenderModel& other);
+    RenderModel(RenderModel&& other) noexcept;
+    RenderModel& operator=(RenderModel&& other) noexcept;
+    ~RenderModel();
+
+    explicit RenderModel(const WorldSpaceMesh& worldSpaceMesh);
+    void draw(QOpenGLShaderProgram& shader, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+};
+
+
+#endif //MESHCORE_RENDERMODEL_H

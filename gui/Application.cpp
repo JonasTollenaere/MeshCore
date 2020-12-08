@@ -4,18 +4,21 @@
 
 #include <QtWidgets>
 #include "ApplicationWindow.h"
+#include "../tasks/SingleModelOptimization.h"
 
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
 
 
-
     ApplicationWindow window;
-#ifdef Q_OS_ANDROID
-    dialog.showMaximized();
-#else
     window.show();
-#endif
+
+
+    SingleModelOptimization task;
+    task.setRenderWidget(window.getRenderWidget());
+    task.run();
+
+
     return QApplication::exec();
 
 }

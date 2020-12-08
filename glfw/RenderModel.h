@@ -28,7 +28,7 @@ public:
     explicit RenderModel(const WorldSpaceMesh& worldSpaceMesh);
     void draw(Shader &shader, const glm::mat4 &projectionViewMatrix, const glm::vec3& viewSpaceLightDirection) const;
 
-    void setColor(const Color& color);
+
 //    void setShader(const Shader& shader);
 };
 

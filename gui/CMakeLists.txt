@@ -4,7 +4,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #set(CMAKE_AUTORCC ON)
 #set(CMAKE_AUTOUIC ON)
 
-file(GLOB SOURCES *.cpp ../core/*.cpp)
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 

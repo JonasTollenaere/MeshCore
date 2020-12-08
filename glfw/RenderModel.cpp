@@ -10,8 +10,8 @@ RenderModel::RenderModel(const WorldSpaceMesh &worldSpaceMesh):
 worldSpaceMesh(worldSpaceMesh),
 color(Color(1,1,1,1))
 {
-    const std::vector<Vertex> vertices = worldSpaceMesh.modelSpaceMesh.vertices;
-    const std::vector<Triangle> triangles = worldSpaceMesh.modelSpaceMesh.triangles;
+    const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().vertices;
+    const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().triangles;
 
     std::vector<unsigned int> indices;
     std::vector<float> data;
