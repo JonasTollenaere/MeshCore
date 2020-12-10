@@ -2,13 +2,13 @@
 // Created by Jonas on 4/12/2020.
 //
 
-#ifndef MESHCORE_SINGLEMODELOPTIMIZATION_H
-#define MESHCORE_SINGLEMODELOPTIMIZATION_H
+#ifndef MESHCORE_SANDBOXTASK_H
+#define MESHCORE_SANDBOXTASK_H
 
 
 #include <RenderWidget.h>
 
-class SingleModelOptimization {
+class SandboxTask {
 private:
     RenderWidget* renderWidget;
 public:
@@ -18,4 +18,4 @@ public:
 };
 
 
-#endif //MESHCORE_SINGLEMODELOPTIMIZATION_H
+#endif //MESHCORE_SANDBOXTASK_H

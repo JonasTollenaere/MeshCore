@@ -48,6 +48,14 @@ ApplicationWindow::ApplicationWindow() {
     connect(resetViewAction, &QAction::triggered, renderWidget, &RenderWidget::resetView);
     resetViewAction->setShortcut(QKeySequence(QString("Ctrl+0")));
 
+    QAction* toggleWireMesh = viewMenu->addAction(QString("Toggle Wiremesh"));
+    connect(toggleWireMesh, &QAction::triggered, renderWidget, &RenderWidget::toggleWireMesh);
+    toggleWireMesh->setCheckable(true);
+
+    QAction* toggleCulling = viewMenu->addAction(QString("Toggle Culling"));
+    connect(toggleCulling, &QAction::triggered, renderWidget, &RenderWidget::toggleCullFace);
+    toggleCulling->setCheckable(true);
+    toggleCulling->setChecked(true);
 
     QAction* aboutAction = helpMenu->addAction(QString("About Meshcore"));
     connect(aboutAction, &QAction::triggered, this, &ApplicationWindow::displayApplicationInfo);

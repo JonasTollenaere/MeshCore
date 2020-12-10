@@ -13,9 +13,6 @@ RenderWidget::RenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
 
 void RenderWidget::initializeGL() {
 
-    const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
-    std::cout << MAIN_THREAD_ID << std::endl;
-
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 
     initializeOpenGLFunctions();
@@ -31,11 +28,20 @@ void RenderWidget::initializeGL() {
     glCullFace(GL_BACK);
 
     ShaderProgramSource shaderProgramSource = ShaderProgramSource::parseShader("../../glfw/res/shaders/Intermediate.shader");
-    shader.addShaderFromSourceCode(QOpenGLShader::Vertex, shaderProgramSource.VertexSource);
-    shader.addShaderFromSourceCode(QOpenGLShader::Fragment, shaderProgramSource.FragmentSource);
-    shader.bindAttributeLocation("vertex", 0);
-    shader.bindAttributeLocation("normal", 1);
-    shader.link();
+    betterShader.addShaderFromSourceCode(QOpenGLShader::Vertex, shaderProgramSource.VertexSource);
+    betterShader.addShaderFromSourceCode(QOpenGLShader::Fragment, shaderProgramSource.FragmentSource);
+    betterShader.bindAttributeLocation("vertex", 0);
+    betterShader.bindAttributeLocation("normal", 1);
+    betterShader.link();
+
+    ShaderProgramSource basicShaderProgramSource = ShaderProgramSource::parseShader("../../glfw/res/shaders/Basic.shader");
+    basicShader.addShaderFromSourceCode(QOpenGLShader::Vertex, basicShaderProgramSource.VertexSource);
+    basicShader.addShaderFromSourceCode(QOpenGLShader::Fragment, basicShaderProgramSource.FragmentSource);
+    basicShader.bindAttributeLocation("vertex", 0);
+    basicShader.bindAttributeLocation("normal", 1);
+    basicShader.link();
+
+    currentShader = &betterShader;
 }
 
 void RenderWidget::resetView() {
@@ -49,12 +55,10 @@ void RenderWidget::resizeGL(int w, int h) {
 }
 
 void RenderWidget::paintGL() {
-
-    std::shared_lock<std::shared_mutex> lock(sharedMutex); // Lock with destructor that releases the mutex
+    std::shared_lock<std::shared_mutex> lock(sharedMutex); // A lock with destructor that releases the mutex
     for(auto& [id, model]:  this->renderModelsMap){
-        model.draw(shader, viewMatrix, projectionMatrix);
+        model.draw(*currentShader, viewMatrix, projectionMatrix);
     }
-
 }
 
 void RenderWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -63,11 +67,11 @@ void RenderWidget::mouseMoveEvent(QMouseEvent *event) {
     lastMousePosition = event->pos();
     const double rotationSpeed = 0.01f;
 
-    glm::dvec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
-    glm::dvec3 cameraLeft    = glm::vec3(- 1.0f, 0.0f,  0.0f);
+    glm::dvec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
+    glm::dvec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
 
     this->viewMatrix = glm::rotate(viewMatrix, rotationSpeed * dx, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraUp,0.0f)));
-    this->viewMatrix = glm::rotate(viewMatrix, - rotationSpeed * dy, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraLeft,0.0f)));
+    this->viewMatrix = glm::rotate(viewMatrix, rotationSpeed * dy, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraRight, 0.0f)));
     this->update();
 }
 
@@ -110,13 +114,50 @@ void RenderWidget::keyPressEvent(QKeyEvent* event){
         viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, - factor * distance), 0.0f)));
         this->update();
     }
+    else if (key == Qt::Key_Left) {
+        const double rotationSpeed = 0.05f;
+        glm::dvec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
+        glm::dvec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+        this->viewMatrix = glm::rotate(viewMatrix, - rotationSpeed, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraUp,0.0f)));
+        this->update();
+    }
+    else if (key == Qt::Key_Right) {
+        const double rotationSpeed = 0.05f;
+        glm::dvec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
+        this->viewMatrix = glm::rotate(viewMatrix, rotationSpeed, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraUp,0.0f)));
+        this->update();
+    }
+    else if (key == Qt::Key_Up) {
+        const double rotationSpeed = 0.05f;
+        glm::dvec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+        this->viewMatrix = glm::rotate(viewMatrix, - rotationSpeed, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraRight,0.0f)));
+        this->update();
+    }
+    else if (key == Qt::Key_Down) {
+        const double rotationSpeed = 0.05f;
+        glm::dvec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+        this->viewMatrix = glm::rotate(viewMatrix, rotationSpeed, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(cameraRight,0.0f)));
+        this->update();
+    }
 }
 
+/*** This is threadsafe, can be called from anywhere ***/
 void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh) {
-    this->addWorldSpaceMesh(worldSpaceMesh, Color(1,1,1,1));
+    this->addWorldSpaceMesh(worldSpaceMesh, Color(1, 1, 1, 1));
 }
 
+/*** This is threadsafe, can be called from anywhere ***/
+Q_DECLARE_METATYPE(WorldSpaceMesh)
+Q_DECLARE_METATYPE(Color)
 void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Color& color) {
+
+    // This way the actions are executed on the main thread
+    qRegisterMetaType<const WorldSpaceMesh&>();
+    qRegisterMetaType<const Color&>();
+    QMetaObject::invokeMethod(this, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(WorldSpaceMesh, worldSpaceMesh), Q_ARG(const Color&, color));
+}
+
+void RenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
     this->makeCurrent();
     auto model = RenderModel(worldSpaceMesh);
     model.setColor(color);
@@ -125,16 +166,40 @@ void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const
     this->update();
 }
 
+/*** This is threadsafe, can be called from anywhere ***/
 void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
     const std::string& id = worldSpaceMesh.getId();
     std::unique_lock<std::shared_mutex> lock(sharedMutex); // Unique lock for writing with destructor that releases the mutex
     if(renderModelsMap.find(id) != renderModelsMap.end()){
         renderModelsMap[id].setTransformation(worldSpaceMesh.getModelTransformationMatrix());
+        this->update();
+    }
+}
+
+// TODO setting per rendermodel
+void RenderWidget::toggleWireMesh() {
+    this->makeCurrent();
+    GLint currentPolygonMode[2];
+    glGetIntegerv(GL_POLYGON_MODE, currentPolygonMode);
+    if(currentPolygonMode[0] == GL_FILL){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        currentShader = &basicShader;
     }
     else{
-        this->makeCurrent(); // TODO makeCurrent can only be executed on the GUI thread
-        auto model = RenderModel(worldSpaceMesh);
-        this->renderModelsMap[id] = std::move(model);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_CULL_FACE);
+        currentShader = &betterShader;
     }
-    this->update();
+}
+
+// TODO culling per rendermodel
+void RenderWidget::toggleCullFace() {
+    this->makeCurrent();
+    GLboolean enabled = glIsEnabled(GL_CULL_FACE);
+    if(enabled){
+        glDisable(GL_CULL_FACE);
+    }
+    else{
+        glEnable(GL_CULL_FACE);
+    }
 }

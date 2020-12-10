@@ -15,7 +15,7 @@ RenderModel::RenderModel(const WorldSpaceMesh& worldSpaceMesh):
         vertexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::VertexBuffer)),
         indexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::IndexBuffer)),
         vertexArray(new QOpenGLVertexArrayObject()),
-        transformation(1.0f)
+        transformation(worldSpaceMesh.getModelTransformationMatrix())
 {
     const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().vertices;
     const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().triangles;

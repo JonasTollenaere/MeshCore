@@ -7,32 +7,35 @@
 
 
 #include "ModelSpaceMesh.h"
+#include "Transformation.h"
 
 class WorldSpaceMesh {
 private:
     static int nextId;
     std::string id;
-    glm::mat4 modelTransformationMatrix;
-    const ModelSpaceMesh& modelSpaceMesh;
+    Transformation modelTransformation;
+    const ModelSpaceMesh modelSpaceMesh;
 //    std::vector<Vertex> transformedVertices; // TODO should these be cached?
 
 public:
-//    WorldSpaceMesh();
-//    WorldSpaceMesh(const WorldSpaceMesh& other);
-//    WorldSpaceMesh(WorldSpaceMesh&& other) noexcept ;
-//    WorldSpaceMesh& operator=(WorldSpaceMesh&& other) noexcept ;
+    WorldSpaceMesh();
+    WorldSpaceMesh(const WorldSpaceMesh& other);
     ~WorldSpaceMesh();
 
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh);
-    explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const glm::mat4& modelTransformationMatrix);
+    explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const Transformation& modelTransformationMatrix);
 
-    void setModelTransformationMatrix(const glm::mat4& modelTransformationMatrix);
-    glm::mat4 getModelTransformationMatrix() const;
-    void transform(const glm::mat4& transformationMatrix);
+    void setModelTransformationMatrix(const Transformation& transformation);
+    Transformation getModelTransformationMatrix() const;
+    void transform(const Transformation& transformation);
+    bool includes(const Vertex& worldSpaceVertex) const;
 
     const ModelSpaceMesh &getModelSpaceMesh() const;
 
     const std::string &getId() const;
+
+    bool triangleTriangleIntersects(const WorldSpaceMesh &other) const;
+    bool rayTriangleInside(const WorldSpaceMesh &other) const;
 };
 
 

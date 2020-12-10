@@ -13,7 +13,6 @@
 #include "../core/WorldSpaceMesh.h"
 
 typedef glm::vec4 Color;
-typedef glm::mat4 Transformation;
 
 class RenderModel: protected QOpenGLFunctions {
 private:
@@ -24,7 +23,7 @@ private:
     Transformation transformation;
 public:
     void setTransformation(const Transformation &transformation);
-    void setColor(const Color& color);
+    void setColor(const Color& c);
 
     RenderModel();
 //    RenderModel(const RenderModel& other);

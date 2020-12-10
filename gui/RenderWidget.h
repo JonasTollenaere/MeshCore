@@ -17,6 +17,7 @@
 
 
 class RenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
+Q_OBJECT
 private:
     float fieldOfView = 75.0f;
     int width;
@@ -30,15 +31,23 @@ private:
     std::shared_mutex sharedMutex;
 
 
-    QOpenGLShaderProgram shader;
-//    QOpenGLShaderProgram axisShader;
+    QOpenGLShaderProgram betterShader;
+    QOpenGLShaderProgram basicShader;
+    QOpenGLShaderProgram* currentShader;
 
 public:
     explicit RenderWidget(QWidget *parent = nullptr);
+
+private:
     void resetView();
+    void toggleWireMesh();
+    void toggleCullFace();
+
+public:
     void addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh);
     void addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
     void updateWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh);
+    friend class ApplicationWindow;
 
 protected:
 
@@ -51,6 +60,10 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+
+private slots:
+    Q_INVOKABLE void addWorldSpaceMeshSlot(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
+
 
 };
 

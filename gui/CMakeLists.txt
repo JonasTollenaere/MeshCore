@@ -1,6 +1,6 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-#set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTORCC ON)
 #set(CMAKE_AUTOUIC ON)
 
@@ -21,4 +21,3 @@ link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
 add_executable(Application ${SOURCES})
 target_link_libraries(Application Qt5::Widgets)
-

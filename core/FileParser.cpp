@@ -7,16 +7,26 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <filesystem>
 
 #define ASSERT(x) if (!(x)) __debugbreak();  //Compiler specific
 
 ModelSpaceMesh FileParser::parseFile(const std::string &filePath) {
     std::string extension = filePath.substr(filePath.find_last_of('.') + 1);
 
+    if(!std::filesystem::exists(filePath)){
+        std::cout << "Warning: File " << filePath << " does not exist!" << std::endl;
+
+        return ModelSpaceMesh(std::vector<Vertex>(), std::vector<Triangle>());
+    }
+
     if (extension ==  "stl") return parseFileSTL(filePath);
     else if( extension == "obj")  return parseFileOBJ(filePath);
     // Return empty mesh if file extension not supported
-    return ModelSpaceMesh(std::vector<Vertex>(), std::vector<Triangle>());
+    else{
+        std::cout << "Warning: Extension ." << extension << " of file " << filePath << " not supported!" << std::endl;
+        return ModelSpaceMesh(std::vector<Vertex>(), std::vector<Triangle>());
+    }
 }
 
 ModelSpaceMesh FileParser::parseFileOBJ(const std::string &filePath) {
@@ -77,7 +87,6 @@ ModelSpaceMesh FileParser::parseFileSTL(const std::string &filePath) {
     std::string line;
     getline(stream, line);
     ASSERT(line.find("solid") != std::string::npos) // Make sure this isn't a binary stl file
-
 
     while(getline(stream, line)){
         auto firstLength = line.find("facet normal");

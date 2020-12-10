@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "Vertex.h"
-#include "MeshTriangle.h"
+#include "Transformation.h"
 
 class Ray {
 private:
@@ -17,7 +17,8 @@ private:
 public:
     Ray(Vertex origin, Vertex direction);
     friend std::ostream & operator<<(std::ostream & os, const Ray& ray);
-    double intersects(const MeshTriangle &triangle);
+    void transform(const Transformation &transformation);
+    bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2);
 };
 
 #endif //OPTIX_SAMPLES_RAY_H

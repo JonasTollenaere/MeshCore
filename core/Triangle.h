@@ -1,5 +1,5 @@
 //
-// Created by tolle on 17/11/2020.
+// Created by Jonas on 17/11/2020.
 //
 
 #ifndef MESHCORE2_TRIANGLE_H

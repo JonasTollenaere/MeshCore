@@ -4,7 +4,10 @@
 
 #include <QtWidgets>
 #include "ApplicationWindow.h"
-#include "../tasks/SingleModelOptimization.h"
+#include "../tasks/SandboxTask.h"
+
+
+Q_DECLARE_METATYPE(WorldSpaceMesh)
 
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
@@ -14,8 +17,9 @@ int main(int argc, char *argv[]){
     window.show();
 
 
-    SingleModelOptimization task;
+    SandboxTask task;
     task.setRenderWidget(window.getRenderWidget());
+
     task.run();
 
 

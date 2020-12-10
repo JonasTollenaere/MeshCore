@@ -4,6 +4,7 @@
 
 #include "RenderModel.h"
 #include "VertexBufferLayout.h"
+#include "../gui/RenderModel.h"
 #include <glm/gtx/normal.hpp>
 
 RenderModel::RenderModel(const WorldSpaceMesh &worldSpaceMesh):
@@ -62,12 +63,12 @@ void RenderModel::draw(Shader& shader, const glm::mat4& projectionViewMatrix, co
     GLCall(glDrawElements(GL_TRIANGLES, indexBuffer.getCount(), GL_UNSIGNED_INT, nullptr))
 }
 
-void RenderModel::setColor(const Color &newColor) {
-    this->color = newColor;
-}
-
 RenderModel::RenderModel(RenderModel &&other) noexcept: worldSpaceMesh(other.worldSpaceMesh) {
     this->vertexArray = std::move(other.vertexArray);
     this->indexBuffer = std::move(other.indexBuffer);
     this->color = other.color;
+}
+
+void RenderModel::setColor(const Color &c) {
+    this->color = c;
 }
