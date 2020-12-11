@@ -15,7 +15,7 @@ private:
     std::string id;
     Transformation modelTransformation;
     const ModelSpaceMesh modelSpaceMesh;
-//    std::vector<Vertex> transformedVertices; // TODO should these be cached?
+    std::vector<Vertex> worldSpaceVertices;
 
 public:
     WorldSpaceMesh();

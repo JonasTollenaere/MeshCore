@@ -64,6 +64,8 @@ ModelSpaceMesh FileParser::parseFileOBJ(const std::string &filePath) {
                 indices.emplace_back(stoul(content) - 1);
 
                 for(int i=1; i+1 < indices.size(); i++){
+                    // TODO deal with concave facets, perhaps use https://github.com/mapbox/earcut.hpp (2D)
+                    // See also DiamCAD_CPP_glm - geometric.h
                     triangles.emplace_back(Triangle{indices[0], indices[i], indices[i+1]});
                 }
             }

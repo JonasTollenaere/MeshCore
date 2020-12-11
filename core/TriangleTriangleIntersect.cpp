@@ -6,18 +6,19 @@
  * Updated June 1999: removed the divisions -- a little faster now!
  * Updated October 1999: added {} to CROSS and SUB macros
  *
+ * Updated December 2020: modified input and return types
+ *
  * int NoDivTriTriIsect(float V0[3],float V1[3],float V2[3],
  *                      float U0[3],float U1[3],float U2[3])
  *
  * parameters: vertices of triangle 1: V0,V1,V2
  *             vertices of triangle 2: U0,U1,U2
- * result    : returns 1 if the triangles intersect, otherwise 0
+ * result    : returns true if the triangles intersect, otherwise false
  *
  */
 
-#include <math.h>
-
 #include "TriangleTriangleIntersect.h"
+#include <cmath>
 #define FABS(x) (float(fabs(x)))        /* implement as is fastest on your machine */
 
  /* if USE_EPSILON_TEST is true then we do a check:
@@ -67,11 +68,11 @@
     e=Ax*Cy-Ay*Cx;                                    \
     if(f>0)                                           \
     {                                                 \
-      if(e>=0 && e<=f) return 1;                      \
+      if(e>=0 && e<=f) return true;                      \
     }                                                 \
     else                                              \
     {                                                 \
-      if(e<=0 && e>=f) return 1;                      \
+      if(e<=0 && e>=f) return true;                      \
     }                                                 \
   }
 
@@ -109,7 +110,7 @@
   d2=a*V0[i0]+b*V0[i1]+c;                   \
   if(d0*d1>0.0)                             \
   {                                         \
-    if(d0*d2>0.0) return 1;                 \
+    if(d0*d2>0.0) return true;                 \
   }                                         \
 }
 
@@ -149,7 +150,7 @@
 
 namespace Intersection
 {
-	int NoDivTriTriIsect(float V0[3], float V1[3], float V2[3],
+	bool NoDivTriTriIsect(float V0[3], float V1[3], float V2[3],
 		float U0[3], float U1[3], float U2[3])
 	{
 		float E1[3], E2[3];
@@ -256,7 +257,7 @@ namespace Intersection
 		SORT(isect2[0], isect2[1]);
 
 		if (isect1[1] < isect2[0] || isect2[1] < isect1[0]) return 0;
-		return 1;
+		return true;
 	}
 
 	int coplanar_tri_tri(float N[3], float V0[3], float V1[3], float V2[3],
@@ -305,6 +306,6 @@ namespace Intersection
 		POINT_IN_TRI(V0, U0, U1, U2);
 		POINT_IN_TRI(U0, V0, V1, V2);
 
-		return 0;
+		return false;
 	}
 }

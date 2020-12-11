@@ -12,7 +12,8 @@ int WorldSpaceMesh::nextId = 0;
 WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
         modelSpaceMesh(modelSpaceMesh),
         modelTransformation(1.0f),
-        id(std::to_string(nextId++))
+        id(std::to_string(nextId++)),
+        worldSpaceVertices(modelSpaceMesh.vertices)
 {
 
 }
@@ -20,13 +21,19 @@ WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
 WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh, const Transformation& transformation):
         modelSpaceMesh(modelSpaceMesh),
         modelTransformation(transformation),
-        id(std::to_string(nextId++))
+        id(std::to_string(nextId++)),
+        worldSpaceVertices()
 {
-
+    for(Vertex vertex: modelSpaceMesh.vertices){
+        worldSpaceVertices.emplace_back(Vertex(transformation * glm::vec4(vertex, 1.0f)));
+    }
 }
 
 void WorldSpaceMesh::setModelTransformationMatrix(const Transformation &transformation) {
     this->modelTransformation = transformation;
+    for(int i=0; i < worldSpaceVertices.size(); i++){
+        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.vertices[i], 1.0f));
+    }
 }
 
 Transformation WorldSpaceMesh::getModelTransformationMatrix() const {
@@ -35,7 +42,9 @@ Transformation WorldSpaceMesh::getModelTransformationMatrix() const {
 
 void WorldSpaceMesh::transform(const Transformation& transformation) {
     this->modelTransformation *= transformation;
-    // TODO check multiplication order
+    for(int i=0; i < worldSpaceVertices.size(); i++){
+        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.vertices[i], 1.0f));
+    }
 }
 
 WorldSpaceMesh::~WorldSpaceMesh() = default;
@@ -64,27 +73,20 @@ bool WorldSpaceMesh::includes(const Vertex &worldSpaceVertex) const {
 bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) const {
     for (Triangle thisTriangle: this->modelSpaceMesh.triangles) {
 
-        Vertex innerVertex0 = Vertex(this->modelTransformation *
-                                     glm::vec4(this->modelSpaceMesh.vertices[thisTriangle.vertexIndex0], 1));
-        Vertex innerVertex1 = Vertex(this->modelTransformation *
-                                     glm::vec4(this->modelSpaceMesh.vertices[thisTriangle.vertexIndex1], 1));
-        Vertex innerVertex2 = Vertex(this->modelTransformation *
-                                     glm::vec4(this->modelSpaceMesh.vertices[thisTriangle.vertexIndex2], 1));
+        Vertex innerVertex0 = this->worldSpaceVertices[thisTriangle.vertexIndex0];
+        Vertex innerVertex1 = this->worldSpaceVertices[thisTriangle.vertexIndex1];
+        Vertex innerVertex2 = this->worldSpaceVertices[thisTriangle.vertexIndex2];
 
         for (Triangle otherTriangle: other.modelSpaceMesh.triangles) {
-            Vertex roughVertex0 = Vertex(other.modelTransformation *
-                                         glm::vec4(other.modelSpaceMesh.vertices[otherTriangle.vertexIndex0], 1));
-            Vertex roughVertex1 = Vertex(other.modelTransformation *
-                                         glm::vec4(other.modelSpaceMesh.vertices[otherTriangle.vertexIndex1], 1));
-            Vertex roughVertex2 = Vertex(other.modelTransformation *
-                                         glm::vec4(other.modelSpaceMesh.vertices[otherTriangle.vertexIndex2], 1));
-
-            int test = Intersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0), glm::value_ptr(innerVertex1),
+            Vertex roughVertex0 = other.worldSpaceVertices[otherTriangle.vertexIndex0];
+            Vertex roughVertex1 = other.worldSpaceVertices[otherTriangle.vertexIndex1];
+            Vertex roughVertex2 = other.worldSpaceVertices[otherTriangle.vertexIndex2];
+            bool test = Intersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0), glm::value_ptr(innerVertex1),
                                                       glm::value_ptr(innerVertex2),
                                                       glm::value_ptr(roughVertex0), glm::value_ptr(roughVertex1),
                                                       glm::value_ptr(roughVertex2));
 
-            if (test == 1) {
+            if (test) {
                 return true;
             }
         }
@@ -93,8 +95,7 @@ bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) con
 }
 
 bool WorldSpaceMesh::rayTriangleInside(const WorldSpaceMesh &other) const {
-    for(Vertex vertex: this->modelSpaceMesh.vertices){
-        Vertex worldSpaceVertex = glm::vec3(this->modelTransformation * glm::vec4(vertex, 1.0f));
+    for(Vertex worldSpaceVertex: this->worldSpaceVertices){
         if(!other.includes(worldSpaceVertex)){ //186490 ms. without inverse caching // 186666 ms. with inverse transformation cached
             return false;
         }
