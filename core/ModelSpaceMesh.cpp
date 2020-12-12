@@ -27,8 +27,8 @@ bool ModelSpaceMesh::includes(const Vertex &modelSpaceVertex) const{
     return true;
 }
 
-int ModelSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) const{
-    int numberOfIntersections = 0;
+unsigned int ModelSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) const{
+    unsigned int numberOfIntersections = 0;
     for(Triangle triangle: this->triangles){
         bool intersects = modelSpaceRay.intersectsTriangle(this->vertices[triangle.vertexIndex0],
                                                            this->vertices[triangle.vertexIndex1],

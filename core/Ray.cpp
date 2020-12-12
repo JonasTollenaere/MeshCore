@@ -16,7 +16,7 @@ inline std::ostream &operator<<(std::ostream &os, const Ray &ray) {
 bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) {
 
     //Möller–Trumbore
-    const float EPSILON = 0.0000001;
+    const float EPSILON = 0.0000001f;
 
     glm::vec3 edge1 = v1 - v0;
     glm::vec3 edge2 = v2 - v0;

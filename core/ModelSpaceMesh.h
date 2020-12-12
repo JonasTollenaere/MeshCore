@@ -23,7 +23,7 @@ public:
     ~ModelSpaceMesh();
 
 private:
-    int calculateNumberOfIntersections(Ray modelSpaceRay) const;
+    unsigned int calculateNumberOfIntersections(Ray modelSpaceRay) const;
 
 };
 
