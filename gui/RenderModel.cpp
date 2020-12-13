@@ -15,7 +15,7 @@ RenderModel::RenderModel(const WorldSpaceMesh& worldSpaceMesh):
         vertexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::VertexBuffer)),
         indexBuffer(new QOpenGLBuffer(QOpenGLBuffer::Type::IndexBuffer)),
         vertexArray(new QOpenGLVertexArrayObject()),
-        transformation(worldSpaceMesh.getModelTransformationMatrix())
+        transformation(worldSpaceMesh.getModelTransformation())
 {
     const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().vertices;
     const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().triangles;
@@ -31,7 +31,7 @@ RenderModel::RenderModel(const WorldSpaceMesh& worldSpaceMesh):
         triangleVertices.emplace_back(vertices[t.vertexIndex2]);
         glm::vec3 normal = glm::triangleNormal(triangleVertices[0], triangleVertices[1], triangleVertices[2]);
 
-        // We push the vertices once for each triangle because the normal is different for each triangle
+        // We push the modelSpaceVertices once for each triangle because the normal is different for each triangle
         // (Adding up the normals doesn't provide visually satisfying results
         for (unsigned int j = 0; j < 3; j++) {
             data.emplace_back(triangleVertices[j].x);

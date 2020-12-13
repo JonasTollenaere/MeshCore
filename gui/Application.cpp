@@ -5,6 +5,7 @@
 #include <QtWidgets>
 #include "ApplicationWindow.h"
 #include "../tasks/SandboxTask.h"
+#include "../tasks/CudaTask.h"
 
 
 Q_DECLARE_METATYPE(WorldSpaceMesh)
@@ -17,11 +18,13 @@ int main(int argc, char *argv[]){
     window.show();
 
 
-    SandboxTask task;
+    CudaTask task;
     task.setRenderWidget(window.getRenderWidget());
-
     task.run();
 
+    SandboxTask task2;
+    task2.setRenderWidget(window.getRenderWidget());
+    task2.run();
 
     return QApplication::exec();
 

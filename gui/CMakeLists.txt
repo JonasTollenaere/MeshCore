@@ -4,7 +4,7 @@ set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTORCC ON)
 #set(CMAKE_AUTOUIC ON)
 
-file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp)
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
@@ -19,5 +19,9 @@ add_definitions(-DGLEW_STATIC)
 include_directories(${GLEW_DIR}/include)
 link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
+### CUDA ###
+enable_language(CUDA)
+
 add_executable(Application ${SOURCES})
 target_link_libraries(Application Qt5::Widgets)
+set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

@@ -16,10 +16,14 @@
 #include <shared_mutex>
 
 
+
+#define INITIAL_VIEW_DISTANCE 50.0f
+#define INITIAL_FOV 90.0f
+
 class RenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT
 private:
-    float fieldOfView = 75.0f;
+    float fieldOfView = INITIAL_FOV;
     int width;
     int height;
     QPoint lastMousePosition;

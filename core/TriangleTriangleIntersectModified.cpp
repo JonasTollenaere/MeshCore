@@ -9,8 +9,8 @@
 // * int NoDivTriTriIsect(float V0[3],float V1[3],float V2[3],
 // *                      float U0[3],float U1[3],float U2[3])
 // *
-// * parameters: vertices of triangle 1: V0,V1,V2
-// *             vertices of triangle 2: U0,U1,U2
+// * parameters: modelSpaceVertices of triangle 1: V0,V1,V2
+// *             modelSpaceVertices of triangle 2: U0,U1,U2
 // * result    : returns 1 if the triangles intersect, otherwise 0
 // *
 // */

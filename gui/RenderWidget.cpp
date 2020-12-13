@@ -7,8 +7,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <QOpenGLShaderProgram>
 
-#define INITIAL_VIEW_DISTANCE 50.0f
-
 RenderWidget::RenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
 
 void RenderWidget::initializeGL() {
@@ -171,7 +169,7 @@ void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
     const std::string& id = worldSpaceMesh.getId();
     std::unique_lock<std::shared_mutex> lock(sharedMutex); // Unique lock for writing with destructor that releases the mutex
     if(renderModelsMap.find(id) != renderModelsMap.end()){
-        renderModelsMap[id].setTransformation(worldSpaceMesh.getModelTransformationMatrix());
+        renderModelsMap[id].setTransformation(worldSpaceMesh.getModelTransformation());
         this->update();
     }
 }

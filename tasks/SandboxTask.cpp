@@ -10,15 +10,19 @@
 
 void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const WorldSpaceMesh& roughMesh){
 
+    std::cout << "Starting Random Walk CPU" << std::endl;
+
     auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     std::mt19937 randomEngine(0);
     auto nextFloat = std::uniform_real_distribution<float>(0, 1);
 
-    Transformation currentTransformation = innerMesh.getModelTransformationMatrix();
+    Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
-    int moves = 500;
+    int moves = 20;
     for(int i=0; i<moves; i++){
+
+        std::cout << i << std::endl;
 
         Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * nextFloat(randomEngine)));
         newTransformation = glm::rotate(newTransformation, nextFloat(randomEngine), glm::vec3(nextFloat(randomEngine) - 0.5, nextFloat(randomEngine)-0.5, nextFloat(randomEngine)-0.5));
@@ -34,11 +38,6 @@ void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wor
             feasible = !innerMesh.triangleTriangleIntersects(roughMesh);
         }
 
-
-//        std::cout << "Modeltransformation: " << newTransformation << std::endl;
-//        std::cout << "Feasible: " << feasible << std::endl;
-//        std::cout << std::endl;
-
         if(feasible){
             currentTransformation = newTransformation;
             renderWidget->updateWorldSpaceMesh(innerMesh);
@@ -53,6 +52,8 @@ void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wor
 
 
     std::cout << totalms << std::endl;
+
+    std::cout << currentTransformation << std::endl;
 
     std::cout << "MPS: " << float(moves)/float(totalms)*1000.0f << std::endl;
 }
@@ -88,11 +89,14 @@ void SandboxTask::run() {
 
     const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
     WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh, glm::scale(Transformation(1.0f), glm::vec3(1.0f)));
+    worldSpaceMesh.transform(glm::translate(Transformation(1.0f), glm::vec3(20,0,0)));
     renderWidget->addWorldSpaceMesh(worldSpaceMesh, glm::vec4(1,0,0,1));
 
     const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
     WorldSpaceMesh worldSpaceMesh5 = WorldSpaceMesh(modelSpaceMesh5, glm::translate(Transformation(1.0f), glm::vec3(0,-1,0)));
+    worldSpaceMesh5.transform(glm::translate(Transformation(1.0f), glm::vec3(20,0,0)));
     worldSpaceMesh5.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
+
 //    worldSpaceMesh5.transform(Transformation(0.02f));
 //    worldSpaceMesh5.transform(glm::rotate(Transformation(1.0f), 1.57f, glm::vec3(1,0,0)));
     renderWidget->addWorldSpaceMesh(worldSpaceMesh5, glm::vec4(1,1,1,0.4));

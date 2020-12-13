@@ -26,7 +26,7 @@ public:
     explicit WorldSpaceMesh(const ModelSpaceMesh & modelSpaceMesh, const Transformation& modelTransformationMatrix);
 
     void setModelTransformationMatrix(const Transformation& transformation);
-    Transformation getModelTransformationMatrix() const;
+    Transformation getModelTransformation() const;
     void transform(const Transformation& transformation);
     bool includes(const Vertex& worldSpaceVertex) const;
 
@@ -36,6 +36,8 @@ public:
 
     bool triangleTriangleIntersects(const WorldSpaceMesh &other) const;
     bool rayTriangleInside(const WorldSpaceMesh &other) const;
+
+    unsigned int calculateNumberOfIntersections(Ray modelSpaceRay) const;
 };
 
 

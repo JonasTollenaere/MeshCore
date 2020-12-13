@@ -24,7 +24,6 @@ public:
 
 private:
     unsigned int calculateNumberOfIntersections(Ray modelSpaceRay) const;
-
 };
 
 #endif //OPTIX_SAMPLES_MODELSPACEMESH_H

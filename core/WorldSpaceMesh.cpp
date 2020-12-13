@@ -36,7 +36,7 @@ void WorldSpaceMesh::setModelTransformationMatrix(const Transformation &transfor
     }
 }
 
-Transformation WorldSpaceMesh::getModelTransformationMatrix() const {
+Transformation WorldSpaceMesh::getModelTransformation() const {
     return modelTransformation;
 }
 
@@ -66,8 +66,29 @@ WorldSpaceMesh::WorldSpaceMesh():
 WorldSpaceMesh::WorldSpaceMesh(const WorldSpaceMesh &other) = default;
 
 bool WorldSpaceMesh::includes(const Vertex &worldSpaceVertex) const {
-    Vertex modelSpaceVertex = Vertex(glm::inverse(this->modelTransformation) * glm::vec4(worldSpaceVertex, 1));
-    return this->modelSpaceMesh.includes(modelSpaceVertex);
+    Ray ray(worldSpaceVertex, glm::vec3(1, 0, 0));
+    if(this->calculateNumberOfIntersections(ray)%2 == 0){
+        return false;
+    }
+    return true;
+
+//     Alternative to modelspace if worldspaceVertices are not cached
+//    Vertex modelSpaceVertex = Vertex(glm::inverse(this->modelTransformation) * glm::vec4(worldSpaceVertex, 1));
+//    return this->modelSpaceMesh.includes(modelSpaceVertex);
+
+}
+
+unsigned int WorldSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) const {
+    unsigned int numberOfIntersections = 0;
+    for (Triangle triangle: this->modelSpaceMesh.triangles) {
+        bool intersects = modelSpaceRay.intersectsTriangle(this->worldSpaceVertices[triangle.vertexIndex0],
+                                                           this->worldSpaceVertices[triangle.vertexIndex1],
+                                                           this->worldSpaceVertices[triangle.vertexIndex2]);
+        if (intersects) {
+            numberOfIntersections++;
+        }
+    }
+    return numberOfIntersections;
 }
 
 bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) const {
@@ -96,7 +117,7 @@ bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) con
 
 bool WorldSpaceMesh::rayTriangleInside(const WorldSpaceMesh &other) const {
     for(Vertex worldSpaceVertex: this->worldSpaceVertices){
-        if(!other.includes(worldSpaceVertex)){ //186490 ms. without inverse caching // 186666 ms. with inverse transformation cached
+        if(!other.includes(worldSpaceVertex)){
             return false;
         }
     }
