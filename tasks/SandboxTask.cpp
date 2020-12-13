@@ -12,7 +12,6 @@ void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wor
 
     std::cout << "Starting Random Walk CPU" << std::endl;
 
-    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     std::mt19937 randomEngine(0);
     auto nextFloat = std::uniform_real_distribution<float>(0, 1);
@@ -20,6 +19,8 @@ void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wor
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
     int moves = 20;
+
+    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
 
         std::cout << i << std::endl;
@@ -49,7 +50,6 @@ void randomWalk(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wor
 
     auto stopms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto totalms = stopms - startms;
-
 
     std::cout << totalms << std::endl;
 

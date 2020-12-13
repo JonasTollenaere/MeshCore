@@ -19,9 +19,6 @@ add_definitions(-DGLEW_STATIC)
 include_directories(${GLEW_DIR}/include)
 link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
-### CUDA ###
-enable_language(CUDA)
-
 add_executable(Application ${SOURCES})
 target_link_libraries(Application Qt5::Widgets)
 set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

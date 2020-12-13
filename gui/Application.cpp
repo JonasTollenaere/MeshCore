@@ -22,9 +22,9 @@ int main(int argc, char *argv[]){
     task.setRenderWidget(window.getRenderWidget());
     task.run();
 
-    SandboxTask task2;
-    task2.setRenderWidget(window.getRenderWidget());
-    task2.run();
+//    SandboxTask task2;
+//    task2.setRenderWidget(window.getRenderWidget());
+//    task2.run();
 
     return QApplication::exec();
 

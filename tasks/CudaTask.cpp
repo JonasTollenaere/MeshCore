@@ -12,19 +12,20 @@ void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wo
 
     std::cout << "Starting Random Walk GPU" << std::endl;
 
-    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     std::mt19937 randomEngine(0);
     auto nextFloat = std::uniform_real_distribution<float>(0, 1);
 
-//    const CudaStream cudaStream;
+    const CudaStream cudaStream;
 
-    CudaWorldSpaceMesh cudaInnerMesh(innerMesh);
-    CudaWorldSpaceMesh cudaRoughMesh(roughMesh);
+    CudaWorldSpaceMesh cudaInnerMesh(innerMesh, cudaStream);
+    CudaWorldSpaceMesh cudaRoughMesh(roughMesh, cudaStream);
 
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
-    int moves = 20;
+    int moves = 200;
+
+    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
 
         Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * nextFloat(randomEngine)));
@@ -58,8 +59,8 @@ void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wo
 
         if(feasible){
             currentTransformation = newTransformation;
-            innerMesh.setModelTransformationMatrix(currentTransformation);
-            renderWidget->updateWorldSpaceMesh(innerMesh);
+//            innerMesh.setModelTransformationMatrix(currentTransformation);
+//            renderWidget->updateWorldSpaceMesh(innerMesh);
         }
         else{
 //            innerMesh.setModelTransformationMatrix(currentTransformation);
@@ -69,17 +70,18 @@ void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wo
     auto stopms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto totalms = stopms - startms;
 
-
     std::cout << totalms << std::endl;
 
     std::cout << currentTransformation << std::endl;
-
+    innerMesh.setModelTransformationMatrix(currentTransformation);
+    renderWidget->updateWorldSpaceMesh(innerMesh);
     std::cout << "MPS: " << float(moves)/float(totalms)*1000.0f << std::endl;
 }
 
 void CudaTask::run() {
 
     const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
+//    const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
     WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh, glm::scale(Transformation(1.0f), glm::vec3(1.0f)));
     renderWidget->addWorldSpaceMesh(worldSpaceMesh, glm::vec4(1,0,0,1));
 

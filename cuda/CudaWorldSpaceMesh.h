@@ -18,13 +18,13 @@ private:
     Vertex* modelSpaceVertices;
     Vertex* worldSpaceVertices;
     Transformation* transformation;
-//    const cudaStream_t* cudaStream;
+    const cudaStream_t* cudaStream;
 
     unsigned int numberOfTriangles;
     unsigned int numberOfVertices;
 
 public:
-    CudaWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh/*, const CudaStream& cudaStream*/);
+    CudaWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const CudaStream& cudaStream);
     ~CudaWorldSpaceMesh();
 
     void setModelTransformationMatrix(const Transformation& transformation);
