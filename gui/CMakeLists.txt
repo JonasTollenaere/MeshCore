@@ -1,24 +1,28 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+### QT ###
 set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTORCC ON)
 #set(CMAKE_AUTOUIC ON)
-
-file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu)
-
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+link_libraries(Qt5::Widgets)
 
 ### OpenGL ###
 find_package(OpenGL REQUIRED)
-message (STATUS "OPENGL_INCLUDE_DIR=${OPENGL_INCLUDE_DIR}")
-include_directories(${OPENGL_INCLUDE_DIR})
 link_libraries(OpenGL::GL)
 
-### GLEW ###  TODO get find_package to work to make this a robust project
+### GLEW ###
 add_definitions(-DGLEW_STATIC)
 include_directories(${GLEW_DIR}/include)
 link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 
+### CUDA ###
+enable_language(CUDA)
+set(CMAKE_CUDA_STANDARD 14)
+find_package(CUDA REQUIRED)
+include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+### Application.exe ###
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu)
 add_executable(Application ${SOURCES})
-target_link_libraries(Application Qt5::Widgets)
 set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

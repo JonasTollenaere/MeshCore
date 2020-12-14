@@ -2,8 +2,6 @@ file(GLOB SOURCES ../core/*.cpp *.cpp)
 
 add_executable(GLFWRenderer ${SOURCES})
 
-message((GUI) Sources: ${SOURCES})
-
 ### OpenGL ###
 find_package(OpenGL REQUIRED)
 message (STATUS "OPENGL_INCLUDE_DIR=${OPENGL_INCLUDE_DIR}")
