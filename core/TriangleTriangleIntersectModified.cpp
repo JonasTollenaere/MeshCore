@@ -20,25 +20,24 @@
 #include "TriangleTriangleIntersectModified.h"
 #include "Ray.h"
 
-#define FABS(x) (float(fabs(x)))        /* implement as is fastest on your machine */
+#define FABS(x) (abs(x))        /* implement as is fastest on your machine */
 
  /* if USE_EPSILON_TEST is true then we do a check:
 		  if |dv|<EPSILON then dv=0.0;
 	else no check is done (which is less robust)
  */
 #define USE_EPSILON_TEST TRUE
-#define EPSILON 0.000001
+#define EPSILON 0.000001f
 
 /* sort so that a<=b */
 #define SORT(a,b)       \
              if(a>b)    \
              {          \
-               float c; \
-               c=a;     \
+               float temporary; \
+               temporary=a;     \
                a=b;     \
-               b=c;     \
+               b=temporary;     \
              }
-
 
 /* this edge to edge test is based on Franlin Antonio's gem:
    "Faster Line Segment Intersection", in Graphics Gems III,
@@ -137,114 +136,109 @@
 
 namespace MIntersection
 {
-	bool NoDivTriTriIsect(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
-                         const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2)
-	{
-		float isect1[2], isect2[2];
-		float du0du1, du0du2, dv0dv1, dv0dv2;
-		short index;
-		float vp0, vp1, vp2;
-		float up0, up1, up2;
-		float bb, cc, max;
-
-		/* compute plane equation of triangle(V0,V1,V2) */
-		glm::vec3 e1 = v1 - v0;
+    bool NoDivTriTriIsect(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
+                          const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2)
+    {
+        /* compute plane equation of triangle(V0,V1,V2) */
+        glm::vec3 e1 = v1 - v0;
         glm::vec3 e2 = v2 - v0;
         glm::vec3 n1 = glm::cross(e1,e2);
         float d1 = - glm::dot(n1, v0);
-		/* plane equation 1: N1.X+d1=0 */
+        /* plane equation 1: N1.X+d1=0 */
 
 
-		/* put U0,U1,U2 into plane equation 1 to compute signed distances to the plane*/
+        /* put U0,U1,U2 into plane equation 1 to compute signed distances to the plane*/
         float du0 = glm::dot(n1, u0) + d1;
         float du1 = glm::dot(n1, u1) + d1;
         float du2 = glm::dot(n1, u2) + d1;
 
-		/* coplanarity robustness check */
+        /* coplanarity robustness check */
 #if USE_EPSILON_TEST==TRUE
-		if (FABS(du0) < EPSILON) du0 = 0.0;
-		if (FABS(du1) < EPSILON) du1 = 0.0;
-		if (FABS(du2) < EPSILON) du2 = 0.0;
+        if (FABS(du0) < EPSILON) du0 = 0.0;
+        if (FABS(du1) < EPSILON) du1 = 0.0;
+        if (FABS(du2) < EPSILON) du2 = 0.0;
 #endif
-		du0du1 = du0 * du1;
-		du0du2 = du0 * du2;
+        float du0du1 = du0 * du1;
+        float du0du2 = du0 * du2;
 
-		if (du0du1 > 0.0f && du0du2 > 0.0f) /* same sign on all of them + not equal 0 ? */
-			return 0;                    /* no intersection occurs */
+        if (du0du1 > 0.0f && du0du2 > 0.0f) /* same sign on all of them + not equal 0 ? */
+            return false; /* no intersection occurs */
 
-		  /* compute plane of triangle (U0,U1,U2) */
+        /* compute plane of triangle (U0,U1,U2) */
         e1 = u1 - u0;
         e2 = u2 - u0;
         glm::vec3 n2 = glm::cross(e1,e2);
         float d2 = - glm::dot(n2, u0);
-		/* plane equation 2: N2.X+d2=0 */
+        /* plane equation 2: N2.X+d2=0 */
 
-		/* put V0,V1,V2 into plane equation 2 */
+        /* put V0,V1,V2 into plane equation 2 */
         float dv0 = glm::dot(n2, v0) + d2;
         float dv1 = glm::dot(n2, v1) + d2;
         float dv2 = glm::dot(n2, v2) + d2;
 
 #if USE_EPSILON_TEST==TRUE
-		if (FABS(dv0) < EPSILON) dv0 = 0.0;
-		if (FABS(dv1) < EPSILON) dv1 = 0.0;
-		if (FABS(dv2) < EPSILON) dv2 = 0.0;
+        if (FABS(dv0) < EPSILON) dv0 = 0.0;
+        if (FABS(dv1) < EPSILON) dv1 = 0.0;
+        if (FABS(dv2) < EPSILON) dv2 = 0.0;
 #endif
 
-		dv0dv1 = dv0 * dv1;
-		dv0dv2 = dv0 * dv2;
+        float dv0dv1 = dv0 * dv1;
+        float dv0dv2 = dv0 * dv2;
 
-		if (dv0dv1 > 0.0f && dv0dv2 > 0.0f) /* same sign on all of them + not equal 0 ? */
-			return 0;                    /* no intersection occurs */
+        if (dv0dv1 > 0.0f && dv0dv2 > 0.0f) /* same sign on all of them + not equal 0 ? */
+            return false;                    /* no intersection occurs */
 
-		  /* compute direction of intersection line */
-		glm::vec3 dir = glm::cross(n1,n2);
+        /* compute direction of intersection line */
+        glm::vec3 dir = glm::cross(n1,n2);
 
-		/* compute and index to the largest component of D */
-		max = (float)FABS(dir[0]);
-		index = 0;
-		bb = (float)FABS(dir[1]);
-		cc = (float)FABS(dir[2]);
-		if (bb > max) max = bb, index = 1;
-		if (cc > max) max = cc, index = 2;
+        /* compute and index to the largest component of D */
+        float max = FABS(dir[0]);
+        short index = 0;
+        float bb = FABS(dir[1]);
+        float cc = FABS(dir[2]);
+        if (bb > max) max = bb, index = 1;
+        if (cc > max) index = 2;
 
-		/* this is the simplified projection onto L*/
-		vp0 = v0[index];
-		vp1 = v1[index];
-		vp2 = v2[index];
+        /* this is the simplified projection onto L*/
+        float vp0 = v0[index];
+        float vp1 = v1[index];
+        float vp2 = v2[index];
 
-		up0 = u0[index];
-		up1 = u1[index];
-		up2 = u2[index];
+        float up0 = u0[index];
+        float up1 = u1[index];
+        float up2 = u2[index];
 
-		/* compute interval for triangle 1 */
-		float a, b, c, x0, x1;
-		NEWCOMPUTE_INTERVALS(vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, a, b, c, x0, x1);
+        /* compute interval for triangle 1 */
+        float a, b, c, x0, x1;
+        NEWCOMPUTE_INTERVALS(vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, a, b, c, x0, x1)
 
-		/* compute interval for triangle 2 */
-		float d, e, f, y0, y1;
-		NEWCOMPUTE_INTERVALS(up0, up1, up2, du0, du1, du2, du0du1, du0du2, d, e, f, y0, y1);
+        /* compute interval for triangle 2 */
+        float d, e, f, y0, y1;
+        NEWCOMPUTE_INTERVALS(up0, up1, up2, du0, du1, du2, du0du1, du0du2, d, e, f, y0, y1)
 
-		float xx, yy, xxyy, tmp;
-		xx = x0 * x1;
-		yy = y0 * y1;
-		xxyy = xx * yy;
+        float xx, yy, xxyy, tmp;
+        float isect1[2], isect2[2];
+        xx = x0 * x1;
+        yy = y0 * y1;
+        xxyy = xx * yy;
 
-		tmp = a * xxyy;
-		isect1[0] = tmp + b * x1 * yy;
-		isect1[1] = tmp + c * x0 * yy;
+        tmp = a * xxyy;
 
-		tmp = d * xxyy;
-		isect2[0] = tmp + e * xx * y1;
-		isect2[1] = tmp + f * xx * y0;
+        isect1[0] = tmp + b * x1 * yy;
+        isect1[1] = tmp + c * x0 * yy;
 
-		SORT(isect1[0], isect1[1]);
-		SORT(isect2[0], isect2[1]);
+        tmp = d * xxyy;
+        isect2[0] = tmp + e * xx * y1;
+        isect2[1] = tmp + f * xx * y0;
 
-		if (isect1[1] < isect2[0] || isect2[1] < isect1[0]) return false;
-		return true;
-	}
+        SORT(isect1[0], isect1[1])
+        SORT(isect2[0], isect2[1])
 
-	int coplanar_tri_tri(const glm::vec3& n,
+        if (isect1[1] < isect2[0] || isect2[1] < isect1[0]) return false;
+        return true;
+    }
+
+    int coplanar_tri_tri(const glm::vec3& n,
                          const glm::vec3& V0, const glm::vec3& V1, const glm::vec3& V2,
                          const glm::vec3& U0, const glm::vec3& U1, const glm::vec3& U2)
 	{
@@ -283,23 +277,22 @@ namespace MIntersection
 		}
 
 		/* test all edges of triangle 1 against the edges of triangle 2 */
-		EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2);
-		EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2);
-		EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2);
+		EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2)
+		EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2)
+		EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2)
 
 		/* finally, test if tri1 is totally contained in tri2 or vice versa */
-		POINT_IN_TRI(V0, U0, U1, U2);
-		POINT_IN_TRI(U0, V0, V1, V2);
+		POINT_IN_TRI(V0, U0, U1, U2)
+		POINT_IN_TRI(U0, V0, V1, V2)
 
 		return 0;
 	}
 
 	bool edgeIntersectsTriangle(const glm::vec3& v0, const glm::vec3& v1,
                                 const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2){
-        glm::vec3 dir = v1 - v0;
-        Ray ray(v0, dir);
-        float t = ray.intersectionDistance(u0, u1, u2);
-        if(t > EPSILON && t < 1) return true;
+        Ray ray(v0,  v1 - v0);
+        float t = ray.intersectionDistanceJGT(u0, u1, u2);
+        if(t > 0 && t < 1 + EPSILON) return true;
         return false;
 
 	}
@@ -308,11 +301,12 @@ namespace MIntersection
                                                   const glm::vec3& u0, const glm::vec3& u1, const glm::vec3& u2){
 
 	    if(edgeIntersectsTriangle(v0, v1, u0, u1, u2)) return true;
-	    if(edgeIntersectsTriangle(v1, v2, u0, u1, u2)) return true;
-        if(edgeIntersectsTriangle(v2, v0, u0, u1, u2)) return true;
         if(edgeIntersectsTriangle(u0, u1, v0, v1, v2)) return true;
-//        if(edgeIntersectsTriangle(u1, u2, v0, v1, v2)) return true;
-//        if(edgeIntersectsTriangle(u2, u0, v0, v1, v2)) return true;
+	    if(edgeIntersectsTriangle(v1, v2, u0, u1, u2)) return true;
+        if(edgeIntersectsTriangle(u1, u2, v0, v1, v2)) return true;
+        if(edgeIntersectsTriangle(v2, v0, u0, u1, u2)) return true;
+//        if(edgeIntersectsTriangle(u2, u0, v0, v1, v2)) return true; // Checking all 6 edges is redundant!
+//        In case of a triangle-triangle intersection there will always be 2 edges that ray-intersect the other triangle
 	    return false;
 	}
 }

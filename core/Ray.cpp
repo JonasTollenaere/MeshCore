@@ -4,6 +4,8 @@
 
 #include "Ray.h"
 
+#define EPSILON 0.000001f
+
 Ray::Ray(Vertex origin, Vertex direction) {
     this->origin = origin;
     this->direction = direction;
@@ -16,8 +18,6 @@ inline std::ostream &operator<<(std::ostream &os, const Ray &ray) {
 bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const {
 
     //Möller–Trumbore
-    const float EPSILON = 0.0000001f;
-
     glm::vec3 edge1 = v1 - v0;
     glm::vec3 edge2 = v2 - v0;
 
@@ -52,8 +52,6 @@ bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v
 float Ray::intersectionDistance(const Vertex& v0, const Vertex& v1, const Vertex& v2) const {
 
     //Möller–Trumbore
-    const float EPSILON = 0.0000001f;
-
     glm::vec3 edge1 = v1 - v0;
     glm::vec3 edge2 = v2 - v0;
 
@@ -76,6 +74,67 @@ float Ray::intersectionDistance(const Vertex& v0, const Vertex& v1, const Vertex
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
     float t = f * glm::dot(edge2, q);
+    return t;
+}
+
+float Ray::intersectionDistanceJGT(const Vertex &v0, const Vertex &v1, const Vertex &v2) const {
+
+    //Möller–Trumbore  // https://github.com/erich666/jgt-code/blob/master/Volume_02/Number_1/Moller1997a/raytri.c
+    glm::vec3 edge1 = v1 - v0;
+    glm::vec3 edge2 = v2 - v0;
+
+    glm::vec3 h = glm::cross(this->direction, edge2);
+
+
+    /* if determinant is near zero, ray lies in plane of triangle */
+    float a = glm::dot(edge1, h);
+
+    glm::vec3 q;
+    if (a > EPSILON)
+    {
+        /* calculate distance from vert0 to ray origin */
+        glm::vec3 s = this->origin - v0;
+
+        /* calculate U parameter and test bounds */
+        float u = glm::dot(s, h);
+        if (u < 0.0 || u > a)
+            return 0;
+
+        /* prepare to test V parameter */
+        q = glm::cross(s, edge1);
+
+        /* calculate V parameter and test bounds */
+        float v = glm::dot(this->direction, q);
+        if (v < 0.0 || u + v > a)
+            return 0;
+
+    }
+    else if(a < -EPSILON)
+    {
+        /* calculate distance from vert0 to ray origin */
+        glm::vec3 s = this->origin - v0;
+
+        /* calculate U parameter and test bounds */
+        float u = glm::dot(s, h);
+
+        if (u > 0.0 || u < a)
+            return 0;
+
+        /* prepare to test V parameter */
+        q = glm::cross(s, edge1);
+
+        /* calculate V parameter and test bounds */
+        float v = glm::dot(this->direction, q);
+        if (v > 0.0 || u + v < a)
+            return 0;
+    }
+    else return 0;  /* ray is parallell to the plane of the triangle */
+
+
+    float f = 1.0f / a;
+
+    /* calculate t, ray intersects triangle */
+    float t = glm::dot(edge2, q) * f;
     return t;
 }
 

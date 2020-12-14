@@ -21,6 +21,8 @@ public:
     bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
 
     float intersectionDistance(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
+
+    float intersectionDistanceJGT(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
 };
 
 #endif //OPTIX_SAMPLES_RAY_H
