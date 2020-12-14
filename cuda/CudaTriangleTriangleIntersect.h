@@ -5,6 +5,8 @@
 #ifndef MESHCORE_CUDATRIANGLETRIANGLEINTERSECT_H
 #define MESHCORE_CUDATRIANGLETRIANGLEINTERSECT_H
 
+#include <glm/vec3.hpp>
+
 namespace CudaIntersection
 {
     __device__ bool NoDivTriTriIsect(float V0[3], float V1[3], float V2[3],

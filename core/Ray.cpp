@@ -13,7 +13,7 @@ inline std::ostream &operator<<(std::ostream &os, const Ray &ray) {
     return os << "Ray(Origin" << ray.origin << ", Direction" << ray.direction << ")";
 }
 
-bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) {
+bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const {
 
     //Möller–Trumbore
     const float EPSILON = 0.0000001f;
@@ -39,7 +39,7 @@ bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v
         return false;
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
-    double t = f * glm::dot(edge2, q);
+    float t = f * glm::dot(edge2, q);
     if (t > EPSILON) // ray intersection
     {
         return true;
@@ -47,6 +47,36 @@ bool Ray::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v
     else { // This means that there is a line intersection but not a ray intersection.
         return false;
     }
+}
+
+float Ray::intersectionDistance(const Vertex& v0, const Vertex& v1, const Vertex& v2) const {
+
+    //Möller–Trumbore
+    const float EPSILON = 0.0000001f;
+
+    glm::vec3 edge1 = v1 - v0;
+    glm::vec3 edge2 = v2 - v0;
+
+    glm::vec3 h = glm::cross(this->direction, edge2);
+
+    float a = glm::dot(edge1, h);
+    if (a > -EPSILON && a < EPSILON) {
+        return - std::numeric_limits<float>::max();    // This ray is parallel to this triangle, no line intersection
+    }
+    float f = 1.0f / a;
+    glm::vec3 s = this->origin - v0;
+    float u = f * (glm::dot(s, h));
+    if (u < 0.0 || u > 1.0) {
+        return - std::numeric_limits<float>::max(); // No line intersection
+    }
+    glm::vec3 q = glm::cross(s, edge1);
+    float v = f * glm::dot(this->direction, q);
+    if (v < 0.0 || u + v > 1.0) {
+        return - std::numeric_limits<float>::max(); // No line intersection
+    }
+    // At this stage we can compute t to find out where the intersection point is on the line.
+    float t = f * glm::dot(edge2, q);
+    return t;
 }
 
 void Ray::transform(const Transformation& transformation) {

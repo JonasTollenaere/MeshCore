@@ -5,6 +5,7 @@
 #include <string>
 #include "WorldSpaceMesh.h"
 #include "TriangleTriangleIntersect.h"
+#include "TriangleTriangleIntersectModified.h"
 #include <glm/gtc/type_ptr.hpp>
 
 int WorldSpaceMesh::nextId = 0;
@@ -102,10 +103,21 @@ bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) con
             Vertex roughVertex0 = other.worldSpaceVertices[otherTriangle.vertexIndex0];
             Vertex roughVertex1 = other.worldSpaceVertices[otherTriangle.vertexIndex1];
             Vertex roughVertex2 = other.worldSpaceVertices[otherTriangle.vertexIndex2];
-            bool test = Intersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0), glm::value_ptr(innerVertex1),
+//            bool test = Intersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0), glm::value_ptr(innerVertex1),
+//                                                      glm::value_ptr(innerVertex2),
+//                                                      glm::value_ptr(roughVertex0), glm::value_ptr(roughVertex1),
+//                                                      glm::value_ptr(roughVertex2));
+//            bool test2 = MIntersection::NoDivTriTriIsect(innerVertex0, innerVertex1, innerVertex2,
+//                                                        roughVertex0, roughVertex1, roughVertex2);
+            bool test = MIntersection::ExperimentalTriangleTriangleIntersection(
+                    innerVertex0, innerVertex1, innerVertex2,roughVertex0, roughVertex1, roughVertex2);
+
+            if(test != Intersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0), glm::value_ptr(innerVertex1),
                                                       glm::value_ptr(innerVertex2),
                                                       glm::value_ptr(roughVertex0), glm::value_ptr(roughVertex1),
-                                                      glm::value_ptr(roughVertex2));
+                                                      glm::value_ptr(roughVertex2))){
+                std::cout << "Different result!!!" << std::endl;
+            }
 
             if (test) {
                 return true;

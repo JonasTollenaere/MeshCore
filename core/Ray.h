@@ -18,7 +18,9 @@ public:
     Ray(Vertex origin, Vertex direction);
     friend std::ostream & operator<<(std::ostream & os, const Ray& ray);
     void transform(const Transformation &transformation);
-    bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2);
+    bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
+
+    float intersectionDistance(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
 };
 
 #endif //OPTIX_SAMPLES_RAY_H

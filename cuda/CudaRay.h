@@ -18,7 +18,7 @@ public:
     __device__ CudaRay();
     __device__ CudaRay(Vertex origin, Vertex direction);
     __device__ void transform(const Transformation &transformation);
-    __device__ bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2);
+    __device__ bool intersectsTriangle(const Vertex &v0, const Vertex &v1, const Vertex &v2) const;
 };
 
 #endif //MESHCORE_CUDARAY_H

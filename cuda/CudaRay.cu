@@ -11,7 +11,7 @@ CudaRay::CudaRay(Vertex origin, Vertex direction): origin(origin), direction(dir
 }
 
 __device__
-bool CudaRay::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) {
+bool CudaRay::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2) const {
 
     //Möller–Trumbore
     const float EPSILON = 0.0000001f;
@@ -37,7 +37,7 @@ bool CudaRay::intersectsTriangle(const Vertex& v0, const Vertex& v1, const Verte
         return false;
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
-    double t = f * glm::dot(edge2, q);
+    float t = f * glm::dot(edge2, q);
     if (t > EPSILON) // ray intersection
     {
         return true;
