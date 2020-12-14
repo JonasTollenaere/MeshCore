@@ -14,12 +14,15 @@
 
 class CudaWorldSpaceMesh {
 private:
+
+    // Pointers in VRAM
     Triangle* triangles;
     Vertex* modelSpaceVertices;
     Vertex* worldSpaceVertices;
     Transformation* transformation;
-    const cudaStream_t* cudaStream;
+    bool* flags;
 
+    const cudaStream_t* cudaStream;
     unsigned int numberOfTriangles;
     unsigned int numberOfVertices;
 

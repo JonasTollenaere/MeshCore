@@ -6,7 +6,12 @@
 #define BLOCK_SIZE 32
 
 CudaWorldSpaceMesh::CudaWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, const CudaStream& cudaStream):
-    modelSpaceVertices(nullptr), worldSpaceVertices(nullptr), triangles(nullptr), transformation(nullptr), cudaStream(&cudaStream.getStream())
+    modelSpaceVertices(nullptr),
+    worldSpaceVertices(nullptr),
+    triangles(nullptr),
+    transformation(nullptr),
+    flags(nullptr),
+    cudaStream(&cudaStream.getStream())
 {
     // Allocate and the transformation
     Transformation transform(worldSpaceMesh.getModelTransformation());
@@ -27,6 +32,10 @@ CudaWorldSpaceMesh::CudaWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, con
     unsigned int triangleBytes = this->numberOfTriangles * sizeof(Triangle);
     cudaMalloc(&this->triangles, triangleBytes);
     cudaMemcpyAsync(this->triangles, worldSpaceMesh.getModelSpaceMesh().triangles.data(), triangleBytes, cudaMemcpyHostToDevice, *this->cudaStream);
+
+    // Allocate flags
+    cudaMalloc(&this->flags, 2 * sizeof(bool));
+
 }
 
 CudaWorldSpaceMesh::~CudaWorldSpaceMesh() {
@@ -34,6 +43,7 @@ CudaWorldSpaceMesh::~CudaWorldSpaceMesh() {
     cudaFree(this->modelSpaceVertices);
     cudaFree(this->triangles);
     cudaFree(this->worldSpaceVertices);
+    cudaFree(this->flags);
 }
 
 __global__
@@ -89,16 +99,13 @@ bool CudaWorldSpaceMesh::rayTriangleInside(const CudaWorldSpaceMesh &other) cons
     unsigned int nBlocks= this->numberOfVertices / blockSize + (this->numberOfVertices % blockSize == 0 ? 0 : 1);
 
     bool inside = true;
-    bool* d_inside;
-
-    cudaMalloc(&d_inside, sizeof(bool));
-    cudaMemcpyAsync(d_inside, &inside, sizeof(bool), cudaMemcpyHostToDevice, *this->cudaStream);
+    cudaMemcpyAsync(&flags[0], &inside, sizeof(bool), cudaMemcpyHostToDevice, *this->cudaStream);
 
     rayTriangleInsideKernel <<< nBlocks, blockSize, 0, *this->cudaStream >>>
     (this->triangles, this->worldSpaceVertices, this->numberOfVertices, this->numberOfTriangles,
-     other.triangles, other.worldSpaceVertices, other.numberOfVertices, other.numberOfTriangles, d_inside);
+     other.triangles, other.worldSpaceVertices, other.numberOfVertices, other.numberOfTriangles, &flags[0]);
 
-    cudaMemcpyAsync(&inside, d_inside, sizeof(bool), cudaMemcpyDeviceToHost, *this->cudaStream);
+    cudaMemcpyAsync(&inside, &flags[0], sizeof(bool), cudaMemcpyDeviceToHost, *this->cudaStream);
 
     cudaStreamSynchronize(*this->cudaStream);
 
@@ -112,8 +119,10 @@ void triangleTriangleIntersectKernel(const Triangle* innerTriangles, const Verte
 {
     unsigned int threadId = threadIdx.x + blockIdx.x * blockDim.x;
 
-    unsigned int innerTriangleId = threadId/numberOfOuterTriangles;
-    unsigned int outerTriangleId = threadId%numberOfOuterTriangles;
+    unsigned int innerTriangleId = threadId;
+
+//    unsigned int innerTriangleId = threadId/numberOfOuterTriangles;
+//    unsigned int outerTriangleId = threadId%numberOfOuterTriangles;
 
     if(innerTriangleId < numberOfInnerTriangles){
         Triangle innerTriangle = innerTriangles[innerTriangleId];
@@ -121,41 +130,40 @@ void triangleTriangleIntersectKernel(const Triangle* innerTriangles, const Verte
         Vertex innerVertex1 = innerVertices[innerTriangle.vertexIndex1];
         Vertex innerVertex2 = innerVertices[innerTriangle.vertexIndex2];
 
-        Triangle outerTriangle = outerTriangles[outerTriangleId];
-        Vertex outerVertex0 = outerVertices[outerTriangle.vertexIndex0];
-        Vertex outerVertex1 = outerVertices[outerTriangle.vertexIndex1];
-        Vertex outerVertex2 = outerVertices[outerTriangle.vertexIndex2];
-        bool test = CudaIntersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0),
-                                                       glm::value_ptr(innerVertex1),
-                                                       glm::value_ptr(innerVertex2),
-                                                       glm::value_ptr(outerVertex0),
-                                                       glm::value_ptr(outerVertex1),
-                                                       glm::value_ptr(outerVertex2));
-        if (test) {
-            *intersects = true;
-            return;
+        for(int outerTriangleIndex=0; outerTriangleIndex<numberOfOuterTriangles; outerTriangleIndex++){
+            Triangle outerTriangle = outerTriangles[outerTriangleIndex];
+            Vertex outerVertex0 = outerVertices[outerTriangle.vertexIndex0];
+            Vertex outerVertex1 = outerVertices[outerTriangle.vertexIndex1];
+            Vertex outerVertex2 = outerVertices[outerTriangle.vertexIndex2];
+            bool test = CudaIntersection::NoDivTriTriIsect(glm::value_ptr(innerVertex0),
+                                                           glm::value_ptr(innerVertex1),
+                                                           glm::value_ptr(innerVertex2),
+                                                           glm::value_ptr(outerVertex0),
+                                                           glm::value_ptr(outerVertex1),
+                                                           glm::value_ptr(outerVertex2));
+            if (test) {
+                *intersects = true;
+            }
         }
-
     }
 }
 
 bool CudaWorldSpaceMesh::triangleTriangleIntersects(const CudaWorldSpaceMesh &other) const {
 
     unsigned blockSize = BLOCK_SIZE;
-    unsigned int nThreads = numberOfTriangles * other.numberOfTriangles;
+//    unsigned int nThreads = this->numberOfTriangles * other.numberOfTriangles;
+    unsigned int nThreads = this->numberOfTriangles;
     unsigned int nBlocks= nThreads / blockSize + (nThreads % blockSize == 0 ? 0 : 1);
 
     bool intersects = false;
-    bool* d_intersects;
 
-    cudaMalloc(&d_intersects, sizeof(bool));
-    cudaMemcpyAsync(d_intersects, &intersects, sizeof(bool), cudaMemcpyHostToDevice, *this->cudaStream);
+    cudaMemcpyAsync(&flags[1], &intersects, sizeof(bool), cudaMemcpyHostToDevice, *this->cudaStream);
 
     triangleTriangleIntersectKernel <<< nBlocks, blockSize, 0, *this->cudaStream >>>
             (this->triangles, this->worldSpaceVertices, this->numberOfVertices, this->numberOfTriangles,
-             other.triangles, other.worldSpaceVertices, other.numberOfVertices, other.numberOfTriangles, d_intersects);
+             other.triangles, other.worldSpaceVertices, other.numberOfVertices, other.numberOfTriangles, &flags[1]);
 
-    cudaMemcpyAsync(&intersects, d_intersects, sizeof(bool), cudaMemcpyDeviceToHost, *this->cudaStream);
+    cudaMemcpyAsync(&intersects, &flags[1], sizeof(bool), cudaMemcpyDeviceToHost, *this->cudaStream);
 
     cudaStreamSynchronize(*this->cudaStream);
 
