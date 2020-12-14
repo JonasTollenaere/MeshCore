@@ -18,7 +18,7 @@
 
 
 #define INITIAL_VIEW_DISTANCE 50.0f
-#define INITIAL_FOV 90.0f
+#define INITIAL_FOV 86.0f
 
 class RenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT
@@ -66,9 +66,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    Q_INVOKABLE void addWorldSpaceMeshSlot(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
-
-
+    Q_INVOKABLE [[maybe_unused]] void addWorldSpaceMeshSlot(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
 };
 
 #endif //MESHCORE_RENDERWIDGET_H

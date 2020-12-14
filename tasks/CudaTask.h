@@ -7,14 +7,12 @@
 
 
 #include <RenderWidget.h>
+#include "AbstractTask.h"
 
-class CudaTask {
-private:
-    RenderWidget* renderWidget;
+class CudaTask: public AbstractTask {
 public:
-    void run();
-
-    void setRenderWidget(RenderWidget *renderWidget);
+    using AbstractTask::AbstractTask;
+    void run() override;
 };
 
 

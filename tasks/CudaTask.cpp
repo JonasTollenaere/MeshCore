@@ -6,12 +6,19 @@
 #include "CudaTask.h"
 #include "../core/FileParser.h"
 #include "../cuda/CudaWorldSpaceMesh.h"
-#include "../cuda/CudaStream.h"
 
-void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const WorldSpaceMesh& roughMesh){
+void CudaTask::run() {
+
+    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
+//    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(1.0f)));
+    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
+    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5, glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
+    roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
+    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
 
     std::cout << "Starting Random Walk GPU" << std::endl;
-
 
     std::mt19937 randomEngine(0);
     auto nextFloat = std::uniform_real_distribution<float>(0, 1);
@@ -59,8 +66,10 @@ void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wo
 
         if(feasible){
             currentTransformation = newTransformation;
-//            innerMesh.setModelTransformationMatrix(currentTransformation);
-//            renderWidget->updateWorldSpaceMesh(innerMesh);
+
+                innerMesh.setModelTransformationMatrix(currentTransformation);
+                this->updateRenderMesh(innerMesh);
+
         }
         else{
 //            innerMesh.setModelTransformationMatrix(currentTransformation);
@@ -74,27 +83,6 @@ void randomWalk2(RenderWidget *renderWidget, WorldSpaceMesh& innerMesh, const Wo
 
     std::cout << currentTransformation << std::endl;
     innerMesh.setModelTransformationMatrix(currentTransformation);
-    renderWidget->updateWorldSpaceMesh(innerMesh);
+    this->updateRenderMesh(innerMesh);
     std::cout << "MPS: " << float(moves)/float(totalms)*1000.0f << std::endl;
-}
-
-void CudaTask::run() {
-
-    const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
-//    const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
-    WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh, glm::scale(Transformation(1.0f), glm::vec3(1.0f)));
-    renderWidget->addWorldSpaceMesh(worldSpaceMesh, glm::vec4(1,0,0,1));
-
-    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
-    WorldSpaceMesh worldSpaceMesh5 = WorldSpaceMesh(modelSpaceMesh5, glm::translate(Transformation(1.0f), glm::vec3(0,-1,0)));
-    worldSpaceMesh5.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
-//    worldSpaceMesh5.transform(Transformation(0.02f));
-//    worldSpaceMesh5.transform(glm::rotate(Transformation(1.0f), 1.57f, glm::vec3(1,0,0)));
-    renderWidget->addWorldSpaceMesh(worldSpaceMesh5, glm::vec4(1,1,1,0.4));
-    auto* first = new std::thread(randomWalk2, renderWidget, worldSpaceMesh, worldSpaceMesh5);
-
-}
-
-void CudaTask::setRenderWidget(RenderWidget *renderWidget) {
-    CudaTask::renderWidget = renderWidget;
 }

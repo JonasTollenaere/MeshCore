@@ -4,7 +4,6 @@
 
 #include "RenderWidget.h"
 #include "ShaderProgramSource.h"
-#include <glm/gtc/matrix_transform.hpp>
 #include <QOpenGLShaderProgram>
 
 RenderWidget::RenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
@@ -155,7 +154,7 @@ void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const
     QMetaObject::invokeMethod(this, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(WorldSpaceMesh, worldSpaceMesh), Q_ARG(const Color&, color));
 }
 
-void RenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
+[[maybe_unused]] void RenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
     this->makeCurrent();
     auto model = RenderModel(worldSpaceMesh);
     model.setColor(color);

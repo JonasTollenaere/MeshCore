@@ -11,21 +11,21 @@
 Q_DECLARE_METATYPE(WorldSpaceMesh)
 
 int main(int argc, char *argv[]){
+
     QApplication app(argc, argv);
-
-
     ApplicationWindow window;
     window.show();
 
 
-    CudaTask task;
-    task.setRenderWidget(window.getRenderWidget());
-    task.run();
+    CudaTask task1(window.getRenderWidget());
+    task1.start();
 
-//    SandboxTask task2;
-//    task2.setRenderWidget(window.getRenderWidget());
-//    task2.run();
+    for(int i=0; i<12; i++){
+        CudaTask task2;
+        task2.start();
+    }
 
-    return QApplication::exec();
+    int returnCode = QApplication::exec();
 
+    return returnCode;
 }
