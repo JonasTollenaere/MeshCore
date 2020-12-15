@@ -4,7 +4,6 @@
 
 #include "RenderModel.h"
 #include "VertexBufferLayout.h"
-#include "../gui/RenderModel.h"
 #include <glm/gtx/normal.hpp>
 
 RenderModel::RenderModel(const WorldSpaceMesh &worldSpaceMesh):
@@ -51,9 +50,9 @@ void RenderModel::draw(Shader& shader, const glm::mat4& projectionViewMatrix, co
     ASSERT(sizeof(GLuint) == sizeof(unsigned int))
     shader.bind();
     shader.setUniform4fv("u_Color", this->color);
-    const glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * this->worldSpaceMesh.getModelTransformationMatrix();
+    const glm::mat4 modelViewProjectionMatrix = projectionViewMatrix * this->worldSpaceMesh.getModelTransformation();
     shader.setUniformMat4f("u_ModelViewProjectionMatrix", modelViewProjectionMatrix);
-    const glm::vec3 modelLightDirection = glm::vec3(glm::vec4(viewSpaceLightDirection, 1.0f) * this->worldSpaceMesh.getModelTransformationMatrix());
+    const glm::vec3 modelLightDirection = glm::vec3(glm::vec4(viewSpaceLightDirection, 1.0f) * this->worldSpaceMesh.getModelTransformation());
     shader.setUniform3fv("u_LightDirection", modelLightDirection);
     const float ambientLighting = 0.05f;
     shader.setUniform1f("u_Ambient", ambientLighting);
