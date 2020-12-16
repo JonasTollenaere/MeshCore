@@ -9,5 +9,7 @@ set(CMAKE_MODULE_PATH "${OptiX_INSTALL_DIR}/SDK/CMake")
 find_package(OptiX REQUIRED)
 include_directories("${OptiX_INCLUDE}")
 
-add_executable(HelloOptix ../optix/HelloOptix.cu)
+### HelloOptix.exe ###
+file(GLOB SOURCES *.cpp *.cu ../core/*.cpp)
+add_executable(HelloOptix ${SOURCES})
 set_target_properties(HelloOptix PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
