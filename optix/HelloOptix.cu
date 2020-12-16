@@ -11,28 +11,12 @@
 #include <cuda_runtime.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <cuda.h>
-
-
 #include "Exception.h"
 #include "../core/WorldSpaceMesh.h"
 #include "../core/FileParser.h"
 
-static __forceinline__ __device__ void trace(
-        OptixTraversableHandle handle,
-        float3                 ray_origin,
-        float3                 ray_direction,
-        float                  tmin,
-        float                  tmax,
-        float*                 prd
-)
-{
-    uint32_t p0;
-    p0 = float_as_int( *prd );
-    optixTrace(handle, ray_origin, ray_direction, tmin, tmax,0.5f, OptixVisibilityMask(1),
-               OPTIX_RAY_FLAG_NONE,0, 0, 0, p0);
-    *prd = int_as_float( p0 );
-}
+#include <string>
+#include <fstream>
 
 static void context_log_cb( unsigned int level, const char* tag, const char* message, void* cbdata)
 {
@@ -67,10 +51,11 @@ int main(){
 //          on or more records in the shader binding table for each mesh.
 
         // Specify options for the build.
-        OptixAccelBuildOptions accelOptions;
-        memset(&accelOptions, 0, sizeof(OptixAccelBuildOptions));
-        accelOptions.buildFlags = OPTIX_BUILD_FLAG_NONE;
-        // accelOptions.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
+        OptixAccelBuildOptions accelOptions = {};
+        accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE;
+//        accelOptions.buildFlags |= OPTIX_BUILD_FLAG_ALLOW_UPDATE; // TODO use this to refit the worldspace instance quicklyu
+//        accelOptions.buildFlags |= OPTIX_BUILD_FLAG_ALLOW_COMPACTION; // TODO see documentation 5.7 (don't do this if this degrades tracing performance)
+
         accelOptions.operation  = OPTIX_BUILD_OPERATION_BUILD;
 
         // Prepare data to build
@@ -98,8 +83,7 @@ int main(){
 
         // Populate the build input struct with our triangle data as well as
         // information about the sizes and types of our data
-        OptixBuildInput buildInput;
-        memset(&buildInput, 0,  sizeof(OptixBuildInput));
+        OptixBuildInput buildInput = {};
         buildInput.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
         buildInput.triangleArray.vertexBuffers = &d_modelSpaceVertices;
         buildInput.triangleArray.numVertices = numberOfVertices;
@@ -111,38 +95,149 @@ int main(){
         buildInput.triangleArray.indexStrideInBytes = sizeof(unsigned int)*3;
         buildInput.triangleArray.preTransform = 0;
         buildInput.triangleArray.numSbtRecords = 1;
-        const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
+        unsigned int triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT }; // Setting this flag usuallyimproves performance even if no any-hit program is present in the SBT
         buildInput.triangleArray.flags = triangle_input_flags;
 
-        CUdeviceptr tempBuffer, outputBuffer;
-        size_t tempBufferSizeInBytes, outputBufferSizeInBytes;
         accelOptions.motionOptions.numKeys = 0; // A numKeys value of zero specifies no motion blur
 
         OptixAccelBufferSizes bufferSizes;
 
         OPTIX_CHECK(optixAccelComputeMemoryUsage(optixContext, &accelOptions, &buildInput, 1, &bufferSizes));
-        CUdeviceptr d_output;
+        CUdeviceptr d_outputGAS;
         CUdeviceptr d_temp;
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_output), bufferSizes.outputSizeInBytes));
+        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes));
         CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes));
 
 
-        OptixTraversableHandle outputHandle = 0;
+        OptixTraversableHandle modelSpaceGASHandle = 0;
 
         OPTIX_CHECK(optixAccelBuild(optixContext, cuStream,       // This runs asyncrhonously on the GPU
                                               &accelOptions, &buildInput, 1, d_temp,
-                                              bufferSizes.tempSizeInBytes, d_output,
-                                              bufferSizes.outputSizeInBytes, &outputHandle,
-                                              nullptr, 0));
+                                    bufferSizes.tempSizeInBytes, d_outputGAS,
+                                    bufferSizes.outputSizeInBytes, &modelSpaceGASHandle,
+                                    nullptr, 0));
+
+        float transform[12] = {1,0,0,0,
+                               0,1,0,0,
+                               0,0,1,0}; // TODO set current worldspacemesh transform
+
+        OptixStaticTransform modelTransformation;
+        memcpy(modelTransformation.transform, transform, sizeof(float)*12);
+        memcpy(modelTransformation.invTransform, transform, sizeof(float)*12);
+        modelTransformation.child = modelSpaceGASHandle;
 
 
 
-//       CUDA_CHECK(cudaStreamSynchronize(cuStream));
+//        OptixInstance instance;
+//        memcpy(instance.transform, transform, sizeof(float)*12);
+//        instance.instanceId = 0;
+//        instance.visibilityMask = 255;
+//        instance.sbtOffset = 0;
+//        instance.flags = OPTIX_INSTANCE_FLAG_DISABLE_ANYHIT;
+//        instance.traversableHandle = modelSpaceGASHandle;
+
+//        CUdeviceptr d_instance;
+//        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_instance), sizeof(OptixInstance)));
+//        CUDA_CHECK(cudaMemcpy(reinterpret_cast<void *>(d_instance), &instance, sizeof(OptixInstance), cudaMemcpyHostToDevice));
+
+//        OptixBuildInput worldSpaceBuildInput;
+//        memset(&worldSpaceBuildInput, 0,  sizeof(OptixBuildInput));
+//        OptixBuildInputInstanceArray worldSpaceBuildInputArray = worldSpaceBuildInput.instanceArray;
+//        worldSpaceBuildInput.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
+//        worldSpaceBuildInputArray.instances = d_instance;
+//        worldSpaceBuildInputArray.numInstances = 1;
+
+//        CUdeviceptr d_outputInstance;
+//        OPTIX_CHECK(optixAccelComputeMemoryUsage(optixContext, &accelOptions, &worldSpaceBuildInput, 1, &bufferSizes));
+//        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_outputInstance), bufferSizes.outputSizeInBytes));
+//        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes));
+//
+//
+//        OptixTraversableHandle worldSpaceInstanceHandle = 0;
+//
+//        OPTIX_CHECK(optixAccelBuild(optixContext, cuStream,       // This runs asyncrhonously on the GPU
+//                                    &accelOptions, &worldSpaceBuildInput, 1, d_temp,
+//                                    bufferSizes.tempSizeInBytes, d_outputGAS,
+//                                    bufferSizes.outputSizeInBytes, &worldSpaceInstanceHandle,
+//                                    nullptr, 0));
 
 //    2.    Create a pipeline of programs that contains all programs that will be invoked during a ray tracing launch.
 
+        // Set the options for module compilation
+        OptixModuleCompileOptions moduleCompileOptions = {};
+        moduleCompileOptions.maxRegisterCount = OPTIX_COMPILE_DEFAULT_MAX_REGISTER_COUNT;
+        moduleCompileOptions.optLevel = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
+        moduleCompileOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+
+        // Set the options for pipeline compilation
+        OptixPipelineCompileOptions pipelineCompileOptions = {};
+        pipelineCompileOptions.usesMotionBlur = false;
+        pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
+        pipelineCompileOptions.numPayloadValues = 2;
+        pipelineCompileOptions.numAttributeValues = 2;
+        pipelineCompileOptions.pipelineLaunchParamsVariableName = "params";
+        pipelineCompileOptions.usesPrimitiveTypeFlags = OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE;  // Improves performance
+        pipelineCompileOptions.exceptionFlags = OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
+        char logString[2048];
+        size_t logStringSize = sizeof(logString);
+
+        // Get built-in intersection module
+        OptixModule intersectionModule;
+        OptixBuiltinISOptions builtinISOptions = {};
+        builtinISOptions.builtinISModuleType = OPTIX_PRIMITIVE_TYPE_TRIANGLE;
+        OPTIX_CHECK(optixBuiltinISModuleGet(optixContext,
+                               &moduleCompileOptions,
+                               &pipelineCompileOptions,
+                               &builtinISOptions,
+                               &intersectionModule));
 
 
+        // Compile the module based on the OptixProgram.ptx
+        OptixModule ptxModule;
+        std::ifstream t("../../optix/OptixPrograms/OptixPrograms.ptx");
+        std::string ptxString((std::istreambuf_iterator<char>(t)),
+                              std::istreambuf_iterator<char>());
+        OPTIX_CHECK(optixModuleCreateFromPTX(optixContext,
+                                                 &moduleCompileOptions,
+                                                 &pipelineCompileOptions,
+                                                 ptxString.c_str(),
+                                                 ptxString.size(),
+                                                 logString,
+                                                 &logStringSize,
+                                                 &ptxModule));
+
+        // Use the modules to create the necessary programgroups (HITGROUP + RAYGEN)
+        OptixProgramGroupDesc programGroupDescriptions[2] = {};
+        programGroupDescriptions[0].kind = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
+        programGroupDescriptions[0].hitgroup.moduleCH = ptxModule;
+        programGroupDescriptions[0].hitgroup.entryFunctionNameCH = "__closesthit__ch";
+        programGroupDescriptions[0].hitgroup.moduleAH = nullptr;
+        programGroupDescriptions[0].hitgroup.entryFunctionNameAH = nullptr;
+        programGroupDescriptions[0].hitgroup.moduleIS = intersectionModule;
+        programGroupDescriptions[0].hitgroup.entryFunctionNameIS = nullptr;
+        programGroupDescriptions[1].kind = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+        programGroupDescriptions[1].raygen.module = ptxModule;
+        programGroupDescriptions[1].raygen.entryFunctionName = "__raygen__rg";
+        OptixProgramGroupOptions pgOptions = {};
+        OptixProgramGroup programGroups[2];
+        OPTIX_CHECK(optixProgramGroupCreate(optixContext,
+                                            programGroupDescriptions,
+                                            2,
+                                            &pgOptions,
+                                            logString, &logStringSize,
+                                            programGroups));
+
+        // Create a pipeline with these program groups
+        OptixPipeline pipeline = nullptr;
+        OptixPipelineLinkOptions pipelineLinkOptions = {};
+        pipelineLinkOptions.maxTraceDepth = 1;              // TODO CHECK WHAT THIS DOES
+        pipelineLinkOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
+        OPTIX_CHECK(optixPipelineCreate(optixContext,
+                                        &pipelineCompileOptions,
+                                        &pipelineLinkOptions,
+                                        programGroups, 2,
+                                        logString, &logStringSize,
+                                        &pipeline));
 
 //    3.    Create a shader binding table that includes references to these programs and their parameters.
 
@@ -153,7 +248,8 @@ int main(){
 
         // Finalize TODO check if these can be called earlier to save VRAM
         CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_temp)));
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_output)));
+        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_outputGAS)));
+//        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_outputInstance)));
         CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_modelSpaceVertices)));
         CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_triangleIndices)));
     }

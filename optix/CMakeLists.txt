@@ -11,5 +11,11 @@ include_directories("${OptiX_INCLUDE}")
 
 ### HelloOptix.exe ###
 file(GLOB SOURCES *.cpp *.cu ../core/*.cpp)
-add_executable(HelloOptix ${SOURCES})
+add_executable(HelloOptix ${SOURCES} OptixParams.h)
 set_target_properties(HelloOptix PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+### PTX Compilation ### TODO
+#add_library(OptixProgramPtx OBJECT OptixPrograms/OptixPrograms.cu)
+#set_property(TARGET OptixProgramPtx PROPERTY CUDA_PTX_COMPILATION ON)
+#set_target_properties(OptixProgramPtx PROPERTIES LIBRARY_OUTPUT_DIRECTORY testlibrary )
+#add_dependencies(HelloOptix OptixProgramPtx)
