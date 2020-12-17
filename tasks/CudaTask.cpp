@@ -20,9 +20,6 @@ void CudaTask::run() {
 
     std::cout << "Starting Random Walk GPU" << std::endl;
 
-    std::mt19937 randomEngine(0);
-    auto nextFloat = std::uniform_real_distribution<float>(0, 1);
-
     const CudaStream cudaStream;
 
     CudaWorldSpaceMesh cudaInnerMesh(innerMesh, cudaStream);
@@ -35,11 +32,11 @@ void CudaTask::run() {
     auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
 
-        Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * nextFloat(randomEngine)));
-        newTransformation = glm::rotate(newTransformation, nextFloat(randomEngine), glm::vec3(nextFloat(randomEngine) - 0.5, nextFloat(randomEngine)-0.5, nextFloat(randomEngine)-0.5));
-        newTransformation = glm::translate(newTransformation, glm::vec3(nextFloat(randomEngine) - 0.5f, nextFloat(randomEngine) - 0.5f,nextFloat(randomEngine)  - 0.5f));
+        Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * this->getRandomFloat(1)));
+        newTransformation = glm::rotate(newTransformation, this->getRandomFloat(1), glm::vec3(this->getRandomFloat(1) - 0.5, this->getRandomFloat(1)-0.5, this->getRandomFloat(1)-0.5));
+        newTransformation = glm::translate(newTransformation, glm::vec3(this->getRandomFloat(1) - 0.5f, this->getRandomFloat(1) - 0.5f,this->getRandomFloat(1)  - 0.5f));
 
-        cudaInnerMesh.setModelTransformationMatrix(newTransformation);
+        cudaInnerMesh.setModelTransformation(newTransformation);
         innerMesh.setModelTransformationMatrix(newTransformation);
 
         // Ray triangle test
@@ -72,7 +69,7 @@ void CudaTask::run() {
 
         }
         else{
-//            innerMesh.setModelTransformationMatrix(currentTransformation);
+//            innerMesh.setModelTransformation(currentTransformation);
         }
     }
 

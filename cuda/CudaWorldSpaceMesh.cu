@@ -25,7 +25,7 @@ CudaWorldSpaceMesh::CudaWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, con
 
     // Allocate and update the transformation, worldSpaceVertices
     cudaMalloc(&this->worldSpaceVertices, verticesBytes);
-    this->setModelTransformationMatrix(worldSpaceMesh.getModelTransformation());
+    this->setModelTransformation(worldSpaceMesh.getModelTransformation());
 
     // Allocate and copy the triangles
     this->numberOfTriangles = worldSpaceMesh.getModelSpaceMesh().triangles.size();
@@ -55,8 +55,8 @@ void calculateWorldSpaceVertices(const Transformation* transformation, const Ver
     }
 }
 
-void CudaWorldSpaceMesh::setModelTransformationMatrix(const Transformation &newTransformation) {
-    cudaMemcpyAsync(this->transformation, &newTransformation, sizeof(Transformation), cudaMemcpyHostToDevice, *this->cudaStream);
+void CudaWorldSpaceMesh::setModelTransformation(const Transformation &transformation) {
+    cudaMemcpyAsync(this->transformation, &transformation, sizeof(Transformation), cudaMemcpyHostToDevice, *this->cudaStream);
     unsigned blockSize = BLOCK_SIZE;
     unsigned int nBlocks= this->numberOfVertices / blockSize + (this->numberOfVertices % blockSize == 0 ? 0 : 1);
     calculateWorldSpaceVertices <<< nBlocks, blockSize, 0, *this->cudaStream >>> (this->transformation, this->modelSpaceVertices, this->worldSpaceVertices, this->numberOfVertices);

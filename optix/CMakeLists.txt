@@ -10,8 +10,8 @@ find_package(OptiX REQUIRED)
 include_directories("${OptiX_INCLUDE}")
 
 ### HelloOptix.exe ###
-file(GLOB SOURCES *.cpp *.cu ../core/*.cpp)
-add_executable(HelloOptix ${SOURCES} OptixParams.h)
+file(GLOB SOURCES *.cpp *.cu ../core/*.cpp *.h)
+add_executable(HelloOptix ${SOURCES})
 set_target_properties(HelloOptix PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 ### PTX Compilation ### TODO

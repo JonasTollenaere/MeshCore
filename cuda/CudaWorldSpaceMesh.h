@@ -30,7 +30,7 @@ public:
     CudaWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const CudaStream& cudaStream);
     ~CudaWorldSpaceMesh();
 
-    void setModelTransformationMatrix(const Transformation& transformation);
+    void setModelTransformation(const Transformation& transformation);
 
     bool triangleTriangleIntersects(const CudaWorldSpaceMesh &other) const;
     bool rayTriangleInside(const CudaWorldSpaceMesh &other) const;

@@ -27,107 +27,48 @@
 //
 
 #include <optix.h>
-#include "../OptixParams.h"
-#include <iostream>
+#include "../OptixLaunchParameters.h"
+#include "../OptixData.h"
+
+#define EPSILON 0.000001f
 
 extern "C" {
-__constant__ Params params;
+__constant__ OptixLaunchParameters optixLaunchParameters;
 }
-
-static __forceinline__ __device__ void trace(
-        OptixTraversableHandle handle,
-        float3                 ray_origin,
-        float3                 ray_direction,
-        float                  tmin,
-        float                  tmax,
-        float*                 prd
-)
-{
-    uint32_t p0;
-    p0 = float_as_int( *prd );
-    optixTrace(
-            handle,
-            ray_origin,
-            ray_direction,
-            tmin,
-            tmax,
-            0.5f,                // rayTime
-            OptixVisibilityMask( 1 ),
-            OPTIX_RAY_FLAG_NONE,
-            0,                   // SBT offset
-            0,                   // SBT stride
-            0,                   // missSBTIndex
-            p0 );
-    *prd = int_as_float( p0 );
-}
-
-
-static __forceinline__ __device__ void setPayload( float p )
-{
-    optixSetPayload_0( float_as_int( p ) );
-}
-
-
-static __forceinline__ __device__ float getPayload()
-{
-    return int_as_float(optixGetPayload_0());
-}
-
-
-__forceinline__ __device__ uchar1 make_color( const float&  c )
-{
-    return make_uchar1(
-            static_cast<uint8_t>( c )
-    );
-}
-
 
 extern "C" __global__ void __raygen__rg()
 {
-    const uint3 idx = optixGetLaunchIndex();
-    const uint3 dim = optixGetLaunchDimensions();
-    /*if (idx.x == 0 && idx.y == 0) {
-        printf("dim.x = %d, dim.y = %d", dim.x, dim.y);
-    }*/
+    const unsigned int idx = optixGetLaunchIndex().x;
 
-    /*const float3      U      = rtData->camera_u;
-    const float3      V      = rtData->camera_v;
-    const float3      W      = rtData->camera_w;
-    const float2      d = 2.0f * make_float2(
-            static_cast<float>( idx.x ) / static_cast<float>( dim.x ),
-            static_cast<float>( idx.y ) / static_cast<float>( dim.y )
-            ) - 1.0f;*/
-
-
-    //const float3 direction   = normalize( d.x * U + d.y * V + W );
-
-    float       payload = 0.0f;
-
-    //printf("origin: %d, %d, %d; direction: %d, %d, %d\n", origin.x, origin.y, origin.z, direction.x, direction.y, direction.z);
-
+    const RayGenData* rayGenData = reinterpret_cast<RayGenData*>(optixGetSbtDataPointer());
+//    printf("RayGen %d\tOrigin: (%.2f,%.2f,%.2f)\tDirection: (%.2f,%.2f,%.2f)\n", idx,
+//           rayGenData->origins[idx].x, rayGenData->origins[idx].y, rayGenData->origins[idx].z,
+//           rayGenData->directions[idx].x, rayGenData->directions[idx].y, rayGenData->directions[idx].z);
+    optixTrace(
+            optixLaunchParameters.handle,
+            rayGenData->origins[idx],
+            rayGenData->directions[idx],
+            0,                      // tmin
+            1 + EPSILON,            // tmax
+            0.0f,                 // Ignored and removed by the compiler if motion is not enabled
+            OptixVisibilityMask(255),
+            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT, // No need to disable anyhit if this is done in the acceleration structures
+            0,                   // SBT offset, only used for different ray types
+            0,                   // SBT stride, only used for different ray types
+            0);               // missSBTIndex
 }
 
 extern "C" __global__ void __miss__ms()
 {
-    //printf("miss!\n");
-    //MissData* rt_data  = reinterpret_cast<MissData*>( optixGetSbtDataPointer() );
-    //printf("MISS: %d, %d, %d\n", rt_data->r, rt_data->g, rt_data->b);
-    //float    payload = getPayload();
-    ///setPayload( rt_data->r);
+
 }
 
 
 extern "C" __global__ void __closesthit__ch()
 {
+    const unsigned int idx = optixGetLaunchIndex().x;
 
-    //const float2 barycentrics = optixGetTriangleBarycentrics();
-    //printf("snijden: ");
-    //printf("snijden!\n");
-    setPayload( 1.0f );
-}
-
-extern "C" __global__ void __anyhit__ah()
-{
-    //printf("snijden!\n");
-    setPayload( getPayload() + 1.0f );
+//    printf("Hit %d: %.5f\n", idx, optixGetRayTmax());
+    HitGroupData* hitGroupData = reinterpret_cast<HitGroupData*>(optixGetSbtDataPointer());
+    hitGroupData->hit = true;
 }
