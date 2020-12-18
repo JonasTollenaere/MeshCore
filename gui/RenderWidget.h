@@ -44,7 +44,7 @@ public:
 
 private:
     void resetView();
-    void toggleWireMesh();
+    void toggleWireFrame();
     void toggleCullFace();
 
 public:

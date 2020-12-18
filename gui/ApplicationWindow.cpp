@@ -48,9 +48,9 @@ ApplicationWindow::ApplicationWindow() {
     connect(resetViewAction, &QAction::triggered, renderWidget, &RenderWidget::resetView);
     resetViewAction->setShortcut(QKeySequence(QString("Ctrl+0")));
 
-    QAction* toggleWireMesh = viewMenu->addAction(QString("Toggle Wiremesh"));
-    connect(toggleWireMesh, &QAction::triggered, renderWidget, &RenderWidget::toggleWireMesh);
-    toggleWireMesh->setCheckable(true);
+    QAction* toggleWireFrame = viewMenu->addAction(QString("Toggle Wireframe"));
+    connect(toggleWireFrame, &QAction::triggered, renderWidget, &RenderWidget::toggleWireFrame);
+    toggleWireFrame->setCheckable(true);
 
     QAction* toggleCulling = viewMenu->addAction(QString("Toggle Culling"));
     connect(toggleCulling, &QAction::triggered, renderWidget, &RenderWidget::toggleCullFace);

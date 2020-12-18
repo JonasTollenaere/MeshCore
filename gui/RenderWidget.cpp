@@ -174,7 +174,7 @@ void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
 }
 
 // TODO setting per rendermodel
-void RenderWidget::toggleWireMesh() {
+void RenderWidget::toggleWireFrame() {
     this->makeCurrent();
     GLint currentPolygonMode[2];
     glGetIntegerv(GL_POLYGON_MODE, currentPolygonMode);
