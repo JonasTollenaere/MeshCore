@@ -34,11 +34,11 @@ optixDeviceContext(&optixDeviceContext), cuStream(&cuStream){
         edgeOrigins.emplace_back(vertexToFloat3(v1));
         edgeOrigins.emplace_back(vertexToFloat3(v2));
     }
-    cudaMalloc(reinterpret_cast<void **>(&d_modelSpaceVertices), sizeof(float3) * modelSpaceVertices.size());
-    cudaMalloc(reinterpret_cast<void **>(&d_triangleIndices), sizeof(uint3) * triangleIndices.size());
-    cudaMalloc(reinterpret_cast<void **>(&d_edgeOrigins), sizeof(float3) * edgeOrigins.size());
-    cudaMalloc(reinterpret_cast<void **>(&d_edgeDirections), sizeof(float3) * edgeDirections.size());
-    cudaMalloc(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform));
+    cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), sizeof(float3) * modelSpaceVertices.size(), this->cuStream[0]);
+    cudaMallocAsync(reinterpret_cast<void **>(&d_triangleIndices), sizeof(uint3) * triangleIndices.size(), this->cuStream[0]);
+    cudaMallocAsync(reinterpret_cast<void **>(&d_edgeOrigins), sizeof(float3) * edgeOrigins.size(), this->cuStream[0]);
+    cudaMallocAsync(reinterpret_cast<void **>(&d_edgeDirections), sizeof(float3) * edgeDirections.size(), this->cuStream[0]);
+    cudaMallocAsync(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform), this->cuStream[0]);
 
     OptixAccelBuildOptions accelOptions = {};
     accelOptions.operation  = OPTIX_BUILD_OPERATION_BUILD;
@@ -86,11 +86,11 @@ optixDeviceContext(&optixDeviceContext), cuStream(&cuStream){
 }
 
 OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
-    cudaFree(reinterpret_cast<void *>(d_modelSpaceVertices));
-    cudaFree(reinterpret_cast<void *>(d_triangleIndices));
-    cudaFree(reinterpret_cast<void *>(d_edgeOrigins));
-    cudaFree(reinterpret_cast<void *>(d_edgeDirections));
-    cudaFree(reinterpret_cast<void *>(d_modelTransformation));
+    cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), this->cuStream[0]);
+    cudaFreeAsync(reinterpret_cast<void *>(d_triangleIndices), this->cuStream[0]);
+    cudaFreeAsync(reinterpret_cast<void *>(d_edgeOrigins), this->cuStream[0]);
+    cudaFreeAsync(reinterpret_cast<void *>(d_edgeDirections), this->cuStream[0]);
+    cudaFreeAsync(reinterpret_cast<void *>(d_modelTransformation), this->cuStream[0]);
 }
 
 bool OptixWorldSpaceMesh::isInside(const OptixWorldSpaceMesh &other) const {

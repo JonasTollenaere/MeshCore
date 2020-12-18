@@ -86,7 +86,7 @@ int main(){
             modelSpaceVertices.emplace_back(vertexToFloat3(vertex));
         }
         unsigned int verticesBytes = numberOfVertices * sizeof(float3);
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_modelSpaceVertices), verticesBytes));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), verticesBytes, cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceVertices), modelSpaceVertices.data(), verticesBytes, cudaMemcpyHostToDevice, cuStream));
 
         unsigned int numberOfTriangles = roughWorldSpaceMesh.getModelSpaceMesh().triangles.size();
@@ -98,7 +98,7 @@ int main(){
             triangleIndices.emplace_back(triangle.vertexIndex2);
         }
         unsigned int indicesBytes = numberOfTriangles * sizeof(float3);
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_triangleIndices), indicesBytes));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_triangleIndices), indicesBytes, cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_triangleIndices), triangleIndices.data(), indicesBytes, cudaMemcpyHostToDevice, cuStream));
 
         // Populate the build input struct with our triangle data as well as
@@ -125,8 +125,8 @@ int main(){
         OPTIX_CHECK(optixAccelComputeMemoryUsage(optixContext, &accelOptions, &buildInput, 1, &bufferSizes));
         CUdeviceptr d_outputGAS;
         CUdeviceptr d_temp;
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes));
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes, cuStream));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes, cuStream));
 
 
         OptixTraversableHandle modelSpaceGASHandle = 0;
@@ -166,7 +166,7 @@ int main(){
         modelTransformation.child = modelSpaceGASHandle;
 
         CUdeviceptr d_modelTransformation;
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform)));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform), cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelTransformation), &modelTransformation, sizeof(OptixStaticTransform), cudaMemcpyHostToDevice, cuStream));
         OptixTraversableHandle worldSpaceHandle = 0;
         OPTIX_CHECK(optixConvertPointerToTraversableHandle(optixContext, d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &worldSpaceHandle));
@@ -270,8 +270,8 @@ int main(){
         }
         float3* d_origins;
         float3* d_directions;
-        CUDA_CHECK(cudaMalloc(&d_origins, origins.size() * sizeof(float3)));
-        CUDA_CHECK(cudaMalloc(&d_directions, directions.size() * sizeof(float3)));
+        CUDA_CHECK(cudaMallocAsync(&d_origins, origins.size() * sizeof(float3), cuStream));
+        CUDA_CHECK(cudaMallocAsync(&d_directions, directions.size() * sizeof(float3), cuStream));
         CUDA_CHECK(cudaMemcpyAsync(d_origins, origins.data(), origins.size()*sizeof(float3), cudaMemcpyHostToDevice, cuStream));
         CUDA_CHECK(cudaMemcpyAsync(d_directions, directions.data(), directions.size()*sizeof(float3), cudaMemcpyHostToDevice, cuStream));
         rayGenRecord.data.origins = d_origins;
@@ -279,7 +279,7 @@ int main(){
         CUdeviceptr d_raygenRecord;
         const size_t raygen_record_size = sizeof( RayGenSbtRecord );
         OPTIX_CHECK(optixSbtRecordPackHeader(programGroups[0], &rayGenRecord));
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_raygenRecord), raygen_record_size));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_raygenRecord), raygen_record_size, cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_raygenRecord), &rayGenRecord, sizeof(RayGenSbtRecord), cudaMemcpyHostToDevice, cuStream));
         sbt.raygenRecord = d_raygenRecord;
 
@@ -287,7 +287,7 @@ int main(){
         hitGroupRecord.data.hit = false;
         CUdeviceptr d_hitGroupRecord;
         OPTIX_CHECK(optixSbtRecordPackHeader(programGroups[1], &hitGroupRecord));
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_hitGroupRecord), sizeof(HitGroupSbtRecord)));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_hitGroupRecord), sizeof(HitGroupSbtRecord), cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_hitGroupRecord), &hitGroupRecord, sizeof(HitGroupSbtRecord), cudaMemcpyHostToDevice, cuStream));
         sbt.hitgroupRecordBase = d_hitGroupRecord;
         sbt.hitgroupRecordStrideInBytes = sizeof(HitGroupSbtRecord);
@@ -297,7 +297,7 @@ int main(){
         CUdeviceptr d_missRecord;
         char missHeader[OPTIX_SBT_RECORD_HEADER_SIZE];
         OPTIX_CHECK(optixSbtRecordPackHeader(programGroups[2], &missHeader));
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void **>(&d_missRecord), OPTIX_SBT_RECORD_HEADER_SIZE));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_missRecord), OPTIX_SBT_RECORD_HEADER_SIZE, cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_missRecord), &missHeader, OPTIX_SBT_RECORD_HEADER_SIZE, cudaMemcpyHostToDevice, cuStream));
         sbt.missRecordBase = d_missRecord;
         sbt.missRecordCount = 1;
@@ -314,7 +314,7 @@ int main(){
         optixLaunchParameters.handle = worldSpaceHandle;
 
         CUdeviceptr d_optixLaunchParameters;
-        CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&d_optixLaunchParameters), sizeof(optixLaunchParameters)));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_optixLaunchParameters), sizeof(optixLaunchParameters), cuStream));
         CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), &optixLaunchParameters, sizeof(optixLaunchParameters),cudaMemcpyHostToDevice, cuStream));
 
         CUDA_CHECK(cudaStreamSynchronize(cuStream));
@@ -344,14 +344,13 @@ int main(){
         std::cout << "Returnvalue: " << hitGroupRecord.data.hit << std::endl;
 
         // Finalize TODO check if these can be called earlier to save VRAM
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_temp)));
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_outputGAS)));
-//        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_outputInstance)));
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_modelSpaceVertices)));
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_triangleIndices)));
-        CUDA_CHECK(cudaFree(reinterpret_cast<void *>(d_optixLaunchParameters)));
-        CUDA_CHECK(cudaFree(d_origins));
-        CUDA_CHECK(cudaFree(d_directions));
+        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_temp), cuStream));
+        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_outputGAS), cuStream));
+        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), cuStream));
+        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_triangleIndices), cuStream));
+        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_optixLaunchParameters), cuStream));
+        CUDA_CHECK(cudaFreeAsync(d_origins, cuStream));
+        CUDA_CHECK(cudaFreeAsync(d_directions, cuStream));
 
     }
     catch( std::exception& e )

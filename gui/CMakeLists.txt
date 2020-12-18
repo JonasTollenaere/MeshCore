@@ -19,8 +19,13 @@ link_libraries("${GLEW_DIR}/lib/Release/x64/glew32s.lib")
 ### CUDA ###
 enable_language(CUDA)
 set(CMAKE_CUDA_STANDARD 14)
-find_package(CUDA REQUIRED)
+find_package(CUDA 11.2 REQUIRED)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+### Optix ###
+set(CMAKE_MODULE_PATH "${OptiX_INSTALL_DIR}/SDK/CMake")
+find_package(OptiX REQUIRED)
+include_directories("${OptiX_INCLUDE}")
 
 ### Application.exe ###
 file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu)
