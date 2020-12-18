@@ -11,8 +11,12 @@ struct RayGenData
     float3* directions;
 };
 
-struct HitGroupData{
-    bool hit;
+struct EdgeIntersectionTestData{
+    bool edgeIntersection;
+};
+
+struct VertexInsideTestData{
+    bool vertexInside;
 };
 
 #endif //MESHCORE_OPTIXDATA_H

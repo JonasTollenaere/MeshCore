@@ -3,9 +3,12 @@
 //
 
 #include <cuda.h>
+#include <optix_stubs.h>
+#include <cuda_runtime.h>
 #include "OptixTask.h"
 #include "../core/WorldSpaceMesh.h"
 #include "../core/FileParser.h"
+#include "../optix/OptixWorldSpaceMesh.h"
 //#include "../optix/OptixWorldSpaceMesh.h"
 //#include "../optix/Exception.h"
 
@@ -28,20 +31,82 @@ void OptixTask::run() {
     this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
 
     //    0.    Create and initialise OptixDeviceContext
-//    OptixDeviceContext optixContext = nullptr;
-//    CUstream cuStream;
-//    {
-//        CUDA_CHECK(cudaFree(nullptr));
-//        CUcontext cuCtx = nullptr;
-//        OPTIX_CHECK(optixInit());
-//        OptixDeviceContextOptions options;
-//        options.logCallbackFunction = &context_log_cb;
-//        options.logCallbackLevel = 4;
-//        OPTIX_CHECK(optixDeviceContextCreate(cuCtx, &options, &optixContext));
-//        OPTIX_CHECK(optixDeviceContextSetCacheEnabled(optixContext, 1));
-//
-//        CUDA_CHECK(cudaStreamCreate(&cuStream));
-//    }
+    OptixDeviceContext optixContext = nullptr;
+    CUstream cuStream;
+    {
+        cudaFree(nullptr);
+        CUcontext cuCtx = nullptr;
+        optixInit();
+        OptixDeviceContextOptions options;
+        options.logCallbackFunction = &context_log_cb;
+        options.logCallbackLevel = 4;
+        optixDeviceContextCreate(cuCtx, &options, &optixContext);
+        optixDeviceContextSetCacheEnabled(optixContext, 1);
 
-//    OptixWorldSpaceMesh optixWorldSpaceMesh();
+        cudaStreamCreate(&cuStream);
+    }
+
+    OptixWorldSpaceMesh innerOptixWorldSpaceMesh(innerMesh, optixContext, cuStream);
+    OptixWorldSpaceMesh roughOptixWorldSpaceMesh(roughMesh, optixContext, cuStream);
+
+    Transformation currentTransformation = innerMesh.getModelTransformation();
+    std::cout << std::boolalpha;
+    int moves = 15;
+
+    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    for(int i=0; i<moves; i++){
+
+        Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * this->getRandomFloat(1)));
+        newTransformation = glm::rotate(newTransformation, this->getRandomFloat(1), glm::vec3(this->getRandomFloat(1) - 0.5, this->getRandomFloat(1)-0.5, this->getRandomFloat(1)-0.5));
+        newTransformation = glm::translate(newTransformation, glm::vec3(this->getRandomFloat(1) - 0.5f, this->getRandomFloat(1) - 0.5f,this->getRandomFloat(1)  - 0.5f));
+
+        innerOptixWorldSpaceMesh.setModelTransformation(newTransformation);
+//        innerMesh.setModelTransformationMatrix(newTransformation);
+
+        bool feasible;
+        feasible = innerOptixWorldSpaceMesh.isFullyInside(roughOptixWorldSpaceMesh);
+
+        std::cout << "Feasible: " << feasible << std::endl;
+
+//        if(!cudaInnerMesh.rayTriangleInside(cudaRoughMesh)){
+//            feasible = false;
+//
+//            assert(!innerMesh.rayTriangleInside(roughMesh));
+////            std::cout << "Vertices not inside" << std::endl;
+//        }
+//        else{
+////            std::cout << "Vertices inside" << std::endl;
+//            assert(innerMesh.rayTriangleInside(roughMesh));
+//            feasible = !cudaInnerMesh.triangleTriangleIntersects(cudaRoughMesh);
+//            if(feasible){
+//                assert(!innerMesh.triangleTriangleIntersects(roughMesh)); // TODO fails
+////                std::cout << "Triangles don't intersect" << std::endl;
+//            }
+//            else{
+//                assert(innerMesh.triangleTriangleIntersects(roughMesh));
+////                std::cout << "Triangles intersect" << std::endl;
+//            }
+//        }
+
+        if(feasible){
+            currentTransformation = newTransformation;
+
+            innerMesh.setModelTransformationMatrix(currentTransformation);
+            this->updateRenderMesh(innerMesh);
+
+        }
+        else{
+//            innerMesh.setModelTransformation(currentTransformation);
+        }
+    }
+
+    auto stopms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto totalms = stopms - startms;
+
+    std::cout << totalms << std::endl;
+
+    std::cout << currentTransformation << std::endl;
+    innerMesh.setModelTransformationMatrix(currentTransformation);
+    this->updateRenderMesh(innerMesh);
+    std::cout << "MPS: " << float(moves)/float(totalms)*1000.0f << std::endl;
 }

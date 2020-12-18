@@ -28,6 +28,6 @@ find_package(OptiX REQUIRED)
 include_directories("${OptiX_INCLUDE}")
 
 ### Application.exe ###
-file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu)
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu ../optix/*.cu ../optix/*.h)
 add_executable(Application ${SOURCES})
 set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

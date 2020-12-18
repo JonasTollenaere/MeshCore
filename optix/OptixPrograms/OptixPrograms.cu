@@ -36,39 +36,56 @@ extern "C" {
 __constant__ OptixLaunchParameters optixLaunchParameters;
 }
 
-extern "C" __global__ void __raygen__rg()
+extern "C" __global__ void __raygen__edgeIntersectionTest__()
 {
     const unsigned int idx = optixGetLaunchIndex().x;
-
     const RayGenData* rayGenData = reinterpret_cast<RayGenData*>(optixGetSbtDataPointer());
-//    printf("RayGen %d\tOrigin: (%.2f,%.2f,%.2f)\tDirection: (%.2f,%.2f,%.2f)\n", idx,
-//           rayGenData->origins[idx].x, rayGenData->origins[idx].y, rayGenData->origins[idx].z,
-//           rayGenData->directions[idx].x, rayGenData->directions[idx].y, rayGenData->directions[idx].z);
     optixTrace(
             optixLaunchParameters.handle,
             rayGenData->origins[idx],
             rayGenData->directions[idx],
-            0,                      // tmin
-            1 + EPSILON,            // tmax
+            0,
+            1 + EPSILON,
             0.0f,                 // Ignored and removed by the compiler if motion is not enabled
             OptixVisibilityMask(255),
-            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT, // No need to disable anyhit if this is done in the acceleration structures
-            0,                   // SBT offset, only used for different ray types
-            0,                   // SBT stride, only used for different ray types
-            0);               // missSBTIndex
+            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
+            0,                   // only used for different ray types
+            0,                   // only used for different ray types
+            0);
 }
 
-extern "C" __global__ void __miss__ms()
+extern "C" __global__ void __closesthit__edgeIntersectionTest__()
 {
-
+    printf("EdgeIntersection");
+    reinterpret_cast<EdgeIntersectionTestData*>(optixGetSbtDataPointer())->edgeIntersection = true;
 }
 
-
-extern "C" __global__ void __closesthit__ch()
+extern "C" __global__ void __raygen__vertexInsideTest__()
 {
     const unsigned int idx = optixGetLaunchIndex().x;
+    const RayGenData* rayGenData = reinterpret_cast<RayGenData*>(optixGetSbtDataPointer());
+    optixTrace(
+            optixLaunchParameters.handle,
+            rayGenData->origins[idx],
+            rayGenData->directions[idx],    // The direction doesn't really matter
+            0,
+            1e38f,
+            0.0f,                 // Ignored and removed by the compiler if motion is not enabled
+            OptixVisibilityMask(255),
+            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
+            0,                   // only used for different ray types
+            0,                   // only used for different ray types
+            0);
+}
 
-//    printf("Hit %d: %.5f\n", idx, optixGetRayTmax());
-    HitGroupData* hitGroupData = reinterpret_cast<HitGroupData*>(optixGetSbtDataPointer());
-    hitGroupData->hit = true;
+extern "C" __global__ void __closesthit__vertexInsideTest__()
+{
+    if(optixIsFrontFaceHit()){
+        reinterpret_cast<VertexInsideTestData*>(optixGetSbtDataPointer())->vertexInside = false;
+    }
+}
+
+extern "C" __global__ void __miss__vertexInsideTest__()
+{
+    reinterpret_cast<VertexInsideTestData*>(optixGetSbtDataPointer())->vertexInside = false;
 }

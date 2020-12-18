@@ -12,17 +12,22 @@ class OptixWorldSpaceMesh {
 
 private:
 
-    CUdeviceptr d_modelSpaceVertices;
-    CUdeviceptr d_triangleIndices;
-    CUdeviceptr d_edgeOrigins;
-    CUdeviceptr d_edgeDirections;
-    CUdeviceptr d_modelTransformation;
+    CUdeviceptr d_modelSpaceVertices{};
+    CUdeviceptr d_triangleIndices{};
+    CUdeviceptr d_modelSpaceEdgeOrigins{};
+    CUdeviceptr d_modelSpaceEdgeDirections{};
+    CUdeviceptr d_modelTransformation{};
+
+    unsigned int numberOfVertices;
+    unsigned int numberOfEdges;
+    unsigned int numberOfTriangles;
 
     const OptixDeviceContext* optixDeviceContext;
     const CUstream* cuStream;
 
-    OptixTraversableHandle modelSpaceHandle;
-    OptixTraversableHandle worldSpaceHandle;
+    OptixTraversableHandle modelSpaceHandle{};
+
+    Transformation modelTransformation{};
 
 public:
     OptixWorldSpaceMesh() = delete;
@@ -32,8 +37,8 @@ public:
 
     void setModelTransformation(const Transformation& transformation);
 
-    bool isInside(const OptixWorldSpaceMesh &other) const;
-    bool isOutside(const OptixWorldSpaceMesh& other) const;
+    bool isFullyInside(const OptixWorldSpaceMesh &other) const;
+    bool isFullyOutside(const OptixWorldSpaceMesh& other) const;
 };
 
 
