@@ -60,13 +60,18 @@ d_modelSpaceEdgeDirections(0)
     numberOfVertices = modelSpaceVertices.size();
     numberOfEdges = edgeOrigins.size();
 
-    assert(edgeOrigins.size()==edgeDirections.size()==numberOfEdges);
+    assert(edgeOrigins.size()==edgeDirections.size());
 
     cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), sizeof(float3) * numberOfVertices, this->cuStream[0]);
     cudaMallocAsync(reinterpret_cast<void **>(&d_triangleIndices), sizeof(uint3) * numberOfTriangles, this->cuStream[0]);
     cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceEdgeOrigins), sizeof(float3) * numberOfEdges, this->cuStream[0]);
     cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceEdgeDirections), sizeof(float3) * numberOfEdges, this->cuStream[0]);
     cudaMallocAsync(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform), this->cuStream[0]);
+
+    cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceVertices), modelSpaceVertices.data(), sizeof(float3) * numberOfVertices, cudaMemcpyHostToDevice, this->cuStream[0]);
+    cudaMemcpyAsync(reinterpret_cast<void *>(d_triangleIndices), triangleIndices.data(), sizeof(uint3) * numberOfTriangles, cudaMemcpyHostToDevice, this->cuStream[0]);
+    cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceEdgeOrigins), edgeOrigins.data(), sizeof(float3) * numberOfEdges, cudaMemcpyHostToDevice, this->cuStream[0]);
+    cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceEdgeDirections), edgeDirections.data(), sizeof(float3) * numberOfEdges, cudaMemcpyHostToDevice, this->cuStream[0]);
 
     OptixAccelBuildOptions accelOptions = {};
     accelOptions.operation  = OPTIX_BUILD_OPERATION_BUILD;
@@ -123,7 +128,7 @@ OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
 
 bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const {
 
-//    2.    Create a pipeline of programs that contains all programs that will be invoked during a ray tracing launch.
+//    2.    Create a edgeIntersectionPipeline of programs that contains all programs that will be invoked during a ray tracing launch.
     // TODO The pipelines should be created only once, somewhere else
 
     // Set the options for module compilation
@@ -132,10 +137,10 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
     moduleCompileOptions.optLevel = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
     moduleCompileOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
 
-    // Set the options for pipeline compilation
+    // Set the options for edgeIntersectionPipeline compilation
     OptixPipelineCompileOptions pipelineCompileOptions = {};
     pipelineCompileOptions.usesMotionBlur = false;
-    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
+    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_ANY;
     pipelineCompileOptions.numPayloadValues = 0;
     pipelineCompileOptions.numAttributeValues = 0;
     pipelineCompileOptions.pipelineLaunchParamsVariableName = "optixLaunchParameters";
@@ -162,7 +167,7 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
                                          &logStringSize,
                                          &ptxModule);
 
-    std::cout << logString << std::endl;
+//    std::cout << logString << std::endl;
 
     // Use the modules to create the necessary programgroups (RAYGEN + HITGROUP + MISS)
     OptixProgramGroupDesc programGroupDescriptions[3] = {};
@@ -186,9 +191,9 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
                                         logString, &logStringSize,
                                         programGroups);
 
-    std::cout << logString << std::endl;
-    // Create a pipeline with these program groups
-    OptixPipeline pipeline = nullptr;
+//    std::cout << logString << std::endl;
+    // Create a edgeIntersectionPipeline with these program groups
+    OptixPipeline edgeIntersectionPipeline = nullptr;
     OptixPipelineLinkOptions pipelineLinkOptions = {};
     pipelineLinkOptions.maxTraceDepth = 16;              // TODO check what this does exactly
     pipelineLinkOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
@@ -197,7 +202,7 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
                                     &pipelineLinkOptions,
                                     programGroups, 3,
                                     logString, &logStringSize,
-                                    &pipeline);
+                                    &edgeIntersectionPipeline);
 
     //    3.    Create a shader binding table that includes references to these programs and their parameters.
 
@@ -223,7 +228,6 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
     sbt.hitgroupRecordStrideInBytes = sizeof(EdgeIntersectionSbtRecord);
     sbt.hitgroupRecordCount = 1;
 
-
     CUdeviceptr d_missRecord;
     char missHeader[OPTIX_SBT_RECORD_HEADER_SIZE];
     optixSbtRecordPackHeader(programGroups[2], &missHeader);
@@ -233,36 +237,16 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
     sbt.missRecordCount = 1;
     sbt.missRecordStrideInBytes = OPTIX_SBT_RECORD_HEADER_SIZE;
 
-    std::cout << "Number of edges: " << numberOfEdges << std::endl;
-
     //    4.    Launch a device-side kernel that will invoke a ray generation program with a multitude of threads calling
     //          optixTrace to begin traversal and the execution of the other programs.
 
     // Set the launch parameters and copy them to device memory
-
-
     Transformation otherToCurrentWorldSpaceTransformation = glm::inverse(this->modelTransformation) * other.modelTransformation;
 
     Transformation otherToCurrentModelSpaceTransformationTransposed = glm::transpose(otherToCurrentWorldSpaceTransformation);
     Transformation inverseOtherToCurrentModelSpaceTransformationTransposed = glm::transpose(glm::inverse(otherToCurrentWorldSpaceTransformation));
     const float* transform = glm::value_ptr(otherToCurrentModelSpaceTransformationTransposed);
     const float* inverseTransform = glm::value_ptr(inverseOtherToCurrentModelSpaceTransformationTransposed);
-
-    std::cout << otherToCurrentModelSpaceTransformationTransposed << std::endl;
-    std::cout << inverseOtherToCurrentModelSpaceTransformationTransposed << std::endl;
-    std::cout << otherToCurrentModelSpaceTransformationTransposed * inverseOtherToCurrentModelSpaceTransformationTransposed<< std::endl;
-    std::cout << "{";
-    for(int i=0; i<12; i++){
-        std::cout << transform[i] << ",";
-    }
-    std::cout << "}";
-    std::cout << std::endl;
-    std::cout << "{";
-    for(int i=0; i<12; i++){
-        std::cout << inverseTransform[i] << ",";
-    }
-    std::cout << "}";
-    std::cout << std::endl;
 
     OptixStaticTransform optixOtherToCurrentModelTransformation;
     memcpy(optixOtherToCurrentModelTransformation.transform, transform, sizeof(float)*12);
@@ -273,7 +257,6 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
     OptixTraversableHandle currentModelSpaceHandle = {};
     optixConvertPointerToTraversableHandle(this->optixDeviceContext[0], d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &currentModelSpaceHandle);
 
-
     OptixLaunchParameters optixLaunchParameters = {};
     optixLaunchParameters.handle = currentModelSpaceHandle;
 
@@ -283,10 +266,10 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
 
     bool* d_hitPointer = &(reinterpret_cast<EdgeIntersectionSbtRecord*>(d_hitGroupRecord))->data.edgeIntersection;
 
-    optixLaunch(pipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1);
+    optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1);
 
     cudaMemcpyAsync(&hitGroupRecord.data.edgeIntersection, d_hitPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]);
-
+//    cudaMemcpyAsync(&hitGroupRecord, reinterpret_cast<void *>(d_hitGroupRecord),  sizeof(EdgeIntersectionSbtRecord), cudaMemcpyDeviceToHost, this->cuStream[0]);
     cudaStreamSynchronize(this->cuStream[0]);
 
     return !hitGroupRecord.data.edgeIntersection;

@@ -6,10 +6,10 @@
 #include <optix_stubs.h>
 #include <cuda_runtime.h>
 #include "OptixTask.h"
-#include "../core/WorldSpaceMesh.h"
+
 #include "../core/FileParser.h"
 #include "../optix/OptixWorldSpaceMesh.h"
-//#include "../optix/OptixWorldSpaceMesh.h"
+
 //#include "../optix/Exception.h"
 
 static void context_log_cb( unsigned int level, const char* tag, const char* message, void* cbdata)
@@ -37,9 +37,9 @@ void OptixTask::run() {
         cudaFree(nullptr);
         CUcontext cuCtx = nullptr;
         optixInit();
-        OptixDeviceContextOptions options;
-        options.logCallbackFunction = &context_log_cb;
-        options.logCallbackLevel = 4;
+        OptixDeviceContextOptions options = {};
+//        options.logCallbackFunction = &context_log_cb;
+//        options.logCallbackLevel = 4;
         optixDeviceContextCreate(cuCtx, &options, &optixContext);
         optixDeviceContextSetCacheEnabled(optixContext, 1);
 
@@ -51,7 +51,7 @@ void OptixTask::run() {
 
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
-    int moves = 15;
+    int moves = 1500;
 
     auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
@@ -66,7 +66,7 @@ void OptixTask::run() {
         bool feasible;
         feasible = innerOptixWorldSpaceMesh.isFullyInside(roughOptixWorldSpaceMesh);
 
-        std::cout << "Feasible: " << feasible << std::endl;
+//        std::cout << "Feasible: " << feasible << std::endl;
 
 //        if(!cudaInnerMesh.rayTriangleInside(cudaRoughMesh)){
 //            feasible = false;
