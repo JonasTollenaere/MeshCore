@@ -29,13 +29,13 @@
 //typedef SbtRecord<EdgeIntersectionTestData> EdgeIntersectionSbtRecord;
 //
 //
-//static void context_log_cb( unsigned int level, const char* tag, const char* message, void* cbdata)
+//static void optix_context_log_cb( unsigned int level, const char* tag, const char* message, void* cbdata)
 //{
 //    std::cerr << "[" << level << "][" << tag << "]:\t"
 //              << message << "\n";
 //}
 //
-//static float3 vertexToFloat3(const Vertex& vertex){
+//static float3 vec3ToFloat3(const Vertex& vertex){
 //    return make_float3(vertex.x, vertex.y, vertex.z);
 //}
 //
@@ -61,7 +61,7 @@
 //            CUcontext cuCtx = nullptr;
 //            OPTIX_CHECK(optixInit());
 //            OptixDeviceContextOptions options;
-//            options.logCallbackFunction = &context_log_cb;
+//            options.logCallbackFunction = &optix_context_log_cb;
 //            options.logCallbackLevel = 4;
 //            OPTIX_CHECK(optixDeviceContextCreate(cuCtx, &options, &optixContext));
 //            OPTIX_CHECK(optixDeviceContextSetCacheEnabled(optixContext, 1));
@@ -83,7 +83,7 @@
 //        std::vector<float3> modelSpaceVertices;
 //        CUdeviceptr d_modelSpaceVertices;
 //        for(Vertex vertex: roughWorldSpaceMesh.getModelSpaceMesh().vertices){
-//            modelSpaceVertices.emplace_back(vertexToFloat3(vertex));
+//            modelSpaceVertices.emplace_back(vec3ToFloat3(vertex));
 //        }
 //        unsigned int verticesBytes = numberOfVertices * sizeof(float3);
 //        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), verticesBytes, cuStream));
@@ -260,12 +260,12 @@
 //            Vertex v0 = innerWorldSpaceMesh.getModelSpaceMesh().vertices[triangle.vertexIndex0];
 //            Vertex v1 = innerWorldSpaceMesh.getModelSpaceMesh().vertices[triangle.vertexIndex1];
 //            Vertex v2 = innerWorldSpaceMesh.getModelSpaceMesh().vertices[triangle.vertexIndex2];
-//            origins.emplace_back(vertexToFloat3(v0));
-//            directions.emplace_back(vertexToFloat3(v1-v0));
-//            origins.emplace_back(vertexToFloat3(v1));
-//            directions.emplace_back(vertexToFloat3(v2-v1));
-//            origins.emplace_back(vertexToFloat3(v2)); // TODO testing 2 edges should be enough?
-//            directions.emplace_back(vertexToFloat3(v0-v2));
+//            origins.emplace_back(vec3ToFloat3(v0));
+//            directions.emplace_back(vec3ToFloat3(v1-v0));
+//            origins.emplace_back(vec3ToFloat3(v1));
+//            directions.emplace_back(vec3ToFloat3(v2-v1));
+//            origins.emplace_back(vec3ToFloat3(v2)); // TODO testing 2 edges should be enough?
+//            directions.emplace_back(vec3ToFloat3(v0-v2));
 //        }
 //        float3* d_origins;
 //        float3* d_directions;
