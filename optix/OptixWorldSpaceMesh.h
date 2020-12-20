@@ -20,6 +20,13 @@ private:
     CUdeviceptr d_modelTransformation{};
     CUdeviceptr d_optixLaunchParameters{};
 
+    // SBT
+    CUdeviceptr d_missRecord;
+    CUdeviceptr d_hitGroupRecord;
+    CUdeviceptr d_raygenRecord;
+
+    CUdeviceptr d_outputGAS;
+
     bool* d_EdgeIntersectionPointer;
 
     unsigned int numberOfVertices;

@@ -95,10 +95,10 @@ optixDeviceContext(optixDeviceContext)
 
     OptixAccelBufferSizes bufferSizes;
     OPTIX_CALL(optixAccelComputeMemoryUsage(optixDeviceContext, &accelOptions, &buildInput, 1, &bufferSizes));
-    CUdeviceptr d_outputGAS;
+
     CUdeviceptr d_temp;
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes));
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes));
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes, this->cuStream[0]));
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes, this->cuStream[0]));
 
     OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
                     &accelOptions, &buildInput, 1, d_temp,
@@ -106,11 +106,13 @@ optixDeviceContext(optixDeviceContext)
                     bufferSizes.outputSizeInBytes, &modelSpaceHandle,
                     nullptr, 0)); // Last 2 elements used for compacting
 
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_temp), this->cuStream[0]));
+
     ///    2.    Create a edgeIntersectionPipeline of programs that contains all programs that will be invoked during a ray tracing launch.
     // Set the options for module compilation
     OptixModuleCompileOptions moduleCompileOptions = {};
     moduleCompileOptions.maxRegisterCount = OPTIX_COMPILE_DEFAULT_MAX_REGISTER_COUNT;
-    moduleCompileOptions.optLevel = OPTIX_COMPILE_OPTIMIZATION_LEVEL_3;
+    moduleCompileOptions.optLevel = OPTIX_COMPILE_OPTIMIZATION_DEFAULT; // Default is OPTIX_COMPILE_OPTIMIZATION_LEVEL_3 (run all optimizations)
 #if NDEBUG
     moduleCompileOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_NONE;
 #else
@@ -188,16 +190,14 @@ optixDeviceContext(optixDeviceContext)
     rayGenRecord.data = {};
     rayGenRecord.data.origins = reinterpret_cast<float3 *>(this->d_modelSpaceEdgeOrigins);
     rayGenRecord.data.directions = reinterpret_cast<float3 *>(this->d_modelSpaceEdgeDirections);
-    CUdeviceptr d_raygenRecord;
     const size_t raygen_record_size = sizeof(RayGenSbtRecord);
     OPTIX_CALL(optixSbtRecordPackHeader(programGroups[0], &rayGenRecord));
     CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_raygenRecord), raygen_record_size, this->cuStream[0]));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_raygenRecord), &rayGenRecord, sizeof(RayGenSbtRecord), cudaMemcpyHostToDevice, this->cuStream[0]));
     sbt.raygenRecord = d_raygenRecord;
-
     EdgeIntersectionSbtRecord hitGroupRecord = {};
     hitGroupRecord.data.edgeIntersection = false;
-    CUdeviceptr d_hitGroupRecord;
+
     OPTIX_CALL(optixSbtRecordPackHeader(programGroups[1], &hitGroupRecord));
     CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_hitGroupRecord), sizeof(EdgeIntersectionSbtRecord), this->cuStream[0]));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_hitGroupRecord), &hitGroupRecord, sizeof(EdgeIntersectionSbtRecord), cudaMemcpyHostToDevice, this->cuStream[0]));
@@ -205,7 +205,6 @@ optixDeviceContext(optixDeviceContext)
     sbt.hitgroupRecordStrideInBytes = sizeof(EdgeIntersectionSbtRecord);
     sbt.hitgroupRecordCount = 1;
 
-    CUdeviceptr d_missRecord;
     char missHeader[OPTIX_SBT_RECORD_HEADER_SIZE];
     OPTIX_CALL(optixSbtRecordPackHeader(programGroups[2], &missHeader));
     CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_missRecord), OPTIX_SBT_RECORD_HEADER_SIZE, this->cuStream[0]));
@@ -224,6 +223,12 @@ OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceEdgeDirections), this->cuStream[0]));
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelTransformation), this->cuStream[0]));
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_optixLaunchParameters), this->cuStream[0]));
+
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_missRecord), this->cuStream[0]));
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_hitGroupRecord), this->cuStream[0]));
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_raygenRecord), this->cuStream[0]));
+
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_outputGAS), this->cuStream[0]));
 }
 
 bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const {
@@ -242,20 +247,23 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
 
 
     // Set the launch parameters and copy them to device memory
-    OptixTraversableHandle currentModelSpaceHandle = {};
-    OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &currentModelSpaceHandle));
+    OptixTraversableHandle currentWorldSpaceHandle = {};
+    OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &currentWorldSpaceHandle));
     OptixLaunchParameters optixLaunchParameters = {};
-    optixLaunchParameters.handle = currentModelSpaceHandle;
+    optixLaunchParameters.handle = currentWorldSpaceHandle;
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), &optixLaunchParameters, sizeof(optixLaunchParameters),cudaMemcpyHostToDevice, this->cuStream[0]));
 
 
     //    4.    Launch a device-side kernel that will invoke a ray generation program with a multitude of threads calling
     //          optixTrace to begin traversal and the execution of the other programs.
-    bool intersection = false;
-    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &intersection, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
+    bool intersection;
     OPTIX_CALL(optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1));
     CUDA_CALL(cudaMemcpyAsync(&intersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
     CUDA_CALL(cudaStreamSynchronize(this->cuStream[0]));
+
+    // We reset the value on d_EdgeIntersectionPointer afterwards, this way it can execute asynchronously
+    bool resetIntersectionValue = false;
+    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &resetIntersectionValue, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
     return !intersection;
 }
 

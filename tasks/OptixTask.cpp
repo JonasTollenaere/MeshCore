@@ -13,10 +13,11 @@
 
 void OptixTask::run() {
 
-    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
-//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
+//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
 //    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
-    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(1.0f)));
+    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
     this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
     const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
     WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5,
@@ -47,7 +48,7 @@ void OptixTask::run() {
 
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
-    int moves = 150000;
+    int moves = 50000;
 
     auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
