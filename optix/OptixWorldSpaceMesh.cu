@@ -214,9 +214,16 @@ optixDeviceContext(optixDeviceContext)
     sbt.missRecordStrideInBytes = OPTIX_SBT_RECORD_HEADER_SIZE;
 
     d_EdgeIntersectionPointer = &(reinterpret_cast<EdgeIntersectionSbtRecord*>(d_hitGroupRecord))->data.edgeIntersection;
+
+    CUDA_CALL(cudaMallocHost(&h_hitGroupRecord, sizeof(EdgeIntersectionSbtRecord)));
+    CUDA_CALL(cudaMallocHost(&h_modelTransformation, sizeof(OptixStaticTransform)));
+    CUDA_CALL(cudaMallocHost(&h_optixLaunchParameters, sizeof(OptixLaunchParameters)));
+    CUDA_CALL(cudaMallocHost(&h_iterationData, sizeof(IterationData)));
 }
 
 OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
+
+    // TODO memory used during building can be freed earlier
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), this->cuStream[0]));
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_triangleIndices), this->cuStream[0]));
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceEdgeOrigins), this->cuStream[0]));
@@ -229,6 +236,11 @@ OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_raygenRecord), this->cuStream[0]));
 
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_outputGAS), this->cuStream[0]));
+
+    CUDA_CALL(cudaFreeHost(h_hitGroupRecord));
+    CUDA_CALL(cudaFreeHost(h_modelTransformation));
+    CUDA_CALL(cudaFreeHost(h_optixLaunchParameters));
+    CUDA_CALL(cudaFreeHost(h_iterationData));
 }
 
 bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const {
@@ -239,32 +251,34 @@ bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const 
     const float* transform = glm::value_ptr(otherToCurrentModelSpaceTransformationTransposed);
     const float* inverseTransform = glm::value_ptr(inverseOtherToCurrentModelSpaceTransformationTransposed);
 
-    OptixStaticTransform optixOtherToCurrentModelTransformation;
-    memcpy(optixOtherToCurrentModelTransformation.transform, transform, sizeof(float)*12);
-    memcpy(optixOtherToCurrentModelTransformation.invTransform, inverseTransform, sizeof(float)*12);
-    optixOtherToCurrentModelTransformation.child = other.modelSpaceHandle;
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelTransformation), &optixOtherToCurrentModelTransformation, sizeof(OptixStaticTransform), cudaMemcpyHostToDevice, this->cuStream[0]));
+    *h_modelTransformation = OptixStaticTransform();
+    memcpy(h_modelTransformation->transform, transform, sizeof(float)*12);
+    memcpy(h_modelTransformation->invTransform, inverseTransform, sizeof(float)*12);
+    h_modelTransformation->child = other.modelSpaceHandle;
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelTransformation), h_modelTransformation, sizeof(OptixStaticTransform), cudaMemcpyHostToDevice, this->cuStream[0]));
 
 
     // Set the launch parameters and copy them to device memory
     OptixTraversableHandle currentWorldSpaceHandle = {};
     OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &currentWorldSpaceHandle));
-    OptixLaunchParameters optixLaunchParameters = {};
-    optixLaunchParameters.handle = currentWorldSpaceHandle;
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), &optixLaunchParameters, sizeof(optixLaunchParameters),cudaMemcpyHostToDevice, this->cuStream[0]));
+    *h_optixLaunchParameters = OptixLaunchParameters();
+    h_optixLaunchParameters->handle = currentWorldSpaceHandle;
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), h_optixLaunchParameters, sizeof(OptixLaunchParameters),cudaMemcpyHostToDevice, this->cuStream[0]));
 
 
     //    4.    Launch a device-side kernel that will invoke a ray generation program with a multitude of threads calling
     //          optixTrace to begin traversal and the execution of the other programs.
-    bool intersection;
     OPTIX_CALL(optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1));
-    CUDA_CALL(cudaMemcpyAsync(&intersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
+    CUDA_CALL(cudaMemcpyAsync(&h_hitGroupRecord->data.edgeIntersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
     CUDA_CALL(cudaStreamSynchronize(this->cuStream[0]));
 
+
+    bool returnValue = !h_hitGroupRecord->data.edgeIntersection;
+
     // We reset the value on d_EdgeIntersectionPointer afterwards, this way it can execute asynchronously
-    bool resetIntersectionValue = false;
-    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &resetIntersectionValue, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
-    return !intersection;
+    h_hitGroupRecord->data.edgeIntersection = false;
+    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &h_hitGroupRecord->data.edgeIntersection, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
+    return returnValue;
 }
 
 bool OptixWorldSpaceMesh::isFullyOutside(const OptixWorldSpaceMesh &other) const{

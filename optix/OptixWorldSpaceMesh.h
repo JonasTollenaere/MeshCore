@@ -8,6 +8,15 @@
 #include <optix.h>
 #include "../core/WorldSpaceMesh.h"
 #include "OptixPipeLineContext.h"
+#include "OptixData.h"
+#include "OptixLaunchParameters.h"
+
+
+struct IterationData{
+    EdgeIntersectionSbtRecord hitGroupRecord;
+    OptixStaticTransform modelTransformation;
+    OptixLaunchParameters optixLaunchParameters;
+};
 
 class OptixWorldSpaceMesh {
 
@@ -26,6 +35,13 @@ private:
     CUdeviceptr d_raygenRecord;
 
     CUdeviceptr d_outputGAS;
+
+    // Host pinned memory
+    EdgeIntersectionSbtRecord* h_hitGroupRecord;
+    OptixStaticTransform* h_modelTransformation;
+    OptixLaunchParameters* h_optixLaunchParameters;
+
+    IterationData* h_iterationData;
 
     bool* d_EdgeIntersectionPointer;
 

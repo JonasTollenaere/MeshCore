@@ -21,6 +21,10 @@ enable_language(CUDA)
 set(CMAKE_CUDA_STANDARD 14)
 find_package(CUDA 11.2 REQUIRED)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+#message(CUDA_LIBRARIES: ${CUDA_LIBRARIES})
+#message(CUDA_CUDA_LIBRARY: ${CUDA_CUDA_LIBRARY})
+#link_libraries("${CUDA_LIBRARIES}")
+#link_libraries("${CUDA_CUDA_LIBRARY}")
 
 ### Optix ###
 set(CMAKE_MODULE_PATH "${OptiX_INSTALL_DIR}/SDK/CMake")
