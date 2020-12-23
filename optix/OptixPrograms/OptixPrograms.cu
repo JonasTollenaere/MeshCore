@@ -1,5 +1,4 @@
-#include <optix.h>
-#include "../OptixLaunchParameters.h"
+#include <optix.h>+
 #include "../OptixData.h"
 
 #define EPSILON 0.000001f

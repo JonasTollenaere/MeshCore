@@ -28,4 +28,16 @@ struct SbtRecord
 typedef SbtRecord<RayGenData> RayGenSbtRecord;
 typedef SbtRecord<EdgeIntersectionTestData> EdgeIntersectionSbtRecord;
 
+struct OptixLaunchParameters
+{
+    OptixTraversableHandle handle;
+};
+
+struct IterationData
+{
+    OptixLaunchParameters optixLaunchParameters;
+    EdgeIntersectionSbtRecord edgeIntersectionSbtRecord;
+    OptixStaticTransform modelTransformation;
+};
+
 #endif //MESHCORE_OPTIXDATA_H

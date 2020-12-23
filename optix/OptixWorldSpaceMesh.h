@@ -9,14 +9,6 @@
 #include "../core/WorldSpaceMesh.h"
 #include "OptixPipeLineContext.h"
 #include "OptixData.h"
-#include "OptixLaunchParameters.h"
-
-
-struct IterationData{
-    EdgeIntersectionSbtRecord hitGroupRecord;
-    OptixStaticTransform modelTransformation;
-    OptixLaunchParameters optixLaunchParameters;
-};
 
 class OptixWorldSpaceMesh {
 
@@ -42,6 +34,11 @@ private:
     OptixLaunchParameters* h_optixLaunchParameters;
 
     IterationData* h_iterationData;
+    IterationData* d_iterationData;
+    CUdeviceptr d_structModelTransformation;
+    CUdeviceptr d_structOptixLaunchParameters;
+    CUdeviceptr d_structEdgeIntersectionSbtRecord;
+    EdgeIntersectionSbtRecord hitGroupRecord = {};
 
     bool* d_EdgeIntersectionPointer;
 
@@ -67,6 +64,8 @@ public:
 
     bool isFullyInside(const OptixWorldSpaceMesh &other) const;
     bool isFullyOutside(const OptixWorldSpaceMesh& other) const;
+
+    bool isFullyInsideWithStruct(const OptixWorldSpaceMesh &other) const;
 };
 
 
