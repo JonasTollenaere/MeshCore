@@ -62,7 +62,7 @@ public:
 
     void setModelTransformation(const Transformation& transformation);
 
-    bool isFullyInside(const OptixWorldSpaceMesh &other) const;
+//    bool isFullyInside(const OptixWorldSpaceMesh &other) const;
     bool isFullyOutside(const OptixWorldSpaceMesh& other) const;
 
     bool isFullyInsideWithStruct(const OptixWorldSpaceMesh &other) const;

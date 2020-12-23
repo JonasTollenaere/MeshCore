@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Triangle.h"
 #include "Ray.h"
+#include "Edge.h"
 
 class ModelSpaceMesh {
 public:
@@ -21,9 +22,10 @@ public:
     ModelSpaceMesh(const ModelSpaceMesh& other);
     bool includes(const Vertex& modelSpaceVertex) const;
     ~ModelSpaceMesh();
-
+    std::vector<Edge> getEdges() const;
 private:
     unsigned int calculateNumberOfIntersections(Ray modelSpaceRay) const;
+
 };
 
 #endif //OPTIX_SAMPLES_MODELSPACEMESH_H
