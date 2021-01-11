@@ -1,4 +1,4 @@
-#include <optix.h>+
+#include <optix.h>
 #include "../OptixData.h"
 
 #define EPSILON 0.000001f
@@ -20,7 +20,7 @@ extern "C" __global__ void __raygen__edgeIntersectionTest__()
             1 + EPSILON,
             0.0f,                 // Ignored and removed by the compiler if motion is not enabled
             OptixVisibilityMask(255),
-            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
+            OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT | OPTIX_RAY_FLAG_DISABLE_ANYHIT,
             0,                   // only used for different ray types
             0,                   // only used for different ray types
             0);
