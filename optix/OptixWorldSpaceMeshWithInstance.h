@@ -10,7 +10,7 @@
 #include "OptixPipeLineContext.h"
 #include "OptixData.h"
 
-class OptixWorldSpaceMesh {
+class OptixWorldSpaceMeshWithInstance {
 
 private:
 
@@ -26,7 +26,10 @@ private:
     CUdeviceptr d_hitGroupRecord;
     CUdeviceptr d_raygenRecord;
 
+    CUdeviceptr d_instance;
     CUdeviceptr d_outputGAS;
+    CUdeviceptr d_outputInstance;
+    CUdeviceptr d_temp;
 
     // Host pinned memory
     EdgeIntersectionSbtRecord* h_hitGroupRecord;
@@ -50,19 +53,24 @@ private:
     const CUstream* cuStream;
 
     OptixPipeline edgeIntersectionPipeline;
+    OptixBuildInput instanceBuildInput = {};
+    OptixAccelBufferSizes instanceBufferSizes;
+    OptixInstance instance = {};
     OptixShaderBindingTable sbt{};
     OptixTraversableHandle modelSpaceHandle{};
+    OptixTraversableHandle worldSpaceHandle{};
     Transformation modelTransformation;
 
 public:
-    OptixWorldSpaceMesh() = delete;
-    OptixWorldSpaceMesh(const OptixWorldSpaceMesh& other) = delete;
-    explicit OptixWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const CUstream& cUStream, const OptixDeviceContext& optixDeviceContext);
-    ~OptixWorldSpaceMesh();
+    OptixWorldSpaceMeshWithInstance() = delete;
+    OptixWorldSpaceMeshWithInstance(const OptixWorldSpaceMeshWithInstance& other) = delete;
+    explicit OptixWorldSpaceMeshWithInstance(const WorldSpaceMesh& worldSpaceMesh, const CUstream& cUStream, const OptixDeviceContext& optixDeviceContext);
+    ~OptixWorldSpaceMeshWithInstance();
 
     void setModelTransformation(const Transformation& transformation);
 
-    bool intersects(const OptixWorldSpaceMesh &other) const;
+    bool intersects(const OptixWorldSpaceMeshWithInstance &other) const;
+    bool intersectsWithInstance(const OptixWorldSpaceMeshWithInstance &other);
 };
 
 

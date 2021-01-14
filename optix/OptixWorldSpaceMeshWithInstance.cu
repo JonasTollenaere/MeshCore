@@ -3,11 +3,11 @@
 //
 
 #include <optix_stubs.h>
-#include "OptixWorldSpaceMesh.h"
+#include "OptixWorldSpaceMeshWithInstance.h"
 #include "Exception.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
-#include <optix_function_table_definition.h>
+//#include <optix_function_table_definition.h>
 
 static float3 vec3ToFloat3(const glm::vec3& vec3){
     return make_float3(vec3.x, vec3.y, vec3.z);
@@ -17,7 +17,7 @@ static uint3 triangleToUint3(const Triangle& triangle){
     return make_uint3(triangle.vertexIndex0, triangle.vertexIndex1, triangle.vertexIndex2);
 }
 
-OptixWorldSpaceMesh::OptixWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const CUstream& cUStream, const OptixDeviceContext& optixDeviceContext):
+OptixWorldSpaceMeshWithInstance::OptixWorldSpaceMeshWithInstance(const WorldSpaceMesh& worldSpaceMesh, const CUstream& cUStream, const OptixDeviceContext& optixDeviceContext):
 modelTransformation(worldSpaceMesh.getModelTransformation()),
 d_triangleIndices(0),
 d_modelSpaceVertices(0),
@@ -79,7 +79,7 @@ optixDeviceContext(optixDeviceContext)
 
     OptixAccelBuildOptions accelOptions = {};
     accelOptions.operation  = OPTIX_BUILD_OPERATION_BUILD;
-    accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE;
+    accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE | OPTIX_BUILD_FLAG_ALLOW_UPDATE;
 
     // Populate the build input struct with our triangle data as well as
     // information about the sizes and types of our data
@@ -102,7 +102,6 @@ optixDeviceContext(optixDeviceContext)
     OptixAccelBufferSizes bufferSizes;
     OPTIX_CALL(optixAccelComputeMemoryUsage(optixDeviceContext, &accelOptions, &buildInput, 1, &bufferSizes));
 
-    CUdeviceptr d_temp;
     CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes, this->cuStream[0]));
     CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes, this->cuStream[0]));
 
@@ -113,6 +112,41 @@ optixDeviceContext(optixDeviceContext)
                     nullptr, 0)); // Last 2 elements used for compacting
 
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_temp), this->cuStream[0]));
+
+    // Allocate d_temp for updating the instancearray
+
+
+    // Now build the instance containing the transform
+    const float* transform = glm::value_ptr(glm::transpose(worldSpaceMesh.getModelTransformation()));
+    memcpy(instance.transform, transform, sizeof(float)*12);  // TODO in practice the model-to-model transformation is placed in this slot (see notes)
+    instance.sbtOffset = 0;
+    instance.visibilityMask = 255;
+    instance.flags = OPTIX_INSTANCE_FLAG_DISABLE_ANYHIT;
+    instance.traversableHandle = modelSpaceHandle;
+    instance.instanceId = 0;
+
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_instance), sizeof(OptixInstance), this->cuStream[0]));
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_instance), &instance, sizeof(OptixInstance), cudaMemcpyHostToDevice, this->cuStream[0]));
+
+    instanceBuildInput.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
+    instanceBuildInput.instanceArray.instances = d_instance;
+    instanceBuildInput.instanceArray.numInstances = 1;
+
+    OptixAccelBufferSizes instanceBufferSizes;
+    OPTIX_CALL(optixAccelComputeMemoryUsage(optixDeviceContext, &accelOptions, &instanceBuildInput, 1, &instanceBufferSizes));
+
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_outputInstance), instanceBufferSizes.outputSizeInBytes, this->cuStream[0]));
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), instanceBufferSizes.tempSizeInBytes, this->cuStream[0]));
+
+    OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
+                               &accelOptions, &instanceBuildInput, 1, d_temp,
+                               instanceBufferSizes.tempSizeInBytes, d_outputInstance,
+                               instanceBufferSizes.outputSizeInBytes, &worldSpaceHandle,
+                               nullptr, 0)); // Last 2 elements used for compacting
+
+    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_temp), this->cuStream[0]));
+    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes,
+                              this->cuStream[0]));
 
     ///    2.    Create a edgeIntersectionPipeline of programs that contains all programs that will be invoked during a ray tracing launch.
     // Set the options for module compilation
@@ -128,7 +162,7 @@ optixDeviceContext(optixDeviceContext)
     // Set the options for edgeIntersectionPipeline compilation
     OptixPipelineCompileOptions pipelineCompileOptions = {};
     pipelineCompileOptions.usesMotionBlur = false;
-    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_ANY;
+    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
     pipelineCompileOptions.numPayloadValues = 0;
     pipelineCompileOptions.numAttributeValues = 0;
     pipelineCompileOptions.pipelineLaunchParamsVariableName = "optixLaunchParameters";
@@ -166,7 +200,7 @@ optixDeviceContext(optixDeviceContext)
     programGroupDescriptions[1].kind = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
     programGroupDescriptions[1].hitgroup.moduleCH = ptxModule;
     programGroupDescriptions[1].hitgroup.entryFunctionNameCH = "__closesthit__edgeIntersectionTest__";
-//      As a special case, the intersection program is not required – and is ignored – for triangle primitives.
+    // As a special case, the intersection program is not required – and is ignored – for triangle primitives.
     programGroupDescriptions[2].kind = OPTIX_PROGRAM_GROUP_KIND_MISS;
     programGroupDescriptions[2].miss.module = nullptr;
     programGroupDescriptions[2].miss.entryFunctionName = nullptr;
@@ -232,7 +266,7 @@ optixDeviceContext(optixDeviceContext)
 
 }
 
-OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
+OptixWorldSpaceMeshWithInstance::~OptixWorldSpaceMeshWithInstance() {
 
     // TODO memory used during building can be freed earlier
     CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), this->cuStream[0]));
@@ -253,43 +287,48 @@ OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
     CUDA_CALL(cudaFreeHost(h_iterationData));
 
     CUDA_CALL(cudaFreeAsync(d_iterationData, this->cuStream[0]));
+    //    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_temp)));
 }
 
-//bool OptixWorldSpaceMesh::isFullyInside(const OptixWorldSpaceMesh &other) const {
-//
-//    Transformation otherToCurrentWorldSpaceTransformation = glm::inverse(this->modelTransformation) * other.modelTransformation;
-//    Transformation otherToCurrentModelSpaceTransformationTransposed = glm::transpose(otherToCurrentWorldSpaceTransformation);
-//    Transformation inverseOtherToCurrentModelSpaceTransformationTransposed = glm::inverse(otherToCurrentModelSpaceTransformationTransposed);
-//    const float* transform = glm::value_ptr(otherToCurrentModelSpaceTransformationTransposed);
-//    const float* inverseTransform = glm::value_ptr(inverseOtherToCurrentModelSpaceTransformationTransposed);
-//
-//    *h_modelTransformation = OptixStaticTransform{};
-//    memcpy(h_modelTransformation->transform, transform, sizeof(float)*12);
-//    memcpy(h_modelTransformation->invTransform, inverseTransform, sizeof(float)*12);
-//    h_modelTransformation->child = other.modelSpaceHandle;
-//    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelTransformation), h_modelTransformation, sizeof(OptixStaticTransform), cudaMemcpyHostToDevice, this->cuStream[0]));
-//
-//
-//    // Set the launch parameters and copy them to device memory
-//    *h_optixLaunchParameters = OptixLaunchParameters();
-//    OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_modelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &h_optixLaunchParameters->handle));
-//    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), h_optixLaunchParameters, sizeof(OptixLaunchParameters),cudaMemcpyHostToDevice, this->cuStream[0]));
-//
-//
-//    //    4.    Launch a device-side kernel that will invoke a ray generation program with a multitude of threads calling
-//    //          optixTrace to begin traversal and the execution of the other programs.
-//    OPTIX_CALL(optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1));
-//    CUDA_CALL(cudaMemcpyAsync(&h_hitGroupRecord->data.edgeIntersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
-//    CUDA_CALL(cudaStreamSynchronize(this->cuStream[0]));
-//    bool returnValue = !h_hitGroupRecord->data.edgeIntersection;
-//
-//    // We reset the value on d_EdgeIntersectionPointer afterwards, this way it can execute asynchronously
-//    h_hitGroupRecord->data.edgeIntersection = false;
-//    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &h_hitGroupRecord->data.edgeIntersection, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
-//    return returnValue;
-//}
+bool OptixWorldSpaceMeshWithInstance::intersectsWithInstance(const OptixWorldSpaceMeshWithInstance &other){
 
-bool OptixWorldSpaceMesh::intersects(const OptixWorldSpaceMesh &other) const {
+    Transformation otherToCurrentModelSpaceTransformation = glm::inverse(this->modelTransformation) * other.modelTransformation;
+    Transformation otherToCurrentModelSpaceTransformationTransposed = glm::transpose(otherToCurrentModelSpaceTransformation);
+    const float* transform = glm::value_ptr(otherToCurrentModelSpaceTransformationTransposed);
+    memcpy(instance.transform, transform, sizeof(float)*12);
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_instance), &instance, sizeof(OptixInstance), cudaMemcpyHostToDevice, this->cuStream[0]));
+
+    OptixAccelBuildOptions accelOptions = {};
+    accelOptions.operation = OPTIX_BUILD_OPERATION_UPDATE;
+    accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE | OPTIX_BUILD_FLAG_ALLOW_UPDATE;
+
+//    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes,
+//                              this->cuStream[0]));
+    OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
+                               &accelOptions, &instanceBuildInput, 1, d_temp,
+                               instanceBufferSizes.tempUpdateSizeInBytes, d_outputInstance,
+                               instanceBufferSizes.outputSizeInBytes, &worldSpaceHandle,
+                               nullptr, 0)); // Last 2 elements used for compacting
+
+    // Set the launch parameters and copy them to device memory
+    *h_optixLaunchParameters = OptixLaunchParameters();
+    h_optixLaunchParameters->handle = worldSpaceHandle;
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_optixLaunchParameters), h_optixLaunchParameters, sizeof(OptixLaunchParameters),cudaMemcpyHostToDevice, this->cuStream[0]));
+
+    //    4.    Launch a device-side kernel that will invoke a ray generation program with a multitude of threads calling
+    //          optixTrace to begin traversal and the execution of the other programs.
+    OPTIX_CALL(optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_optixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1));
+    CUDA_CALL(cudaMemcpyAsync(&h_hitGroupRecord->data.edgeIntersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
+    CUDA_CALL(cudaStreamSynchronize(this->cuStream[0]));
+    bool returnValue = !h_hitGroupRecord->data.edgeIntersection;
+
+    // We reset the value on d_EdgeIntersectionPointer afterwards, this way it can execute asynchronously
+    h_hitGroupRecord->data.edgeIntersection = false;
+    CUDA_CALL(cudaMemcpyAsync(d_EdgeIntersectionPointer, &h_hitGroupRecord->data.edgeIntersection, sizeof(bool), cudaMemcpyHostToDevice, this->cuStream[0]));
+    return returnValue;
+}
+
+bool OptixWorldSpaceMeshWithInstance::intersects(const OptixWorldSpaceMeshWithInstance &other) const {
 
     h_iterationData->edgeIntersectionSbtRecord.data.edgeIntersection= false;
     h_iterationData->modelTransformation = OptixStaticTransform{};
@@ -309,6 +348,6 @@ bool OptixWorldSpaceMesh::intersects(const OptixWorldSpaceMesh &other) const {
     return !h_hitGroupRecord->data.edgeIntersection;
 }
 
-void OptixWorldSpaceMesh::setModelTransformation(const Transformation &transformation) {
+void OptixWorldSpaceMeshWithInstance::setModelTransformation(const Transformation &transformation) {
     this->modelTransformation = transformation;
 }

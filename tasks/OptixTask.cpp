@@ -9,8 +9,8 @@
 #include "OptixTask.h"
 
 #include "../core/FileParser.h"
-#include "../optix/OptixWorldSpaceMesh.h"
 #include "../optix/Exception.h"
+#include "../optix/OptixWorldSpaceMeshWithInstance.h"
 
 void OptixTask::run() {
 
@@ -46,8 +46,8 @@ void OptixTask::run() {
 
     }
 
-    OptixWorldSpaceMesh innerOptixWorldSpaceMesh(innerMesh, cuStream, optixContext);
-    OptixWorldSpaceMesh roughOptixWorldSpaceMesh(roughMesh, cuStream, optixContext);
+    OptixWorldSpaceMeshWithInstance innerOptixWorldSpaceMesh(innerMesh, cuStream, optixContext);
+    OptixWorldSpaceMeshWithInstance roughOptixWorldSpaceMesh(roughMesh, cuStream, optixContext);
 
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
@@ -63,7 +63,7 @@ void OptixTask::run() {
         innerOptixWorldSpaceMesh.setModelTransformation(newTransformation);
 
         bool feasible;
-        feasible = innerOptixWorldSpaceMesh.intersects(roughOptixWorldSpaceMesh);
+        feasible = innerOptixWorldSpaceMesh.intersectsWithInstance(roughOptixWorldSpaceMesh);
         if(feasible){
             currentTransformation = newTransformation;
             innerMesh.setModelTransformationMatrix(currentTransformation);
