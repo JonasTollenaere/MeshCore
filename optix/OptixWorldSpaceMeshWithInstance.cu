@@ -59,19 +59,19 @@ optixDeviceContext(optixDeviceContext)
     assert(edgeOrigins.size()==edgeDirections.size());
     assert(numberOfEdges==edgeDirections.size());
 
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), sizeof(float3) * numberOfVertices, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_triangleIndices), sizeof(uint3) * numberOfTriangles, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceEdgeOrigins), sizeof(float3) * numberOfEdges, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceEdgeDirections), sizeof(float3) * numberOfEdges, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform), this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_optixLaunchParameters), sizeof(OptixLaunchParameters), this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_modelSpaceVertices), sizeof(float3) * numberOfVertices));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_triangleIndices), sizeof(uint3) * numberOfTriangles));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_modelSpaceEdgeOrigins), sizeof(float3) * numberOfEdges));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_modelSpaceEdgeDirections), sizeof(float3) * numberOfEdges));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_modelTransformation), sizeof(OptixStaticTransform)));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_optixLaunchParameters), sizeof(OptixLaunchParameters)));
 
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceVertices), modelSpaceVertices.data(), sizeof(float3) * numberOfVertices, cudaMemcpyHostToDevice, this->cuStream[0]));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_triangleIndices), triangleIndices.data(), sizeof(uint3) * numberOfTriangles, cudaMemcpyHostToDevice, this->cuStream[0]));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceEdgeOrigins), edgeOrigins.data(), sizeof(float3) * numberOfEdges, cudaMemcpyHostToDevice, this->cuStream[0]));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceEdgeDirections), edgeDirections.data(), sizeof(float3) * numberOfEdges, cudaMemcpyHostToDevice, this->cuStream[0]));
 
-    CUDA_CALL(cudaMallocAsync(&d_iterationData, sizeof(IterationData), this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(&d_iterationData, sizeof(IterationData)));
 
     d_structModelTransformation = reinterpret_cast<CUdeviceptr>(&d_iterationData->modelTransformation);
     d_structOptixLaunchParameters = reinterpret_cast<CUdeviceptr>(&d_iterationData->optixLaunchParameters);
@@ -102,8 +102,8 @@ optixDeviceContext(optixDeviceContext)
     OptixAccelBufferSizes bufferSizes;
     OPTIX_CALL(optixAccelComputeMemoryUsage(optixDeviceContext, &accelOptions, &buildInput, 1, &bufferSizes));
 
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes, this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_outputGAS), bufferSizes.outputSizeInBytes));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_temp), bufferSizes.tempSizeInBytes));
 
     OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
                     &accelOptions, &buildInput, 1, d_temp,
@@ -111,7 +111,7 @@ optixDeviceContext(optixDeviceContext)
                     bufferSizes.outputSizeInBytes, &modelSpaceHandle,
                     nullptr, 0)); // Last 2 elements used for compacting
 
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_temp), this->cuStream[0]));
+    CUDA_CALL(cudaFree(reinterpret_cast<void*>(d_temp)));
 
     // Allocate d_temp for updating the instancearray
 
@@ -125,7 +125,7 @@ optixDeviceContext(optixDeviceContext)
     instance.traversableHandle = modelSpaceHandle;
     instance.instanceId = 0;
 
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_instance), sizeof(OptixInstance), this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_instance), sizeof(OptixInstance)));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(d_instance), &instance, sizeof(OptixInstance), cudaMemcpyHostToDevice, this->cuStream[0]));
 
     instanceBuildInput.type = OPTIX_BUILD_INPUT_TYPE_INSTANCES;
@@ -135,8 +135,8 @@ optixDeviceContext(optixDeviceContext)
     OptixAccelBufferSizes instanceBufferSizes;
     OPTIX_CALL(optixAccelComputeMemoryUsage(optixDeviceContext, &accelOptions, &instanceBuildInput, 1, &instanceBufferSizes));
 
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_outputInstance), instanceBufferSizes.outputSizeInBytes, this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_temp), instanceBufferSizes.tempSizeInBytes, this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_outputInstance), instanceBufferSizes.outputSizeInBytes));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_temp), instanceBufferSizes.tempSizeInBytes));
 
     OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
                                &accelOptions, &instanceBuildInput, 1, d_temp,
@@ -144,9 +144,8 @@ optixDeviceContext(optixDeviceContext)
                                instanceBufferSizes.outputSizeInBytes, &worldSpaceHandle,
                                nullptr, 0)); // Last 2 elements used for compacting
 
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_temp), this->cuStream[0]));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes,
-                              this->cuStream[0]));
+    CUDA_CALL(cudaFree(reinterpret_cast<void*>(d_temp)));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes));
 
     ///    2.    Create a edgeIntersectionPipeline of programs that contains all programs that will be invoked during a ray tracing launch.
     // Set the options for module compilation
@@ -162,7 +161,8 @@ optixDeviceContext(optixDeviceContext)
     // Set the options for edgeIntersectionPipeline compilation
     OptixPipelineCompileOptions pipelineCompileOptions = {};
     pipelineCompileOptions.usesMotionBlur = false;
-    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
+    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;  // This can make about 10% difference on total executiontime
+//    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_ANY;
     pipelineCompileOptions.numPayloadValues = 0;
     pipelineCompileOptions.numAttributeValues = 0;
     pipelineCompileOptions.pipelineLaunchParamsVariableName = "optixLaunchParameters";
@@ -232,7 +232,7 @@ optixDeviceContext(optixDeviceContext)
     rayGenRecord.data.directions = reinterpret_cast<float3 *>(this->d_modelSpaceEdgeDirections);
     const size_t raygen_record_size = sizeof(RayGenSbtRecord);
     OPTIX_CALL(optixSbtRecordPackHeader(programGroups[0], &rayGenRecord));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void**>(&d_raygenRecord), raygen_record_size, this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_raygenRecord), raygen_record_size));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_raygenRecord), &rayGenRecord, sizeof(RayGenSbtRecord), cudaMemcpyHostToDevice, this->cuStream[0]));
     sbt.raygenRecord = d_raygenRecord;
 
@@ -246,7 +246,7 @@ optixDeviceContext(optixDeviceContext)
 
     char missHeader[OPTIX_SBT_RECORD_HEADER_SIZE];
     OPTIX_CALL(optixSbtRecordPackHeader(programGroups[2], &missHeader));
-    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_missRecord), OPTIX_SBT_RECORD_HEADER_SIZE, this->cuStream[0]));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_missRecord), OPTIX_SBT_RECORD_HEADER_SIZE));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_missRecord), &missHeader, OPTIX_SBT_RECORD_HEADER_SIZE, cudaMemcpyHostToDevice, this->cuStream[0]));
     sbt.missRecordBase = d_missRecord;
     sbt.missRecordCount = 1;
@@ -269,25 +269,25 @@ optixDeviceContext(optixDeviceContext)
 OptixWorldSpaceMeshWithInstance::~OptixWorldSpaceMeshWithInstance() {
 
     // TODO memory used during building can be freed earlier
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_triangleIndices), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceEdgeOrigins), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceEdgeDirections), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_modelTransformation), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_optixLaunchParameters), this->cuStream[0]));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_modelSpaceVertices)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_triangleIndices)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_modelSpaceEdgeOrigins)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_modelSpaceEdgeDirections)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_modelTransformation)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_optixLaunchParameters)));
 
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_missRecord), this->cuStream[0]));
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void *>(d_raygenRecord), this->cuStream[0]));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_missRecord)));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_raygenRecord)));
 
-    CUDA_CALL(cudaFreeAsync(reinterpret_cast<void*>(d_outputGAS), this->cuStream[0]));
+    CUDA_CALL(cudaFree(reinterpret_cast<void*>(d_outputGAS)));
 
     CUDA_CALL(cudaFreeHost(h_hitGroupRecord));
     CUDA_CALL(cudaFreeHost(h_modelTransformation));
     CUDA_CALL(cudaFreeHost(h_optixLaunchParameters));
     CUDA_CALL(cudaFreeHost(h_iterationData));
 
-    CUDA_CALL(cudaFreeAsync(d_iterationData, this->cuStream[0]));
-    //    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_temp)));
+    CUDA_CALL(cudaFree(d_iterationData));
+    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_temp)));
 }
 
 bool OptixWorldSpaceMeshWithInstance::intersectsWithInstance(const OptixWorldSpaceMeshWithInstance &other){
@@ -302,7 +302,7 @@ bool OptixWorldSpaceMeshWithInstance::intersectsWithInstance(const OptixWorldSpa
     accelOptions.operation = OPTIX_BUILD_OPERATION_UPDATE;
     accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE | OPTIX_BUILD_FLAG_ALLOW_UPDATE;
 
-//    CUDA_CALL(cudaMallocAsync(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes,
+//    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_temp), instanceBufferSizes.tempUpdateSizeInBytes,
 //                              this->cuStream[0]));
     OPTIX_CALL(optixAccelBuild(this->optixDeviceContext, this->cuStream[0],
                                &accelOptions, &instanceBuildInput, 1, d_temp,
