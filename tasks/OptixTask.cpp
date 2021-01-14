@@ -41,6 +41,9 @@ void OptixTask::run() {
         OPTIX_CALL(optixDeviceContextSetCacheEnabled(optixContext, 1));
         cuStream = nullptr;
 //        CUDA_CALL(cudaStreamCreate(&cuStream));
+        // Using streams seems to have a significant overhead when using the WDDM drivers, which is the only option for GeForce cards in windows.
+
+
     }
 
     OptixWorldSpaceMesh innerOptixWorldSpaceMesh(innerMesh, cuStream, optixContext);
@@ -60,7 +63,7 @@ void OptixTask::run() {
         innerOptixWorldSpaceMesh.setModelTransformation(newTransformation);
 
         bool feasible;
-        feasible = innerOptixWorldSpaceMesh.isFullyInside(roughOptixWorldSpaceMesh);
+        feasible = innerOptixWorldSpaceMesh.intersects(roughOptixWorldSpaceMesh);
         if(feasible){
             currentTransformation = newTransformation;
             innerMesh.setModelTransformationMatrix(currentTransformation);

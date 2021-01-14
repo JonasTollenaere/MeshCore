@@ -65,7 +65,7 @@ public:
 //    bool isFullyInside(const OptixWorldSpaceMesh &other) const;
     bool isFullyOutside(const OptixWorldSpaceMesh& other) const;
 
-    bool isFullyInsideWithStruct(const OptixWorldSpaceMesh &other) const;
+    bool intersects(const OptixWorldSpaceMesh &other) const;
 };
 
 

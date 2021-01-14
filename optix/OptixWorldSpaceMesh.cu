@@ -289,7 +289,7 @@ OptixWorldSpaceMesh::~OptixWorldSpaceMesh() {
 //    return returnValue;
 //}
 
-bool OptixWorldSpaceMesh::isFullyInsideWithStruct(const OptixWorldSpaceMesh &other) const {
+bool OptixWorldSpaceMesh::intersects(const OptixWorldSpaceMesh &other) const {
 
     h_iterationData->edgeIntersectionSbtRecord.data.edgeIntersection= false;
     h_iterationData->modelTransformation = OptixStaticTransform{};
