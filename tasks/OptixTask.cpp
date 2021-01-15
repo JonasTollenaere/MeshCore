@@ -4,7 +4,6 @@
 
 #include <cuda.h>
 #include <optix_stubs.h>
-#include <cuda.h>
 #include <cuda_runtime.h>
 #include "OptixTask.h"
 
@@ -62,9 +61,28 @@ void OptixTask::run() {
 
         innerOptixWorldSpaceMesh.setModelTransformation(newTransformation);
 
-        bool feasible;
-        feasible = innerOptixWorldSpaceMesh.intersectsWithInstance(roughOptixWorldSpaceMesh);
-        if(feasible){
+        bool intersects;
+        intersects = innerOptixWorldSpaceMesh.intersects(roughOptixWorldSpaceMesh);
+        bool intersects2 = roughOptixWorldSpaceMesh.intersects(innerOptixWorldSpaceMesh);
+
+        bool intersects3;
+        {
+            innerMesh.setModelTransformationMatrix(newTransformation);
+            intersects3 = innerMesh.triangleTriangleIntersects(roughMesh);
+        }
+
+        if(intersects != intersects2 || intersects != intersects3){
+            currentTransformation = newTransformation;
+            innerMesh.setModelTransformationMatrix(currentTransformation);
+            updateRenderMesh(innerMesh);
+            std::cout << "Feasibles not equal on move " << i << "!" << std::endl;
+            std::cout << "Feasible 1: " << intersects << std::endl;
+            std::cout << "Feasible 2: " << intersects2 << std::endl;
+            std::cout << "Feasible 3: " << intersects3 << std::endl;
+            break;
+        }
+
+        if(!intersects){
             currentTransformation = newTransformation;
             innerMesh.setModelTransformationMatrix(currentTransformation);
             updateRenderMesh(innerMesh);

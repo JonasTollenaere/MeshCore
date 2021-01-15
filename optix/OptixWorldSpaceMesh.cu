@@ -306,7 +306,7 @@ bool OptixWorldSpaceMesh::intersects(const OptixWorldSpaceMesh &other) const {
     OPTIX_CALL(optixLaunch(edgeIntersectionPipeline, this->cuStream[0], d_structOptixLaunchParameters, sizeof(OptixLaunchParameters), &sbt, numberOfEdges, 1, 1));
     CUDA_CALL(cudaMemcpyAsync(&h_hitGroupRecord->data.edgeIntersection, d_EdgeIntersectionPointer, sizeof(bool), cudaMemcpyDeviceToHost, this->cuStream[0]));
     CUDA_CALL(cudaStreamSynchronize(this->cuStream[0]));
-    return !h_hitGroupRecord->data.edgeIntersection;
+    return h_hitGroupRecord->data.edgeIntersection;
 }
 
 void OptixWorldSpaceMesh::setModelTransformation(const Transformation &transformation) {

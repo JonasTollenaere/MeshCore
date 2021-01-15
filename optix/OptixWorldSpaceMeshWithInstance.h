@@ -70,7 +70,9 @@ public:
     void setModelTransformation(const Transformation& transformation);
 
     bool intersects(const OptixWorldSpaceMeshWithInstance &other) const;
-    bool intersectsWithInstance(const OptixWorldSpaceMeshWithInstance &other);
+    bool intersectsWithInstance(OptixWorldSpaceMeshWithInstance &other);
+
+    bool intersectsWithInstanceInverted(const OptixWorldSpaceMeshWithInstance &other);
 };
 
 
