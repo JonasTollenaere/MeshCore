@@ -81,35 +81,35 @@
 //        // Prepare data to build
 //        unsigned int numberOfVertices = roughWorldSpaceMesh.getModelSpaceMesh().vertices.size();
 //        std::vector<float3> modelSpaceVertices;
-//        CUdeviceptr d_modelSpaceVertices;
+//        CUdeviceptr d_outerModelSpaceVertices;
 //        for(Vertex vertex: roughWorldSpaceMesh.getModelSpaceMesh().vertices){
 //            modelSpaceVertices.emplace_back(vec3ToFloat3(vertex));
 //        }
 //        unsigned int verticesBytes = numberOfVertices * sizeof(float3);
-//        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_modelSpaceVertices), verticesBytes, cuStream));
-//        CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_modelSpaceVertices), modelSpaceVertices.data(), verticesBytes, cudaMemcpyHostToDevice, cuStream));
+//        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_outerModelSpaceVertices), verticesBytes, cuStream));
+//        CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerModelSpaceVertices), modelSpaceVertices.data(), verticesBytes, cudaMemcpyHostToDevice, cuStream));
 //
 //        unsigned int numberOfTriangles = roughWorldSpaceMesh.getModelSpaceMesh().triangles.size();
 //        std::vector<unsigned int> triangleIndices;
-//        CUdeviceptr d_triangleIndices;
+//        CUdeviceptr d_outerTriangleIndices;
 //        for(Triangle triangle: roughWorldSpaceMesh.getModelSpaceMesh().triangles){
 //            triangleIndices.emplace_back(triangle.vertexIndex0);
 //            triangleIndices.emplace_back(triangle.vertexIndex1);
 //            triangleIndices.emplace_back(triangle.vertexIndex2);
 //        }
 //        unsigned int indicesBytes = numberOfTriangles * sizeof(float3);
-//        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_triangleIndices), indicesBytes, cuStream));
-//        CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_triangleIndices), triangleIndices.data(), indicesBytes, cudaMemcpyHostToDevice, cuStream));
+//        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void **>(&d_outerTriangleIndices), indicesBytes, cuStream));
+//        CUDA_CHECK(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerTriangleIndices), triangleIndices.data(), indicesBytes, cudaMemcpyHostToDevice, cuStream));
 //
 //        // Populate the build input struct with our triangle data as well as
 //        // information about the sizes and types of our data
 //        OptixBuildInput buildInput = {};
 //        buildInput.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-//        buildInput.triangleArray.vertexBuffers = &d_modelSpaceVertices;
+//        buildInput.triangleArray.vertexBuffers = &d_outerModelSpaceVertices;
 //        buildInput.triangleArray.numVertices = numberOfVertices;
 //        buildInput.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
 //        buildInput.triangleArray.vertexStrideInBytes = 0;
-//        buildInput.triangleArray.indexBuffer = d_triangleIndices;
+//        buildInput.triangleArray.indexBuffer = d_outerTriangleIndices;
 //        buildInput.triangleArray.numIndexTriplets = numberOfTriangles;
 //        buildInput.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
 //        buildInput.triangleArray.indexStrideInBytes = 0;
@@ -345,8 +345,8 @@
 //        // Finalize TODO check if these can be called earlier to save VRAM
 //        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_temp), cuStream));
 //        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_outputGAS), cuStream));
-//        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_modelSpaceVertices), cuStream));
-//        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_triangleIndices), cuStream));
+//        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_outerModelSpaceVertices), cuStream));
+//        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_outerTriangleIndices), cuStream));
 //        CUDA_CHECK(cudaFreeAsync(reinterpret_cast<void *>(d_optixLaunchParameters), cuStream));
 //        CUDA_CHECK(cudaFreeAsync(d_origins, cuStream));
 //        CUDA_CHECK(cudaFreeAsync(d_directions, cuStream));

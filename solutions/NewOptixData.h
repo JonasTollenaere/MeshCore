@@ -11,6 +11,8 @@ struct RayGenData
 {
     float3* origins;
     float3* directions;
+    float* transformations;
+    unsigned int* rayTransformIndices;
 };
 
 struct EdgeIntersectionTestData{

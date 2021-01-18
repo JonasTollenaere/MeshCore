@@ -30,8 +30,11 @@ include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 set(CMAKE_MODULE_PATH "${OptiX_INSTALL_DIR}/SDK/CMake")
 find_package(OptiX REQUIRED)
 include_directories("${OptiX_INCLUDE}")
+#add_library(OptixPrograms OBJECT ../optix/OptixPrograms/OptixPrograms.cu)
+#set_property(TARGET OptixPrograms PROPERTY CUDA_PTX_COMPILATION ON)
 
 ### Application.exe ###
-file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu ../optix/*.cu ../optix/*.h)
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu ../optix/*.cu ../optix/*.h ../solutions/*.cpp ../solutions/*.cu)
 add_executable(Application ${SOURCES})
 set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+#target_link_libraries(Application OptixPrograms)

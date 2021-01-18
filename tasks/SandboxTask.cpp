@@ -8,10 +8,137 @@
 #include "../core/FileParser.h"
 #include "../core/TriangleTriangleIntersectModified.h"
 #include "../core/TriangleTriangleIntersect.h"
+#include "../solutions/OptixSingleModelSolution.h"
+#include "../optix/Exception.h"
 #include <chrono>
 #include <glm/gtc/type_ptr.hpp>
+#include <cuda_runtime.h>
+#include <optix_stubs.h>
 
 void SandboxTask::run(){
+
+//    glm::vec3 inputVec(1.0f);
+//    glm::vec3 outputVec1(0.0f);
+//    glm::vec3 outputVec2(0.0f);
+//
+//    std::cout << "Input before: " << inputVec << std::endl;
+//    std::cout << "Output1 before: " << outputVec1 << std::endl;
+//    std::cout << "Output2 before: " << outputVec2 << std::endl;
+//
+//
+//    float* input = glm::value_ptr(inputVec);
+//    float* output = glm::value_ptr(inputVec);
+//
+//    Transformation transformation(2.0f);
+//    transformation = glm::rotate(transformation, 43.2f, glm::vec3(0.1f,0.3f,5.0f));
+//    transformation = glm::translate(transformation, glm::vec3(1.0f));
+//    std::cout << transformation << std::endl;
+//    const float* transform = glm::value_ptr(glm::transpose(transformation));
+//    for(int i=0; i<12; i++){
+//        std::cout << transform[i] << " ";
+//    }
+//    std::cout << std::endl;
+//
+//    outputVec1 = transformation * glm::vec4(inputVec,1);
+//
+//    for(int i=0; i<3; i++){
+//        outputVec2[i] = 0;
+//        for(int j=0; j<3; j++){
+//            outputVec2[i] += transform[4*i + j] * inputVec[j];
+//        }
+//        outputVec2[i] += transform[4*i + 3] * 1;
+//    }
+//
+//
+//    std::cout << "Input after: " << inputVec << std::endl;
+//    std::cout << "Output1 after: " << outputVec1 << std::endl;
+//    std::cout << "Output2 after: " << outputVec2 << std::endl;
+
+    //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
+//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+//    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
+    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
+    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5,
+                                              glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
+    roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
+    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
+
+    //    0.    Create and initialise OptixDeviceContext
+    StreamContext streamContext = {};
+    {
+        CUDA_CALL(cudaFree(nullptr)); // This initialises the cuda context
+        OPTIX_CALL(optixInit());
+        OptixDeviceContextOptions options = {};
+#if !NDEBUG
+        options.logCallbackFunction = &optix_context_log_cb;
+        options.logCallbackLevel = 4;
+#endif
+        OPTIX_CALL(optixDeviceContextCreate(nullptr, &options, &streamContext.optixDeviceContext));
+#if NDEBUG
+        OPTIX_CALL(optixDeviceContextSetCacheEnabled(streamContext.optixDeviceContext, 1)); // Cache not enabled in debug mode to get all output
+#endif
+        streamContext.cuStream = nullptr;
+//        CUDA_CALL(cudaStreamCreate(&cuStream));
+        // Using streams seems to have a significant overhead when using the WDDM drivers, which is the only option for GeForce cards in windows.
+    }
+
+    OptixSingleModelSolution optixSingleModelSolution(roughMesh, innerMesh, streamContext);
+
+    Transformation currentTransformation = innerMesh.getModelTransformation();
+    std::cout << std::boolalpha;
+    int moves = 150000;
+
+    auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    for(int i=0; i<moves; i++){
+
+        Transformation newTransformation = glm::scale(currentTransformation, glm::vec3(0.85 + 0.4 * this->getRandomFloat(1)));
+        newTransformation = glm::rotate(newTransformation, this->getRandomFloat(1), glm::vec3(this->getRandomFloat(1) - 0.5, this->getRandomFloat(1)-0.5, this->getRandomFloat(1)-0.5));
+        newTransformation = glm::translate(newTransformation, glm::vec3(this->getRandomFloat(1) - 0.5f, this->getRandomFloat(1) - 0.5f,this->getRandomFloat(1)  - 0.5f));
+
+        optixSingleModelSolution.setInnerTransformation(newTransformation);
+
+        bool feasible = optixSingleModelSolution.isFeasible(streamContext);
+
+        bool feasible2;
+        {
+            innerMesh.setModelTransformationMatrix(newTransformation);
+            feasible2 = !innerMesh.triangleTriangleIntersects(roughMesh);
+        }
+
+        if(feasible != feasible2){
+            currentTransformation = newTransformation;
+            innerMesh.setModelTransformationMatrix(currentTransformation);
+            updateRenderMesh(innerMesh);
+            std::cout << "Feasibles not equal on move " << i << "!" << std::endl;
+            std::cout << "Feasible 1: " << feasible << std::endl;
+            std::cout << "Feasible 2: " << feasible2 << std::endl;
+            break;
+        }
+
+        if(feasible){
+            currentTransformation = newTransformation;
+            innerMesh.setModelTransformationMatrix(currentTransformation);
+            updateRenderMesh(innerMesh);
+        }
+//        if(i%1000==0){
+//            innerMesh.setModelTransformationMatrix(currentTransformation);
+//            updateRenderMesh(innerMesh);
+//        }
+    }
+
+    auto stopms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto totalms = stopms - startms;
+    auto totals = totalms/1000.0f;
+
+    std::cout << totalms << " ms." << std::endl;
+
+    std::cout << currentTransformation << std::endl;
+    innerMesh.setModelTransformationMatrix(currentTransformation);
+    this->updateRenderMesh(innerMesh);
+    std::cout << "MPS: " << float(moves)/totals << std::endl;
 
 //    Vertex v0(-0.843433,-0.804675,-0.826513);
 //    Vertex v1(-0.930694,0.0654775,-0.0837993);
@@ -132,22 +259,22 @@ void SandboxTask::run(){
 //    std::cout << totalms << std::endl;
 //    std::cout << "GLM: " << iterations << " calculations in " << (float)totalms/1000.0f << " s." << std::endl;
 
-    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
-//    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
-    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.2f)));
-    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
-    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
-    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5/*, glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0))*/);
-//    roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
-    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
-
-    std::cout << "Starting Sandbox Test" << std::endl;
-
-    int value = roughMesh.calculateNumberOfIntersections(Ray(Vertex(0,0,0), glm::vec3(1,0,0)));
-
-    std::cout << "Intersections: " << value << std::endl;
-
-    std::cout << "Starting Random Walk CPU" << std::endl;
+//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+////    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+//    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.2f)));
+//    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
+//    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+//    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5/*, glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0))*/);
+////    roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
+//    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
+//
+//    std::cout << "Starting Sandbox Test" << std::endl;
+//
+//    int value = roughMesh.calculateNumberOfIntersections(Ray(Vertex(0,0,0), glm::vec3(1,0,0)));
+//
+//    std::cout << "Intersections: " << value << std::endl;
+//
+//    std::cout << "Starting Random Walk CPU" << std::endl;
 
 //    std::mt19937 randomEngine(0); // TODO set back to 0
 //    auto nextFloat = std::uniform_real_distribution<float>(0, 1);

@@ -7,7 +7,6 @@
 
 #include <optix.h>
 #include "../core/WorldSpaceMesh.h"
-#include "OptixPipeLineContext.h"
 #include "OptixData.h"
 
 class OptixWorldSpaceMesh {

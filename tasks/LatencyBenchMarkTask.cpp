@@ -6,12 +6,12 @@
 #include <cuda_runtime.h>
 
 // Larger data transfers, 128 kBytes
-//#define DSIZE 32 * 1024
-//#define LOOPS 100000
+#define DSIZE 32 * 1024
+#define LOOPS 100000
 
 // Small data transfers, 128 bytes
-#define DSIZE 32
-#define LOOPS 100000
+//#define DSIZE 32
+//#define LOOPS 100000
 
 void LatencyBenchMarkTask::run() {
     {

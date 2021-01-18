@@ -5,17 +5,10 @@
 #include <optix_stubs.h>
 #include "OptixWorldSpaceMesh.h"
 #include "Exception.h"
+#include "CudaUtilities.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <optix_function_table_definition.h>
-
-static float3 vec3ToFloat3(const glm::vec3& vec3){
-    return make_float3(vec3.x, vec3.y, vec3.z);
-}
-
-static uint3 triangleToUint3(const Triangle& triangle){
-    return make_uint3(triangle.vertexIndex0, triangle.vertexIndex1, triangle.vertexIndex2);
-}
 
 OptixWorldSpaceMesh::OptixWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const CUstream& cUStream, const OptixDeviceContext& optixDeviceContext):
 modelTransformation(worldSpaceMesh.getModelTransformation()),
@@ -30,7 +23,7 @@ optixDeviceContext(optixDeviceContext)
 {
 
 //    1.    Create acceleration structures that represent a geometry mesh in the scene and select
-//          on or more records in the shader binding table for each mesh.
+//          one or more records in the shader binding table for each mesh.
 
     // Load the necessary modelspacedata on the device
     std::vector<float3> modelSpaceVertices;
@@ -228,7 +221,7 @@ optixDeviceContext(optixDeviceContext)
     *h_iterationData = IterationData{};
     h_iterationData->optixLaunchParameters = OptixLaunchParameters{};
     h_iterationData->edgeIntersectionSbtRecord = hitGroupRecord;
-        OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_structModelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &h_iterationData->optixLaunchParameters.handle));
+    OPTIX_CALL(optixConvertPointerToTraversableHandle(this->optixDeviceContext, d_structModelTransformation, OPTIX_TRAVERSABLE_TYPE_STATIC_TRANSFORM, &h_iterationData->optixLaunchParameters.handle));
 
 }
 
