@@ -11,7 +11,7 @@ Ray::Ray(Vertex origin, Vertex direction) {
     this->direction = direction;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const Ray &ray) {
+std::ostream &operator<<(std::ostream &os, const Ray &ray) {
     return os << "Ray(Origin" << ray.origin << ", Direction" << ray.direction << ")";
 }
 
@@ -140,6 +140,6 @@ float Ray::intersectionDistanceJGT(const Vertex &v0, const Vertex &v1, const Ver
 
 void Ray::transform(const Transformation& transformation) {
     this->origin = glm::vec3(transformation * glm::vec4(this->origin, 1.0f));
-    this->direction = glm::vec3(transformation * glm::vec4(this->direction, 1.0f));
+    this->direction = glm::vec3(transformation * glm::vec4(this->direction, 0.0f));
 }
 
