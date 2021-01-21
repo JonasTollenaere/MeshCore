@@ -7,6 +7,7 @@
 
 
 #include <optix.h>
+
 #include "AbstractSolution.h"
 #include "../core/WorldSpaceMesh.h"
 #include "NewOptixData.h"
@@ -31,18 +32,18 @@ private:
 
     CUdeviceptr d_outerTriangleIndices;
     CUdeviceptr d_outerModelSpaceVertices;
-    CUdeviceptr d_outerModelSpaceEdgeOrigins;
-    CUdeviceptr d_outerModelSpaceEdgeDirections;
+    float3* d_outerModelSpaceEdgeOrigins;
+    float3* d_outerModelSpaceEdgeDirections;
 
     CUdeviceptr d_innerTriangleIndices;
     CUdeviceptr d_innerModelSpaceVertices;
-    CUdeviceptr d_innerModelSpaceEdgeOrigins;
-    CUdeviceptr d_innerModelSpaceEdgeDirections;
+    float3* d_innerModelSpaceEdgeOrigins;
+    float3* d_innerModelSpaceEdgeDirections;
 
     unsigned int numberOfRays;
 
-    CUdeviceptr d_rayOrigins;
-    CUdeviceptr d_rayDirections;
+    float3* d_rayOrigins;
+    float3* d_rayDirections;
     float* d_transformations; // contains 12 floats for each transform
     CUdeviceptr d_rayTransformIndices; // contains the index of transform/instance per ray
 
@@ -62,7 +63,6 @@ private:
     EdgeIntersectionSbtRecord hitGroupRecord = {};
     EdgeIntersectionSbtRecord* h_hitGroupRecord;
     CUdeviceptr d_missRecord;
-    CUdeviceptr d_hitGroupRecord;
     CUdeviceptr d_structEdgeIntersectionSbtRecord;
     CUdeviceptr d_optixLaunchParameters;
 

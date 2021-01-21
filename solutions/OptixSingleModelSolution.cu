@@ -8,7 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <optix_stubs.h>
 #include <fstream>
-
+#include <cuda_runtime.h>
+#include <cuda_device_runtime_api.h>
+#include <cuda.h>
 //#include <optix_function_table_definition.h>
 
 OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWorldSpaceMesh,
@@ -38,18 +40,20 @@ OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWo
     unsigned int outerNumberOfVertices = outerModelSpaceVertices.size();
     unsigned int outerNumberOfEdges = outerEdgeOrigins.size();
 
+    std::cout << "Outer edges: " << outerNumberOfEdges << std::endl;
+
     assert(outerEdgeOrigins.size() == outerEdgeDirections.size());
     assert(outerNumberOfEdges == outerEdgeDirections.size());
 
     CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_outerTriangleIndices), sizeof(uint3) * outerNumberOfTriangles));
     CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_outerModelSpaceVertices), sizeof(float3) * outerNumberOfVertices));
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_outerModelSpaceEdgeOrigins), sizeof(float3) * outerNumberOfEdges));
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_outerModelSpaceEdgeDirections), sizeof(float3) * outerNumberOfEdges));
+    CUDA_CALL(cudaMalloc(&d_outerModelSpaceEdgeOrigins, sizeof(float3) * outerNumberOfEdges));
+    CUDA_CALL(cudaMalloc(&d_outerModelSpaceEdgeDirections, sizeof(float3) * outerNumberOfEdges));
 
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerTriangleIndices), outerTriangleIndices.data(), sizeof(uint3) * outerNumberOfTriangles, cudaMemcpyHostToDevice, streamContext.cuStream));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerModelSpaceVertices), outerModelSpaceVertices.data(), sizeof(float3) * outerNumberOfVertices, cudaMemcpyHostToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerModelSpaceEdgeOrigins), outerEdgeOrigins.data(), sizeof(float3) * outerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_outerModelSpaceEdgeDirections), outerEdgeDirections.data(), sizeof(float3) * outerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_outerModelSpaceEdgeOrigins, outerEdgeOrigins.data(), sizeof(float3) * outerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_outerModelSpaceEdgeDirections, outerEdgeDirections.data(), sizeof(float3) * outerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
 
 
     OptixAccelBuildOptions accelOptions = {};
@@ -125,18 +129,20 @@ OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWo
     unsigned int innerNumberOfVertices = innerModelSpaceVertices.size();
     unsigned int innerNumberOfEdges = innerEdgeOrigins.size();
 
+    std::cout << "Inner edges: " << innerNumberOfEdges << std::endl;
+
     assert(innerEdgeOrigins.size() == innerEdgeDirections.size());
     assert(innerNumberOfEdges == innerEdgeDirections.size());
 
     CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_innerTriangleIndices), sizeof(uint3) * innerNumberOfTriangles));
     CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_innerModelSpaceVertices), sizeof(float3) * innerNumberOfVertices));
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_innerModelSpaceEdgeOrigins), sizeof(float3) * innerNumberOfEdges));
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void **>(&d_innerModelSpaceEdgeDirections), sizeof(float3) * innerNumberOfEdges));
+    CUDA_CALL(cudaMalloc(&d_innerModelSpaceEdgeOrigins, sizeof(float3) * innerNumberOfEdges));
+    CUDA_CALL(cudaMalloc(&d_innerModelSpaceEdgeDirections, sizeof(float3) * innerNumberOfEdges));
 
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_innerTriangleIndices), innerTriangleIndices.data(), sizeof(uint3) * innerNumberOfTriangles, cudaMemcpyHostToDevice, streamContext.cuStream));
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_innerModelSpaceVertices), innerModelSpaceVertices.data(), sizeof(float3) * innerNumberOfVertices, cudaMemcpyHostToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_innerModelSpaceEdgeOrigins), innerEdgeOrigins.data(), sizeof(float3) * innerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void *>(d_innerModelSpaceEdgeDirections), innerEdgeDirections.data(), sizeof(float3) * innerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_innerModelSpaceEdgeOrigins, innerEdgeOrigins.data(), sizeof(float3) * innerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_innerModelSpaceEdgeDirections, innerEdgeDirections.data(), sizeof(float3) * innerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
 
     // Populate the build input struct with our triangle data as well as
     // information about the sizes and types of our data
@@ -282,23 +288,31 @@ OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWo
     CUDA_CALL(cudaMalloc(reinterpret_cast<float3 **>(&d_rayOrigins), sizeof(float3) * numberOfRays));
     CUDA_CALL(cudaMalloc(reinterpret_cast<float3 **>(&d_rayDirections), sizeof(float3) * numberOfRays));
     CUDA_CALL(cudaMalloc(reinterpret_cast<unsigned int **>(&d_rayTransformIndices), sizeof(unsigned int) * numberOfRays));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<float3 *>(d_rayOrigins), reinterpret_cast<const void *>(d_outerModelSpaceEdgeOrigins), sizeof(float3) * outerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemsetAsync(reinterpret_cast<unsigned int *>(d_rayTransformIndices), 1u, outerNumberOfEdges, streamContext.cuStream));
-    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<float3 *>(d_rayOrigins + sizeof(float3) * outerNumberOfEdges), reinterpret_cast<const float3 *>(d_innerModelSpaceEdgeOrigins), sizeof(float3) * innerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
-    CUDA_CALL(cudaMemsetAsync(reinterpret_cast<unsigned int *>(d_rayTransformIndices + sizeof(unsigned int) * outerNumberOfEdges), 1, innerNumberOfEdges, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_rayOrigins, d_outerModelSpaceEdgeOrigins, sizeof(float3) * outerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_rayDirections, d_outerModelSpaceEdgeDirections, sizeof(float3) * outerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
 
-    //void *devPtr, int value, size_t count, cudaStream_t stream __dv(0)
+    // Workaround for weird cudaMemset behaviour
+    std::vector<unsigned int> zeros(outerNumberOfEdges, 0);
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<unsigned int *>(d_rayTransformIndices), zeros.data(), sizeof(unsigned int) * outerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+
+
+    CUDA_CALL(cudaMemcpyAsync(d_rayOrigins + outerNumberOfEdges, d_innerModelSpaceEdgeOrigins, sizeof(float3) * innerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(d_rayDirections + outerNumberOfEdges, d_innerModelSpaceEdgeDirections, sizeof(float3) * innerNumberOfEdges, cudaMemcpyDeviceToDevice, streamContext.cuStream));
+//    CUDA_CALL(cuMemsetD32Async(d_rayTransformIndices + sizeof(unsigned int) * outerNumberOfEdges, 1u, innerNumberOfEdges, streamContext.cuStream));
+
+    std::vector<unsigned int> ones(innerNumberOfEdges, 1);
+    CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<unsigned int *>(d_rayTransformIndices + sizeof(unsigned int) * outerNumberOfEdges), ones.data(), sizeof(unsigned int) * innerNumberOfEdges, cudaMemcpyHostToDevice, streamContext.cuStream));
+
 
     CUDA_CALL(cudaMalloc(&d_transformations, 2*12*sizeof(float)));
     CUDA_CALL(cudaMemcpyAsync(&d_transformations[0], outerTransform, 12*sizeof(float), cudaMemcpyHostToDevice, streamContext.cuStream));
     CUDA_CALL(cudaMemcpyAsync(&d_transformations[12], innerTransform, 12*sizeof(float), cudaMemcpyHostToDevice, streamContext.cuStream));
 
     /// 7.    Create a shader binding table that includes references to these programs and their parameters.
-
     RayGenSbtRecord rayGenRecord;
     rayGenRecord.data = {};
-    rayGenRecord.data.origins = reinterpret_cast<float3 *>(this->d_rayOrigins);
-    rayGenRecord.data.directions = reinterpret_cast<float3 *>(this->d_rayDirections);
+    rayGenRecord.data.origins = this->d_rayOrigins;
+    rayGenRecord.data.directions = this->d_rayDirections;
     rayGenRecord.data.transformations = this->d_transformations;
     rayGenRecord.data.rayTransformIndices = reinterpret_cast<unsigned int *>(this->d_rayTransformIndices);
 
@@ -337,6 +351,7 @@ bool OptixSingleModelSolution::isFeasible(const StreamContext& streamContext) {
     const float* transform = glm::value_ptr( glm::transpose(this->innerTransformation));
     memcpy(innerInstance.transform, transform, sizeof(float)*12);
     CUDA_CALL(cudaMemcpyAsync(reinterpret_cast<void*>(&d_instances[1]), &innerInstance, sizeof(OptixInstance), cudaMemcpyHostToDevice, streamContext.cuStream));
+    CUDA_CALL(cudaMemcpyAsync(&d_transformations[12], transform, 12*sizeof(float), cudaMemcpyHostToDevice, streamContext.cuStream));
     OptixAccelBuildOptions accelOptions = {};
     accelOptions.operation = OPTIX_BUILD_OPERATION_UPDATE;
     accelOptions.buildFlags = OPTIX_BUILD_FLAG_PREFER_FAST_TRACE | OPTIX_BUILD_FLAG_ALLOW_UPDATE;
@@ -372,13 +387,13 @@ void OptixSingleModelSolution::setInnerTransformation(const Transformation &newI
 OptixSingleModelSolution::~OptixSingleModelSolution() {
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_outerModelSpaceVertices)));
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_outerTriangleIndices)));
-    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_outerModelSpaceEdgeOrigins)));
-    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_outerModelSpaceEdgeDirections)));
+    CUDA_CALL(cudaFree(d_outerModelSpaceEdgeOrigins));
+    CUDA_CALL(cudaFree(d_outerModelSpaceEdgeDirections));
 
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_innerModelSpaceVertices)));
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_innerTriangleIndices)));
-    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_innerModelSpaceEdgeOrigins)));
-    CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_innerModelSpaceEdgeDirections)));
+    CUDA_CALL(cudaFree(d_innerModelSpaceEdgeOrigins));
+    CUDA_CALL(cudaFree(d_innerModelSpaceEdgeDirections));
 
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_outerGAS)));
     CUDA_CALL(cudaFree(reinterpret_cast<void *>(d_innerGAS)));

@@ -44,7 +44,7 @@ unsigned int ModelSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) c
 std::vector<Edge> ModelSpaceMesh::getEdges() const {
 
     // Set up the hash and equals in a way that the order of vertexIndex0 and vertexIndex1 doesn't matter
-    auto hash = [](const Edge& edge) { return std::hash<int>()(edge.vertexIndex0 + edge.vertexIndex1); };
+    auto hash = [](const Edge& edge) { return std::hash<int>()(edge.vertexIndex0 + 10 * edge.vertexIndex1); };
     auto equal = [](const Edge& edge1, const Edge& edge2) {
         return (edge1.vertexIndex0 == edge2.vertexIndex0 && edge1.vertexIndex1 == edge2.vertexIndex1) ||
                (edge1.vertexIndex1 == edge2.vertexIndex0 && edge1.vertexIndex0 == edge2.vertexIndex1); };

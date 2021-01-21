@@ -17,54 +17,54 @@
 
 void SandboxTask::run(){
 
-//    glm::vec3 inputVec(1.0f);
-//    glm::vec3 outputVec1(0.0f);
-//    glm::vec3 outputVec2(0.0f);
-//
-//    std::cout << "Input before: " << inputVec << std::endl;
-//    std::cout << "Output1 before: " << outputVec1 << std::endl;
-//    std::cout << "Output2 before: " << outputVec2 << std::endl;
-//
-//
-//    float* input = glm::value_ptr(inputVec);
-//    float* output = glm::value_ptr(inputVec);
-//
-//    Transformation transformation(2.0f);
-//    transformation = glm::rotate(transformation, 43.2f, glm::vec3(0.1f,0.3f,5.0f));
-//    transformation = glm::translate(transformation, glm::vec3(1.0f));
-//    std::cout << transformation << std::endl;
-//    const float* transform = glm::value_ptr(glm::transpose(transformation));
-//    for(int i=0; i<12; i++){
-//        std::cout << transform[i] << " ";
-//    }
-//    std::cout << std::endl;
-//
-//    outputVec1 = transformation * glm::vec4(inputVec,1);
-//
-//    for(int i=0; i<3; i++){
-//        outputVec2[i] = 0;
-//        for(int j=0; j<3; j++){
-//            outputVec2[i] += transform[4*i + j] * inputVec[j];
-//        }
-//        outputVec2[i] += transform[4*i + 3] * 1;
-//    }
+    Ray ray(Vertex(1,1,1), Vertex(2,2,2));
+    std::cout << ray << std::endl;
+    ray.transform(glm::translate(Transformation(1.0f), Vertex(1,0,0)));
+    std::cout << ray << std::endl;
+
+
+//    std::vector<Vertex> modelVertices;
+//    std::vector<Triangle> modelTriangles;
+//    modelVertices.emplace_back(Vertex(1,1,1));
+//    modelVertices.emplace_back(Vertex(1,1,0));
+//    modelVertices.emplace_back(Vertex(1,0,1));
+//    modelVertices.emplace_back(Vertex(1,0,0));
+//    modelVertices.emplace_back(Vertex(0,1,1));
+//    modelVertices.emplace_back(Vertex(0,1,0));
+//    modelVertices.emplace_back(Vertex(0,0,1));
+//    modelVertices.emplace_back(Vertex(0,0,0));
+//    modelTriangles.emplace_back(Triangle{0,2,1});
+//    modelTriangles.emplace_back(Triangle{1,2,3});
+//    modelTriangles.emplace_back(Triangle{4,5,6});
+//    modelTriangles.emplace_back(Triangle{5,7,6});
+//    modelTriangles.emplace_back(Triangle{0,1,4});
+//    modelTriangles.emplace_back(Triangle{1,5,4});
+//    modelTriangles.emplace_back(Triangle{3,2,6});
+//    modelTriangles.emplace_back(Triangle{7,3,6});
+//    modelTriangles.emplace_back(Triangle{0,4,6});
+//    modelTriangles.emplace_back(Triangle{6,2,0});
+//    modelTriangles.emplace_back(Triangle{5,1,7});
+//    modelTriangles.emplace_back(Triangle{3,7,1});
 //
 //
-//    std::cout << "Input after: " << inputVec << std::endl;
-//    std::cout << "Output1 after: " << outputVec1 << std::endl;
-//    std::cout << "Output2 after: " << outputVec2 << std::endl;
+//    const ModelSpaceMesh innerModelMesh(modelVertices, modelTriangles);
+//    const ModelSpaceMesh modelSpaceMesh5(modelVertices, modelTriangles);
 
     //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
 //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
     const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
+//    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/banana.stl");
 //    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
     WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
     this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
     const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
-    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5,
-                                              glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
+//    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/convexstone.stl");
+    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5);
+    roughMesh.setModelTransformationMatrix(glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
     roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
     this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
+
+
 
     //    0.    Create and initialise OptixDeviceContext
     StreamContext streamContext = {};
@@ -101,22 +101,26 @@ void SandboxTask::run(){
         optixSingleModelSolution.setInnerTransformation(newTransformation);
 
         bool feasible = optixSingleModelSolution.isFeasible(streamContext);
-
-        bool feasible2;
-        {
-            innerMesh.setModelTransformationMatrix(newTransformation);
-            feasible2 = !innerMesh.triangleTriangleIntersects(roughMesh);
-        }
-
-        if(feasible != feasible2){
-            currentTransformation = newTransformation;
-            innerMesh.setModelTransformationMatrix(currentTransformation);
-            updateRenderMesh(innerMesh);
-            std::cout << "Feasibles not equal on move " << i << "!" << std::endl;
-            std::cout << "Feasible 1: " << feasible << std::endl;
-            std::cout << "Feasible 2: " << feasible2 << std::endl;
-            break;
-        }
+//
+//        bool feasible2;
+//        {
+//            innerMesh.setModelTransformationMatrix(newTransformation);
+//            feasible2 = !innerMesh.triangleTriangleIntersects(roughMesh);
+//        }
+//
+//        if(feasible != feasible2){
+//            currentTransformation = newTransformation;
+//            innerMesh.setModelTransformationMatrix(currentTransformation);
+//            updateRenderMesh(innerMesh);
+//            std::cout << "Feasibles not equal on move " << i << "!" << std::endl;
+//            std::cout << "Feasible 1: " << feasible << std::endl;
+//            std::cout << "Feasible 2: " << feasible2 << std::endl;
+//
+//            glm::vec4 testVec(-0.723374,-0.0329542,0.194304, 1);
+//            std::cout << testVec << " by this transformation: " << newTransformation * testVec << std::endl;
+//
+//            break;
+//        }
 
         if(feasible){
             currentTransformation = newTransformation;
