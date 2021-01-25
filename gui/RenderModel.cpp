@@ -17,8 +17,8 @@ RenderModel::RenderModel(const WorldSpaceMesh& worldSpaceMesh):
         vertexArray(new QOpenGLVertexArrayObject()),
         transformation(worldSpaceMesh.getModelTransformation())
 {
-    const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().vertices;
-    const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().triangles;
+    const std::vector<Vertex> vertices = worldSpaceMesh.getModelSpaceMesh().getVertices();
+    const std::vector<Triangle> triangles = worldSpaceMesh.getModelSpaceMesh().getTriangles();
 
     std::vector<unsigned int> indices;
     std::vector<float> data;
@@ -135,4 +135,24 @@ void RenderModel::setTransformation(const Transformation &t) {
 
 void RenderModel::setColor(const Color &c){
     RenderModel::color = c;
+}
+
+void RenderModel::setVisible(bool visible){
+    this->visible = visible;
+}
+void RenderModel::setWireframeEnabled(bool wireframeEnabled){
+    this->wireframeEnabled = wireframeEnabled;
+}
+void RenderModel::setCullingEnabled(bool cullingEnabled){
+    this->cullingEnabled = cullingEnabled;
+}
+
+bool RenderModel::isVisible() const {
+    return this->visible;
+}
+bool RenderModel::isWireframeEnabled() const {
+    return this->wireframeEnabled;
+}
+bool RenderModel::isCullingEnabled() const {
+    return this->cullingEnabled;
 }

@@ -10,7 +10,7 @@ OpenGLRenderWidget::OpenGLRenderWidget(QWidget *parent): QOpenGLWidget(parent) {
 
 void OpenGLRenderWidget::initializeGL() {
 
-    viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
+    this->resetView();
 
     initializeOpenGLFunctions();
 
@@ -37,8 +37,6 @@ void OpenGLRenderWidget::initializeGL() {
     basicShader.bindAttributeLocation("vertex", 0);
     basicShader.bindAttributeLocation("normal", 1);
     basicShader.link();
-
-    currentShader = &betterShader;
 }
 
 void OpenGLRenderWidget::resetView() {
@@ -54,7 +52,23 @@ void OpenGLRenderWidget::resizeGL(int w, int h) {
 void OpenGLRenderWidget::paintGL() {
     std::shared_lock<std::shared_mutex> lock(sharedMutex); // A lock with destructor that releases the mutex
     for(auto& [id, model]:  this->renderModelsMap){
-        model.draw(*currentShader, viewMatrix, projectionMatrix);
+        if(model.isVisible()){
+            if(model.isCullingEnabled()){
+                glEnable(GL_CULL_FACE);
+            }
+            else{
+                glDisable(GL_CULL_FACE);
+            }
+
+            if(model.isWireframeEnabled()){
+                model.draw(basicShader, viewMatrix, projectionMatrix);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            }
+            else{
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                model.draw(betterShader, viewMatrix, projectionMatrix);
+            }
+        }
     }
 }
 
@@ -151,7 +165,7 @@ void OpenGLRenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh,
     // This way the actions are executed on the main thread
     qRegisterMetaType<const WorldSpaceMesh&>();
     qRegisterMetaType<const Color&>();
-    QMetaObject::invokeMethod(this, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(WorldSpaceMesh, worldSpaceMesh), Q_ARG(const Color&, color));
+    QMetaObject::invokeMethod(this, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(const WorldSpaceMesh&, worldSpaceMesh), Q_ARG(const Color&, color));
 }
 
 [[maybe_unused]] void OpenGLRenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
@@ -170,33 +184,5 @@ void OpenGLRenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMe
     if(renderModelsMap.find(id) != renderModelsMap.end()){
         renderModelsMap[id].setTransformation(worldSpaceMesh.getModelTransformation());
         this->update();
-    }
-}
-
-// TODO setting per rendermodel
-void OpenGLRenderWidget::toggleWireFrame() {
-    this->makeCurrent();
-    GLint currentPolygonMode[2];
-    glGetIntegerv(GL_POLYGON_MODE, currentPolygonMode);
-    if(currentPolygonMode[0] == GL_FILL){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        currentShader = &basicShader;
-    }
-    else{
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDisable(GL_CULL_FACE);
-        currentShader = &betterShader;
-    }
-}
-
-// TODO culling per rendermodel
-void OpenGLRenderWidget::toggleCullFace() {
-    this->makeCurrent();
-    GLboolean enabled = glIsEnabled(GL_CULL_FACE);
-    if(enabled){
-        glDisable(GL_CULL_FACE);
-    }
-    else{
-        glEnable(GL_CULL_FACE);
     }
 }

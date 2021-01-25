@@ -19,11 +19,23 @@ private:
     QOpenGLBuffer* indexBuffer;
     QOpenGLBuffer* vertexBuffer;
     QOpenGLVertexArrayObject* vertexArray;
-    Color color;
     Transformation transformation;
+
+    bool visible = true;
+    bool wireframeEnabled = false;
+    bool cullingEnabled = true;
+    Color color;
+
 public:
     void setTransformation(const Transformation &transformation);
     void setColor(const Color& c);
+    void setVisible(bool visible);
+    void setWireframeEnabled(bool showWireframe);
+    void setCullingEnabled(bool cullingEnabled);
+
+    [[nodiscard]] bool isVisible() const ;
+    [[nodiscard]] bool isWireframeEnabled() const ;
+    [[nodiscard]] bool isCullingEnabled() const ;
 
     RenderModel();
 //    RenderModel(const RenderModel& other);

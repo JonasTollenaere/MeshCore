@@ -22,17 +22,17 @@ OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWo
     std::vector<float3> outerEdgeOrigins;
     std::vector<float3> outerEdgeDirections;
 
-    for(Vertex vertex: outerWorldSpaceMesh.getModelSpaceMesh().vertices){
+    for(Vertex vertex: outerWorldSpaceMesh.getModelSpaceMesh().getVertices()){
         outerModelSpaceVertices.emplace_back(vec3ToFloat3(vertex));
     }
 
-    for(Triangle triangle: outerWorldSpaceMesh.getModelSpaceMesh().triangles){
+    for(Triangle triangle: outerWorldSpaceMesh.getModelSpaceMesh().getTriangles()){
         outerTriangleIndices.emplace_back(triangleToUint3(triangle));
     }
 
     for(Edge edge: outerWorldSpaceMesh.getModelSpaceMesh().getEdges()){
-        Vertex v0 = outerWorldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex0];
-        Vertex v1 = outerWorldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex1];
+        Vertex v0 = outerWorldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex0];
+        Vertex v1 = outerWorldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex1];
         outerEdgeDirections.emplace_back(vec3ToFloat3(v1 - v0));
         outerEdgeOrigins.emplace_back(vec3ToFloat3(v0));
     }
@@ -111,17 +111,17 @@ OptixSingleModelSolution::OptixSingleModelSolution(const WorldSpaceMesh &outerWo
     std::vector<float3> innerEdgeOrigins;
     std::vector<float3> innerEdgeDirections;
 
-    for(Vertex vertex: innerWorldSpaceMesh.getModelSpaceMesh().vertices){
+    for(Vertex vertex: innerWorldSpaceMesh.getModelSpaceMesh().getVertices()){
         innerModelSpaceVertices.emplace_back(vec3ToFloat3(vertex));
     }
 
-    for(Triangle triangle: innerWorldSpaceMesh.getModelSpaceMesh().triangles){
+    for(Triangle triangle: innerWorldSpaceMesh.getModelSpaceMesh().getTriangles()){
         innerTriangleIndices.emplace_back(triangleToUint3(triangle));
     }
 
     for(Edge edge: innerWorldSpaceMesh.getModelSpaceMesh().getEdges()){
-        Vertex v0 = innerWorldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex0];
-        Vertex v1 = innerWorldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex1];
+        Vertex v0 = innerWorldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex0];
+        Vertex v1 = innerWorldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex1];
         innerEdgeDirections.emplace_back(vec3ToFloat3(v1 - v0));
         innerEdgeOrigins.emplace_back(vec3ToFloat3(v0));
     }

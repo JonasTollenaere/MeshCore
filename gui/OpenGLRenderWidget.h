@@ -36,15 +36,12 @@ private:
 
     QOpenGLShaderProgram betterShader;
     QOpenGLShaderProgram basicShader;
-    QOpenGLShaderProgram* currentShader;
 
 public:
     explicit OpenGLRenderWidget(QWidget *parent = nullptr);
 
 private:
     void resetView();
-    void toggleWireFrame();
-    void toggleCullFace();
 
 public:
     void addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh);

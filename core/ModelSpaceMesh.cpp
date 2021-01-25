@@ -58,4 +58,12 @@ std::vector<Edge> ModelSpaceMesh::getEdges() const {
     return std::vector<Edge>(edgeSet.begin(), edgeSet.end());
 }
 
+[[nodiscard]] std::vector<Vertex> ModelSpaceMesh::getVertices() const {
+    return vertices;
+}
+
+std::vector<Triangle> ModelSpaceMesh::getTriangles() const {
+    return triangles;
+}
+
 ModelSpaceMesh::ModelSpaceMesh() = default;

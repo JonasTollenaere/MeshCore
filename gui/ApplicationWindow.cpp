@@ -74,12 +74,12 @@ void ApplicationWindow::keyPressEvent(QKeyEvent* event){
 }
 
 void ApplicationWindow::loadMesh(){
-    QString fileName = QFileDialog::getOpenFileName(this, QString("Select mesh file"), R"(C:\Users\tolle\CLionProjects\MeshCore\data\models)", QString("Mesh Files (*.stl *.obj)"));
-    if(std::filesystem::exists(fileName.toStdString())){
-        const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile(fileName.toStdString());
-        const WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh);
-        taskRenderWidget->addWorldSpaceMesh(worldSpaceMesh);
-    }
+//    QString fileName = QFileDialog::getOpenFileName(this, QString("Select mesh file"), R"(C:\Users\tolle\CLionProjects\MeshCore\data\models)", QString("Mesh Files (*.stl *.obj)"));
+//    if(std::filesystem::exists(fileName.toStdString())){
+//        const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile(fileName.toStdString());
+//        const WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh);
+//        taskRenderWidget->addWorldSpaceMesh(worldSpaceMesh);
+//    }
 }
 
 void ApplicationWindow::displayApplicationInfo(){

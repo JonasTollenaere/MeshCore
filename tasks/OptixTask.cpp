@@ -18,12 +18,12 @@ void OptixTask::run() {
     const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
 //    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
     WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
-    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
+//    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
     const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
     WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5,
                                               glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
     roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
-    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
+//    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
 
     //    0.    Create and initialise OptixDeviceContext
     OptixDeviceContext optixContext = nullptr;
@@ -74,7 +74,7 @@ void OptixTask::run() {
         if(intersects != intersects2 || intersects != intersects3){
             currentTransformation = newTransformation;
             innerMesh.setModelTransformationMatrix(currentTransformation);
-            updateRenderMesh(innerMesh);
+//            updateRenderMesh(innerMesh);
             std::cout << "Feasibles not equal on move " << i << "!" << std::endl;
             std::cout << "Feasible 1: " << intersects << std::endl;
             std::cout << "Feasible 2: " << intersects2 << std::endl;
@@ -85,7 +85,7 @@ void OptixTask::run() {
         if(!intersects){
             currentTransformation = newTransformation;
             innerMesh.setModelTransformationMatrix(currentTransformation);
-            updateRenderMesh(innerMesh);
+//            updateRenderMesh(innerMesh);
         }
 //        if(i%1000==0){
 //            innerMesh.setModelTransformationMatrix(currentTransformation);
@@ -101,6 +101,6 @@ void OptixTask::run() {
 
     std::cout << currentTransformation << std::endl;
     innerMesh.setModelTransformationMatrix(currentTransformation);
-    this->updateRenderMesh(innerMesh);
+//    this->updateRenderMesh(innerMesh);
     std::cout << "MPS: " << float(moves)/totals << std::endl;
 }

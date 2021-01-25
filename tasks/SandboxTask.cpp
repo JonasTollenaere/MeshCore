@@ -15,16 +15,7 @@
 #include <cuda_runtime.h>
 #include <optix_stubs.h>
 
-void SandboxTask::run(){
-
-    this->notifyObserversStarted();
-    this->notifyObserversStatus("Initialising");
-
-    Ray ray(Vertex(1,1,1), Vertex(2,2,2));
-    std::cout << ray << std::endl;
-    ray.transform(glm::translate(Transformation(1.0f), Vertex(1,0,0)));
-    std::cout << ray << std::endl;
-
+SandboxTask::SandboxTask() {
 
 //    std::vector<Vertex> modelVertices;
 //    std::vector<Triangle> modelTriangles;
@@ -51,23 +42,27 @@ void SandboxTask::run(){
 //
 //
 //    const ModelSpaceMesh innerModelMesh(modelVertices, modelTriangles);
-//    const ModelSpaceMesh modelSpaceMesh5(modelVertices, modelTriangles);
+//    const ModelSpaceMesh outerModelSpaceMesh(modelVertices, modelTriangles);
 
     //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/bobijn-ascii.stl");
 //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
     const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
 //    const ModelSpaceMesh innerModelMesh = FileParser::parseFile("../../data/models/banana.stl");
 //    const ModelSpaceMesh innerMesh = FileParser::parseFile("../../data/models/DIAMCADbr1.obj");
-    WorldSpaceMesh innerMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
-    this->renderMesh(innerMesh, glm::vec4(1, 0, 0, 1));
-    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
-//    const ModelSpaceMesh modelSpaceMesh5 = FileParser::parseFile("../../data/models/convexstone.stl");
-    WorldSpaceMesh roughMesh = WorldSpaceMesh(modelSpaceMesh5);
-    roughMesh.setModelTransformationMatrix(glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
-    roughMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
-    this->renderMesh(roughMesh, glm::vec4(1, 1, 1, 0.4));
+    innerWorldSpaceMesh = WorldSpaceMesh(innerModelMesh, glm::scale(Transformation(1.0f), glm::vec3(0.1f)));
 
+    const ModelSpaceMesh outerModelSpaceMesh = FileParser::parseFile("../../data/models/DIAMCADrough.obj");
+//    const ModelSpaceMesh outerModelSpaceMesh = FileParser::parseFile("../../data/models/convexstone.stl");
+    outerWorldSpaceMesh = WorldSpaceMesh(outerModelSpaceMesh);
+    outerWorldSpaceMesh.setModelTransformationMatrix(glm::translate(Transformation(1.0f), glm::vec3(0, -1, 0)));
+    outerWorldSpaceMesh.transform(glm::scale(Transformation(1.0f), glm::vec3(1.2f)));
 
+}
+
+void SandboxTask::run(){
+
+    this->notifyObserversStarted();
+    this->notifyObserversStatus("Initialising");
 
     //    0.    Create and initialise OptixDeviceContext
     StreamContext streamContext = {};
@@ -88,9 +83,9 @@ void SandboxTask::run(){
         // Using streams seems to have a significant overhead when using the WDDM drivers, which is the only option for GeForce cards in windows.
     }
 
-    OptixSingleModelSolution optixSingleModelSolution(roughMesh, innerMesh, streamContext);
+    OptixSingleModelSolution optixSingleModelSolution(outerWorldSpaceMesh, innerWorldSpaceMesh, streamContext);
 
-    Transformation currentTransformation = innerMesh.getModelTransformation();
+    Transformation currentTransformation = innerWorldSpaceMesh.getModelTransformation();
     std::cout << std::boolalpha;
     int moves = 150000;
     this->notifyObserversStatus("Executing random walk");
@@ -131,8 +126,8 @@ void SandboxTask::run(){
 //            updateRenderMesh(innerMesh);
         }
         if(i%1000==0){
-            innerMesh.setModelTransformationMatrix(currentTransformation);
-            updateRenderMesh(innerMesh);
+            innerWorldSpaceMesh.setModelTransformationMatrix(currentTransformation);
+//            updateRenderMesh(innerWorldSpaceMesh); TODO
             this->notifyObserversProgress((float(i)/float(moves)));
         }
 
@@ -147,8 +142,8 @@ void SandboxTask::run(){
     std::cout << totalms << " ms." << std::endl;
 
     std::cout << currentTransformation << std::endl;
-    innerMesh.setModelTransformationMatrix(currentTransformation);
-    this->updateRenderMesh(innerMesh);
+    innerWorldSpaceMesh.setModelTransformationMatrix(currentTransformation);
+//    this->updateRenderMesh(innerMesh);  TODO
     std::cout << "MPS: " << float(moves)/totals << std::endl;
 
     this->notifyObserversFinished();
@@ -332,4 +327,12 @@ void SandboxTask::run(){
 //    std::cout << currentTransformation << std::endl;
 //
 //    std::cout << "MPS: " << float(moves)/float(totalms)*1000.0f << std::endl;
+}
+
+const WorldSpaceMesh& SandboxTask::getOuterWorldSpaceMesh() const{
+    return this->outerWorldSpaceMesh;
+}
+
+const WorldSpaceMesh& SandboxTask::getInnerWorldSpaceMesh() const {
+    return this->innerWorldSpaceMesh;
 }

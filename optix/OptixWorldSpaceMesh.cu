@@ -31,17 +31,17 @@ optixDeviceContext(optixDeviceContext)
     std::vector<float3> edgeOrigins;
     std::vector<float3> edgeDirections;
 
-    for(Vertex vertex: worldSpaceMesh.getModelSpaceMesh().vertices){
+    for(Vertex vertex: worldSpaceMesh.getModelSpaceMesh().getVertices()){
         modelSpaceVertices.emplace_back(vec3ToFloat3(vertex));
     }
 
-    for(Triangle triangle: worldSpaceMesh.getModelSpaceMesh().triangles){
+    for(Triangle triangle: worldSpaceMesh.getModelSpaceMesh().getTriangles()){
         triangleIndices.emplace_back(triangleToUint3(triangle));
     }
 
     for(Edge edge: worldSpaceMesh.getModelSpaceMesh().getEdges()){
-        Vertex v0 = worldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex0];
-        Vertex v1 = worldSpaceMesh.getModelSpaceMesh().vertices[edge.vertexIndex1];
+        Vertex v0 = worldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex0];
+        Vertex v1 = worldSpaceMesh.getModelSpaceMesh().getVertices()[edge.vertexIndex1];
         edgeDirections.emplace_back(vec3ToFloat3(v1 - v0));
         edgeOrigins.emplace_back(vec3ToFloat3(v0));
     }

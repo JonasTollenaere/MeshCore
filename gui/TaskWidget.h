@@ -6,6 +6,8 @@
 #include "RenderModel.h"
 #include "../tasks/AbstractTaskObserver.h"
 #include "../solutions/AbstractSolution.h"
+#include "../tasks/AbstractTask.h"
+#include "../tasks/SandboxTask.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class TaskWidget; }
@@ -16,22 +18,17 @@ class TaskWidget : public QWidget, public AbstractTaskObserver
     Q_OBJECT
 
 public:
-    explicit TaskWidget(QWidget *parent = nullptr);
+    explicit TaskWidget(QWidget *parent = nullptr, SandboxTask* sandboxTask = nullptr);
     ~TaskWidget() override;
     void notify() override;
     void notifyStarted() override;
     void notifyFinished() override;
     void notifyProgress(float progress) override;
     void notifyStatus(const std::string &status) override;
-
-    AbstractSolution* currentSolution;
-
-    // TODO Make all these thread safe, should address slots
-    void updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh);
-    void addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, const Color& color);
-    void addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh);
+//    void notifySolution(const AbstractSolution& solution) override;
 
 private:
+    SandboxTask* task = nullptr;
     Ui::TaskWidget *ui;
 
 public slots:

@@ -14,7 +14,7 @@ WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh):
         modelSpaceMesh(modelSpaceMesh),
         modelTransformation(1.0f),
         id(std::to_string(nextId++)),
-        worldSpaceVertices(modelSpaceMesh.vertices)
+        worldSpaceVertices(modelSpaceMesh.getVertices())
 {
 
 }
@@ -25,7 +25,7 @@ WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh, const Trans
         id(std::to_string(nextId++)),
         worldSpaceVertices()
 {
-    for(Vertex vertex: modelSpaceMesh.vertices){
+    for(Vertex vertex: modelSpaceMesh.getVertices()){
         worldSpaceVertices.emplace_back(Vertex(transformation * glm::vec4(vertex, 1.0f)));
     }
 }
@@ -33,7 +33,7 @@ WorldSpaceMesh::WorldSpaceMesh(const ModelSpaceMesh &modelSpaceMesh, const Trans
 void WorldSpaceMesh::setModelTransformationMatrix(const Transformation &transformation) {
     this->modelTransformation = transformation;
     for(int i=0; i < worldSpaceVertices.size(); i++){
-        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.vertices[i], 1.0f));
+        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.getVertices()[i], 1.0f));
     }
 }
 
@@ -44,7 +44,7 @@ Transformation WorldSpaceMesh::getModelTransformation() const {
 void WorldSpaceMesh::transform(const Transformation& transformation) {
     this->modelTransformation *= transformation;
     for(int i=0; i < worldSpaceVertices.size(); i++){
-        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.vertices[i], 1.0f));
+        worldSpaceVertices[i] = Vertex(this->modelTransformation * glm::vec4(this->modelSpaceMesh.getVertices()[i], 1.0f));
     }
 }
 
@@ -81,7 +81,7 @@ bool WorldSpaceMesh::includes(const Vertex &worldSpaceVertex) const {
 
 unsigned int WorldSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) const {
     unsigned int numberOfIntersections = 0;
-    for (Triangle triangle: this->modelSpaceMesh.triangles) {
+    for (Triangle triangle: this->modelSpaceMesh.getTriangles()) {
         bool intersects = modelSpaceRay.intersectsTriangle(this->worldSpaceVertices[triangle.vertexIndex0],
                                                            this->worldSpaceVertices[triangle.vertexIndex1],
                                                            this->worldSpaceVertices[triangle.vertexIndex2]);
@@ -93,13 +93,13 @@ unsigned int WorldSpaceMesh::calculateNumberOfIntersections(Ray modelSpaceRay) c
 }
 
 bool WorldSpaceMesh::triangleTriangleIntersects(const WorldSpaceMesh& other) const {
-    for (Triangle thisTriangle: this->modelSpaceMesh.triangles) {
+    for (Triangle thisTriangle: this->modelSpaceMesh.getTriangles()) {
 
         Vertex innerVertex0 = this->worldSpaceVertices[thisTriangle.vertexIndex0];
         Vertex innerVertex1 = this->worldSpaceVertices[thisTriangle.vertexIndex1];
         Vertex innerVertex2 = this->worldSpaceVertices[thisTriangle.vertexIndex2];
 
-        for (Triangle otherTriangle: other.modelSpaceMesh.triangles) {
+        for (Triangle otherTriangle: other.modelSpaceMesh.getTriangles()) {
             Vertex roughVertex0 = other.worldSpaceVertices[otherTriangle.vertexIndex0];
             Vertex roughVertex1 = other.worldSpaceVertices[otherTriangle.vertexIndex1];
             Vertex roughVertex2 = other.worldSpaceVertices[otherTriangle.vertexIndex2];

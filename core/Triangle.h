@@ -8,9 +8,9 @@
 #include <iostream>
 
 struct Triangle{
-    const unsigned int vertexIndex0;
-    const unsigned int vertexIndex1;
-    const unsigned int vertexIndex2;
+    unsigned int vertexIndex0;
+    unsigned int vertexIndex1;
+    unsigned int vertexIndex2;
 };
 
 #endif //MESHCORE2_TRIANGLE_H

@@ -14,7 +14,7 @@ private:
     static int nextId;
     std::string id;
     Transformation modelTransformation;
-    const ModelSpaceMesh modelSpaceMesh;
+    ModelSpaceMesh modelSpaceMesh;
     std::vector<Vertex> worldSpaceVertices;
 
 public:

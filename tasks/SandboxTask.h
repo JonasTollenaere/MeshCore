@@ -5,16 +5,19 @@
 #ifndef MESHCORE_SANDBOXTASK_H
 #define MESHCORE_SANDBOXTASK_H
 
-
-#include <OpenGLRenderWidget.h>
 #include "AbstractTask.h"
+#include "../core/WorldSpaceMesh.h"
 
 class SandboxTask: public AbstractTask {
-
+private:
+    WorldSpaceMesh innerWorldSpaceMesh;
+    WorldSpaceMesh outerWorldSpaceMesh;
 public:
-    using AbstractTask::AbstractTask;
+    SandboxTask();
     void run() override;
-};
 
+    const WorldSpaceMesh& getOuterWorldSpaceMesh() const;
+    const WorldSpaceMesh& getInnerWorldSpaceMesh() const;
+};
 
 #endif //MESHCORE_SANDBOXTASK_H

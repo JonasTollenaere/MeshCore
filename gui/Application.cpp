@@ -9,6 +9,7 @@
 #include "../tasks/OptixTask.h"
 #include "../tasks/LatencyBenchMarkTask.h"
 #include "TaskWidget.h"
+#include "../tasks/ConsoleTaskObserver.h"
 
 Q_DECLARE_METATYPE(WorldSpaceMesh)
 
@@ -22,7 +23,7 @@ int main(int argc, char *argv[]){
 //    OptixTask optixTask(window.getRenderWidget());
 //    optixTask.start();
 
-    SandboxTask sandboxTask(window.getTaskRenderWidget());
+    SandboxTask sandboxTask;
     sandboxTask.registerObserver(window.getTaskRenderWidget());
     sandboxTask.start();
 
@@ -37,6 +38,7 @@ int main(int argc, char *argv[]){
 //    latencyBenchMarkTask.run();
 
 //    SandboxTask sandboxTask;
+//    sandboxTask.registerObserver(new ConsoleTaskObserver());
 //    sandboxTask.run();
 //
 //    return 0;

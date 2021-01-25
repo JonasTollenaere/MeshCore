@@ -1,11 +1,15 @@
 #include "TaskWidget.h"
 #include "./res/forms/ui_taskrenderwidget.h"
+#include "../tasks/SandboxTask.h"
 
-TaskWidget::TaskWidget(QWidget *parent)
+TaskWidget::TaskWidget(QWidget *parent, SandboxTask* sandboxTask)
     : QWidget(parent)
     , ui(new Ui::TaskWidget)
 {
     ui->setupUi(this);
+    this->task = sandboxTask;
+//    this->ui->openGLWidget->addWorldSpaceMesh(this->task->getOuterWorldSpaceMesh(), Color(1,1,1,0.4));
+//    this->ui->openGLWidget->addWorldSpaceMesh(this->task->getInnerWorldSpaceMesh(), Color(1,0,0,1));
 }
 
 TaskWidget::~TaskWidget()
@@ -13,28 +17,11 @@ TaskWidget::~TaskWidget()
     delete ui;
 }
 
-/*** This is threadsafe, can be called from anywhere ***/
-void TaskWidget::addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
-    this->addWorldSpaceMesh(worldSpaceMesh, Color(1, 1, 1, 1));
-}
-
-/*** This is threadsafe, can be called from anywhere ***/
-Q_DECLARE_METATYPE(WorldSpaceMesh)
-Q_DECLARE_METATYPE(Color)
-void TaskWidget::addWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, const Color& color) {
-
-    // This way the actions are executed on the main thread
-    qRegisterMetaType<const WorldSpaceMesh&>();
-    qRegisterMetaType<const Color&>();
-    QMetaObject::invokeMethod(this->ui->openGLWidget, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(WorldSpaceMesh, worldSpaceMesh), Q_ARG(const Color&, color));
-}
-
-void TaskWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
-    this->ui->openGLWidget->updateWorldSpaceMesh(worldSpaceMesh);
-}
-
 void TaskWidget::notify(){
-    std::cout << "This notify is overridden" << std::endl;
+    if(this->task!=nullptr){
+        this->ui->openGLWidget->updateWorldSpaceMesh(this->task->getOuterWorldSpaceMesh());
+        this->ui->openGLWidget->updateWorldSpaceMesh(this->task->getInnerWorldSpaceMesh());
+    }
 }
 
 void TaskWidget::notifyProgress(float progress) {

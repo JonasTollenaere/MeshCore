@@ -18,20 +18,20 @@ CudaWorldSpaceMesh::CudaWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh, con
     cudaMalloc(&this->transformation, sizeof(Transformation));
 
     // Allocate and copy the modelSpaceVertices
-    this->numberOfVertices = worldSpaceMesh.getModelSpaceMesh().vertices.size();
+    this->numberOfVertices = worldSpaceMesh.getModelSpaceMesh().getVertices().size();
     unsigned int verticesBytes = this->numberOfVertices * sizeof(Vertex);
     cudaMalloc(&this->modelSpaceVertices, verticesBytes);
-    cudaMemcpyAsync(this->modelSpaceVertices, worldSpaceMesh.getModelSpaceMesh().vertices.data(), verticesBytes, cudaMemcpyHostToDevice, *this->cudaStream);
+    cudaMemcpyAsync(this->modelSpaceVertices, worldSpaceMesh.getModelSpaceMesh().getVertices().data(), verticesBytes, cudaMemcpyHostToDevice, *this->cudaStream);
 
     // Allocate and update the transformation, worldSpaceVertices
     cudaMalloc(&this->worldSpaceVertices, verticesBytes);
     this->setModelTransformation(worldSpaceMesh.getModelTransformation());
 
     // Allocate and copy the triangles
-    this->numberOfTriangles = worldSpaceMesh.getModelSpaceMesh().triangles.size();
+    this->numberOfTriangles = worldSpaceMesh.getModelSpaceMesh().getTriangles().size();
     unsigned int triangleBytes = this->numberOfTriangles * sizeof(Triangle);
     cudaMalloc(&this->triangles, triangleBytes);
-    cudaMemcpyAsync(this->triangles, worldSpaceMesh.getModelSpaceMesh().triangles.data(), triangleBytes, cudaMemcpyHostToDevice, *this->cudaStream);
+    cudaMemcpyAsync(this->triangles, worldSpaceMesh.getModelSpaceMesh().getTriangles().data(), triangleBytes, cudaMemcpyHostToDevice, *this->cudaStream);
 
     // Allocate flags
     cudaMalloc(&this->flags, 2 * sizeof(bool));

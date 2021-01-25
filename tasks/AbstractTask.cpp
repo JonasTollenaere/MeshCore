@@ -20,10 +20,7 @@ void AbstractTask::finalize() {
     delete thread;
 }
 
-AbstractTask::AbstractTask(): AbstractTask(nullptr){}
-
-AbstractTask::AbstractTask(TaskWidget* taskWidget):
-taskWidget(taskWidget),
+AbstractTask::AbstractTask():
 thread(nullptr),
 randomEngine(0)
 {}
@@ -35,14 +32,6 @@ void AbstractTask::setSeed(unsigned int seed) {
 float AbstractTask::getRandomFloat(float maxValue){
     auto nextFloat = std::uniform_real_distribution<float>(0, maxValue);
     return nextFloat(this->randomEngine);
-}
-
-void AbstractTask::renderMesh(const WorldSpaceMesh &worldSpaceMesh, const Color &color) const {
-    if(this->taskWidget!= nullptr) this->taskWidget->addWorldSpaceMesh(worldSpaceMesh, color);
-}
-
-void AbstractTask::updateRenderMesh(const WorldSpaceMesh &worldSpaceMesh) const {
-    if(this->taskWidget!= nullptr) this->taskWidget->updateWorldSpaceMesh(worldSpaceMesh);
 }
 
 void AbstractTask::notifyObserversUpdate() const {

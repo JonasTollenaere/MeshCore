@@ -13,9 +13,12 @@
 #include "Edge.h"
 
 class ModelSpaceMesh {
+private:
+    std::vector<Vertex> vertices;
+    std::vector<Triangle> triangles;
 public:
-    const std::vector<Vertex> vertices;
-    const std::vector<Triangle> triangles;
+    [[nodiscard]] std::vector<Vertex> getVertices() const;
+    [[nodiscard]] std::vector<Triangle> getTriangles() const;
 public:
     ModelSpaceMesh();
     ModelSpaceMesh(const std::vector<Vertex> & vertices, const std::vector<Triangle> & triangles);
