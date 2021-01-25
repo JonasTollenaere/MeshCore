@@ -2,13 +2,13 @@
 // Created by Jonas on 30/11/2020.
 //
 
-#include "RenderWidget.h"
+#include "OpenGLRenderWidget.h"
 #include "ShaderProgramSource.h"
 #include <QOpenGLShaderProgram>
 
-RenderWidget::RenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
+OpenGLRenderWidget::OpenGLRenderWidget(QWidget *parent): QOpenGLWidget(parent) {}
 
-void RenderWidget::initializeGL() {
+void OpenGLRenderWidget::initializeGL() {
 
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 
@@ -41,24 +41,24 @@ void RenderWidget::initializeGL() {
     currentShader = &betterShader;
 }
 
-void RenderWidget::resetView() {
+void OpenGLRenderWidget::resetView() {
     viewMatrix = glm::translate(glm::dmat4(1.0f), glm::dvec3(0.0f,0.0f, - INITIAL_VIEW_DISTANCE));
 }
 
-void RenderWidget::resizeGL(int w, int h) {
+void OpenGLRenderWidget::resizeGL(int w, int h) {
     this->width = w;
     this->height = h;
     projectionMatrix = glm::perspective(glm::radians(fieldOfView), float(width)/float(height), 0.1f, 10000.0f);
 }
 
-void RenderWidget::paintGL() {
+void OpenGLRenderWidget::paintGL() {
     std::shared_lock<std::shared_mutex> lock(sharedMutex); // A lock with destructor that releases the mutex
     for(auto& [id, model]:  this->renderModelsMap){
         model.draw(*currentShader, viewMatrix, projectionMatrix);
     }
 }
 
-void RenderWidget::mouseMoveEvent(QMouseEvent *event) {
+void OpenGLRenderWidget::mouseMoveEvent(QMouseEvent *event) {
     int dx = event->x() - lastMousePosition.x();
     int dy = event->y() - lastMousePosition.y();
     lastMousePosition = event->pos();
@@ -72,20 +72,20 @@ void RenderWidget::mouseMoveEvent(QMouseEvent *event) {
     this->update();
 }
 
-void RenderWidget::wheelEvent(QWheelEvent *event) {
+void OpenGLRenderWidget::wheelEvent(QWheelEvent *event) {
     auto factor = event->angleDelta().y() / 1200.0;
     auto distance = glm::length(glm::vec3(viewMatrix[3]));
     viewMatrix = glm::translate(viewMatrix, glm::dvec3(glm::inverse(viewMatrix) * glm::dvec4(glm::dvec3(0.0f, 0.0f, factor * distance), 0.0f)));
     this->update();
 }
 
-void RenderWidget::mousePressEvent(QMouseEvent *event) {
+void OpenGLRenderWidget::mousePressEvent(QMouseEvent *event) {
      lastMousePosition = event->pos();
      this->update();
      this->setFocus();
 }
 
-void RenderWidget::mouseDoubleClickEvent(QMouseEvent *event) {
+void OpenGLRenderWidget::mouseDoubleClickEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton)
     {
         if(!this->parentWidget()->isMaximized()){
@@ -97,7 +97,7 @@ void RenderWidget::mouseDoubleClickEvent(QMouseEvent *event) {
     }
 }
 
-void RenderWidget::keyPressEvent(QKeyEvent* event){
+void OpenGLRenderWidget::keyPressEvent(QKeyEvent* event){
     int key = event->key();
     if(key == Qt::Key_Plus){
         auto factor = 0.1;
@@ -139,14 +139,14 @@ void RenderWidget::keyPressEvent(QKeyEvent* event){
 }
 
 /*** This is threadsafe, can be called from anywhere ***/
-void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh) {
+void OpenGLRenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh) {
     this->addWorldSpaceMesh(worldSpaceMesh, Color(1, 1, 1, 1));
 }
 
 /*** This is threadsafe, can be called from anywhere ***/
 Q_DECLARE_METATYPE(WorldSpaceMesh)
 Q_DECLARE_METATYPE(Color)
-void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Color& color) {
+void OpenGLRenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const Color& color) {
 
     // This way the actions are executed on the main thread
     qRegisterMetaType<const WorldSpaceMesh&>();
@@ -154,7 +154,7 @@ void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const
     QMetaObject::invokeMethod(this, "addWorldSpaceMeshSlot", Qt::AutoConnection, Q_ARG(WorldSpaceMesh, worldSpaceMesh), Q_ARG(const Color&, color));
 }
 
-[[maybe_unused]] void RenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
+[[maybe_unused]] void OpenGLRenderWidget::addWorldSpaceMeshSlot(const WorldSpaceMesh& worldSpaceMesh, const Color& color){
     this->makeCurrent();
     auto model = RenderModel(worldSpaceMesh);
     model.setColor(color);
@@ -164,7 +164,7 @@ void RenderWidget::addWorldSpaceMesh(const WorldSpaceMesh& worldSpaceMesh, const
 }
 
 /*** This is threadsafe, can be called from anywhere ***/
-void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
+void OpenGLRenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
     const std::string& id = worldSpaceMesh.getId();
     std::unique_lock<std::shared_mutex> lock(sharedMutex); // Unique lock for writing with destructor that releases the mutex
     if(renderModelsMap.find(id) != renderModelsMap.end()){
@@ -174,7 +174,7 @@ void RenderWidget::updateWorldSpaceMesh(const WorldSpaceMesh &worldSpaceMesh) {
 }
 
 // TODO setting per rendermodel
-void RenderWidget::toggleWireFrame() {
+void OpenGLRenderWidget::toggleWireFrame() {
     this->makeCurrent();
     GLint currentPolygonMode[2];
     glGetIntegerv(GL_POLYGON_MODE, currentPolygonMode);
@@ -190,7 +190,7 @@ void RenderWidget::toggleWireFrame() {
 }
 
 // TODO culling per rendermodel
-void RenderWidget::toggleCullFace() {
+void OpenGLRenderWidget::toggleCullFace() {
     this->makeCurrent();
     GLboolean enabled = glIsEnabled(GL_CULL_FACE);
     if(enabled){

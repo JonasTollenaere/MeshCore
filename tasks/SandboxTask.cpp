@@ -17,6 +17,9 @@
 
 void SandboxTask::run(){
 
+    this->notifyObserversStarted();
+    this->notifyObserversStatus("Initialising");
+
     Ray ray(Vertex(1,1,1), Vertex(2,2,2));
     std::cout << ray << std::endl;
     ray.transform(glm::translate(Transformation(1.0f), Vertex(1,0,0)));
@@ -90,7 +93,7 @@ void SandboxTask::run(){
     Transformation currentTransformation = innerMesh.getModelTransformation();
     std::cout << std::boolalpha;
     int moves = 150000;
-
+    this->notifyObserversStatus("Executing random walk");
     auto startms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for(int i=0; i<moves; i++){
 
@@ -124,14 +127,18 @@ void SandboxTask::run(){
 
         if(feasible){
             currentTransformation = newTransformation;
-            innerMesh.setModelTransformationMatrix(currentTransformation);
-            updateRenderMesh(innerMesh);
-        }
-//        if(i%1000==0){
 //            innerMesh.setModelTransformationMatrix(currentTransformation);
 //            updateRenderMesh(innerMesh);
-//        }
+        }
+        if(i%1000==0){
+            innerMesh.setModelTransformationMatrix(currentTransformation);
+            updateRenderMesh(innerMesh);
+            this->notifyObserversProgress((float(i)/float(moves)));
+        }
+
     }
+
+    this->notifyObserversProgress(1.0f);
 
     auto stopms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto totalms = stopms - startms;
@@ -143,6 +150,8 @@ void SandboxTask::run(){
     innerMesh.setModelTransformationMatrix(currentTransformation);
     this->updateRenderMesh(innerMesh);
     std::cout << "MPS: " << float(moves)/totals << std::endl;
+
+    this->notifyObserversFinished();
 
 //    Vertex v0(-0.843433,-0.804675,-0.826513);
 //    Vertex v1(-0.930694,0.0654775,-0.0837993);

@@ -2,8 +2,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 ### QT ###
 set(CMAKE_AUTOMOC ON)
-#set(CMAKE_AUTORCC ON)
-#set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 link_libraries(Qt5::Widgets)
 
@@ -34,7 +34,7 @@ include_directories("${OptiX_INCLUDE}")
 #set_property(TARGET OptixPrograms PROPERTY CUDA_PTX_COMPILATION ON)
 
 ### Application.exe ###
-file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu ../optix/*.cu ../optix/*.h ../solutions/*.cpp ../solutions/*.cu)
+file(GLOB SOURCES *.cpp ../core/*.cpp ../tasks/*.cpp ../cuda/*.cpp ../cuda/*.cu ../optix/*.cu ../optix/*.h ../solutions/*.cpp ../solutions/*.cu res/forms/*.ui)
 add_executable(Application ${SOURCES})
 set_target_properties(Application PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 #target_link_libraries(Application OptixPrograms)

@@ -6,7 +6,7 @@
 #define MESHCORE_SANDBOXTASK_H
 
 
-#include <RenderWidget.h>
+#include <OpenGLRenderWidget.h>
 #include "AbstractTask.h"
 
 class SandboxTask: public AbstractTask {

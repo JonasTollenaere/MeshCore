@@ -2,8 +2,8 @@
 // Created by Jonas on 30/11/2020.
 //
 
-#ifndef MESHCORE_RENDERWIDGET_H
-#define MESHCORE_RENDERWIDGET_H
+#ifndef MESHCORE_OPENGLRENDERWIDGET_H
+#define MESHCORE_OPENGLRENDERWIDGET_H
 
 #include "RenderModel.h"
 #include <QOpenGLWidget>
@@ -20,7 +20,7 @@
 #define INITIAL_VIEW_DISTANCE 50.0f
 #define INITIAL_FOV 86.0f
 
-class RenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
+class OpenGLRenderWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT
 private:
     float fieldOfView = INITIAL_FOV;
@@ -34,13 +34,12 @@ private:
     std::unordered_map<std::string, RenderModel> renderModelsMap;
     std::shared_mutex sharedMutex;
 
-
     QOpenGLShaderProgram betterShader;
     QOpenGLShaderProgram basicShader;
     QOpenGLShaderProgram* currentShader;
 
 public:
-    explicit RenderWidget(QWidget *parent = nullptr);
+    explicit OpenGLRenderWidget(QWidget *parent = nullptr);
 
 private:
     void resetView();
@@ -65,8 +64,8 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
-private slots:
+public slots:
     Q_INVOKABLE [[maybe_unused]] void addWorldSpaceMeshSlot(const WorldSpaceMesh &worldSpaceMesh, const Color &color);
 };
 
-#endif //MESHCORE_RENDERWIDGET_H
+#endif //MESHCORE_OPENGLRENDERWIDGET_H

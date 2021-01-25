@@ -6,7 +6,7 @@
 #define MESHCORE_CUDATASK_H
 
 
-#include <RenderWidget.h>
+#include <OpenGLRenderWidget.h>
 #include "AbstractTask.h"
 
 class CudaTask: public AbstractTask {

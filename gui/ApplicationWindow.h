@@ -7,7 +7,8 @@
 
 #include <QMainWindow>
 #include <QDialog>
-#include "RenderWidget.h"
+#include "OpenGLRenderWidget.h"
+#include "TaskWidget.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -18,11 +19,11 @@ QT_END_NAMESPACE
 class ApplicationWindow: public QMainWindow {
 private:
     QMenuBar *menuBar;
-    RenderWidget* renderWidget;
+    TaskWidget* taskRenderWidget;
 public:
     ApplicationWindow();
 
-    RenderWidget *getRenderWidget() const;
+    [[nodiscard]] TaskWidget *getTaskRenderWidget() const;
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

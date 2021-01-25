@@ -20,13 +20,10 @@ void AbstractTask::finalize() {
     delete thread;
 }
 
-AbstractTask::AbstractTask():
-renderWidget(nullptr),
-thread(nullptr),
-randomEngine(0){}
+AbstractTask::AbstractTask(): AbstractTask(nullptr){}
 
-AbstractTask::AbstractTask(RenderWidget* renderWidget):
-renderWidget(renderWidget),
+AbstractTask::AbstractTask(TaskWidget* taskWidget):
+taskWidget(taskWidget),
 thread(nullptr),
 randomEngine(0)
 {}
@@ -41,9 +38,54 @@ float AbstractTask::getRandomFloat(float maxValue){
 }
 
 void AbstractTask::renderMesh(const WorldSpaceMesh &worldSpaceMesh, const Color &color) const {
-    if(this->renderWidget!= nullptr) this->renderWidget->addWorldSpaceMesh(worldSpaceMesh, color);
+    if(this->taskWidget!= nullptr) this->taskWidget->addWorldSpaceMesh(worldSpaceMesh, color);
 }
 
 void AbstractTask::updateRenderMesh(const WorldSpaceMesh &worldSpaceMesh) const {
-    if(this->renderWidget!= nullptr) this->renderWidget->updateWorldSpaceMesh(worldSpaceMesh);
+    if(this->taskWidget!= nullptr) this->taskWidget->updateWorldSpaceMesh(worldSpaceMesh);
+}
+
+void AbstractTask::notifyObserversUpdate() const {
+    for(AbstractTaskObserver* observer: taskObservers){
+        observer->notify();
+    }
+}
+
+void AbstractTask::unregisterObserver(AbstractTaskObserver* observer) {
+    auto iterator = taskObservers.begin();
+    while(iterator!=taskObservers.end()){
+        if(*iterator==observer){
+            taskObservers.erase(iterator);
+            std::cout << "Unregistered observer" << std::endl;
+        }
+        iterator++;
+    }
+}
+
+void AbstractTask::registerObserver(AbstractTaskObserver* observer) {
+    taskObservers.emplace_back(observer);
+}
+
+void AbstractTask::notifyObserversProgress(float progress) const {
+    for(AbstractTaskObserver* observer: taskObservers){
+        observer->notifyProgress(progress);
+    }
+}
+
+void AbstractTask::notifyObserversFinished() const {
+    for(AbstractTaskObserver* observer: taskObservers){
+        observer->notifyFinished();
+    }
+}
+
+void AbstractTask::notifyObserversStarted() const {
+    for(AbstractTaskObserver* observer: taskObservers){
+        observer->notifyStarted();
+    }
+}
+
+void AbstractTask::notifyObserversStatus(const std::string& status) const {
+    for(AbstractTaskObserver* observer: taskObservers){
+        observer->notifyStatus(status);
+    }
 }

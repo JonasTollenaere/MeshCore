@@ -18,11 +18,11 @@ ApplicationWindow::ApplicationWindow() {
     format.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(format);
 
-   this->renderWidget = new RenderWidget(this);
+   this->taskRenderWidget = new TaskWidget(this);
 
-    renderWidget->setMinimumSize(200, 100);
-    renderWidget->setFocus();
-    setCentralWidget(renderWidget);
+//    taskRenderWidget->setMinimumSize(200, 100);
+//    taskRenderWidget->setFocus();
+    setCentralWidget(taskRenderWidget);
 
     menuBar = new QMenuBar;
     auto* fileMenu = new QMenu(QString("File"), this);
@@ -45,27 +45,27 @@ ApplicationWindow::ApplicationWindow() {
 //    zoomInAction->setShortcut(QKeySequence::ZoomIn);
 
     QAction* resetViewAction = viewMenu->addAction(QString("Reset view"));
-    connect(resetViewAction, &QAction::triggered, renderWidget, &RenderWidget::resetView);
+//    connect(resetViewAction, &QAction::triggered, taskRenderWidget, &OpenGLRenderWidget::resetView);
     resetViewAction->setShortcut(QKeySequence(QString("Ctrl+0")));
 
     QAction* toggleWireFrame = viewMenu->addAction(QString("Toggle Wireframe"));
-    connect(toggleWireFrame, &QAction::triggered, renderWidget, &RenderWidget::toggleWireFrame);
+//    connect(toggleWireFrame, &QAction::triggered, taskRenderWidget, &OpenGLRenderWidget::toggleWireFrame);
     toggleWireFrame->setCheckable(true);
 
     QAction* toggleCulling = viewMenu->addAction(QString("Toggle Culling"));
-    connect(toggleCulling, &QAction::triggered, renderWidget, &RenderWidget::toggleCullFace);
+//    connect(toggleCulling, &QAction::triggered, taskRenderWidget, &OpenGLRenderWidget::toggleCullFace);
     toggleCulling->setCheckable(true);
     toggleCulling->setChecked(true);
 
     QAction* aboutAction = helpMenu->addAction(QString("About Meshcore"));
     connect(aboutAction, &QAction::triggered, this, &ApplicationWindow::displayApplicationInfo);
 
-    setMinimumSize(640,360);
+    setMinimumSize(1280,720);
     setWindowTitle(tr("MeshCore"));
 }
 
-RenderWidget *ApplicationWindow::getRenderWidget() const {
-    return renderWidget;
+TaskWidget *ApplicationWindow::getTaskRenderWidget() const {
+    return taskRenderWidget;
 }
 
 void ApplicationWindow::keyPressEvent(QKeyEvent* event){
@@ -78,19 +78,13 @@ void ApplicationWindow::loadMesh(){
     if(std::filesystem::exists(fileName.toStdString())){
         const ModelSpaceMesh modelSpaceMesh = FileParser::parseFile(fileName.toStdString());
         const WorldSpaceMesh worldSpaceMesh = WorldSpaceMesh(modelSpaceMesh);
-        renderWidget->addWorldSpaceMesh(worldSpaceMesh);
+        taskRenderWidget->addWorldSpaceMesh(worldSpaceMesh);
     }
-//    else{
-//        auto messageBox = QMessageBox(this);
-//        messageBox.setInformativeText("No valid file selected!");
-//        messageBox.setWindowTitle("Warning");
-//        messageBox.exec();
-//    }
 }
 
 void ApplicationWindow::displayApplicationInfo(){
     auto messageBox = QMessageBox(this);
-    messageBox.setInformativeText("Meshcore v0.0.1");
+    messageBox.setInformativeText("Meshcore v0.0.2");
     messageBox.setWindowTitle("About MeshCore");
     messageBox.setText("Created by Jonas Tollenaere");
     messageBox.exec();

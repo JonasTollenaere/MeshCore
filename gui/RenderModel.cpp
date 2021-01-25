@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/normal.hpp>
 
-#include "RenderWidget.h"
+#include "OpenGLRenderWidget.h"
 #include "ShaderProgramSource.h"
 #include <QOpenGLShaderProgram>
 
