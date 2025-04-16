@@ -24,10 +24,10 @@
     "name" : "gtest",
     "version>=" : "1.16.0"
   }, {
-    "name" : "qt5-base",
-    "version>=" : "5.15.16#0"
+    "name" : "qtbase",
+    "version>=" : "6.8.2#1"
   }, {
-    "name" : "qt5-svg",
-    "version>=" : "5.15.16#0"
+    "name" : "qtsvg",
+    "version>=" : "6.8.2"
   } ]
 }
