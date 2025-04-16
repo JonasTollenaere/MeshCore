@@ -30,7 +30,7 @@ add_subdirectory(tests)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Svg OpenGL OpenGLWidgets REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GIF REQUIRED)
@@ -38,7 +38,7 @@ find_package(GIF REQUIRED)
 ### MeshCore is the complete library with UI that expands upon MeshCoreBase, requires Qt, OpenGL, ...
 file(GLOB UI_SOURCES rendering/*.cpp external/gifencoder/*.cpp)
 add_library(MeshCore STATIC ${UI_SOURCES})
-target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::Svg OpenGL::GL GLEW::GLEW GIF::GIF)
+target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt6::Widgets Qt6::Core Qt6::Svg Qt6::OpenGL Qt6::OpenGLWidgets OpenGL::GL GLEW::GLEW GIF::GIF)
 
 ### SimpleRenderDemo.exe ###
 add_executable(A-SimpleRenderDemo demos/renderDemo.cpp ${SOURCES})
