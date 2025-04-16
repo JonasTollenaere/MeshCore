@@ -19,7 +19,7 @@ build-ubuntu-2204:
 
     # Install a boatload of dependencies to get qt installed
     - apt-get update
-    - apt-get -y install git curl zip unzip tar cmake build-essential ninja-build pkg-config autoconf automake libtool libxmu-dev python3 python3-jinja2 python3-setuptools bison freeglut3-dev iputils-ping libgl1-mesa-dev libglu1-mesa-dev libjpeg-dev libmysqlclient-dev libnss3-dev libopus-dev libpng-dev libsqlite3-dev libssl-dev libx11-xcb-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb1-dev libxcursor-dev libxi-dev libxml2-dev libxrender-dev libxslt-dev mesa-common-dev zlib1g-dev '^libxcb.*-dev' libxkbcommon-dev libxkbcommon-x11-dev libgl-dev libdbus-1-dev libxtst-dev
+    - apt-get -y install git curl zip unzip tar cmake build-essential ninja-build pkg-config autoconf automake libtool libxmu-dev python3 python3-jinja2 python3-setuptools bison freeglut3-dev iputils-ping libgl1-mesa-dev libglu1-mesa-dev libjpeg-dev libmysqlclient-dev libnss3-dev libopus-dev libpng-dev libsqlite3-dev libssl-dev libx11-xcb-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb1-dev libxcursor-dev libxi-dev libxml2-dev libxrender-dev libxslt-dev mesa-common-dev zlib1g-dev '^libxcb.*-dev' libxkbcommon-dev libxkbcommon-x11-dev libgl-dev libdbus-1-dev libxtst-dev flex
     - apt-get -y upgrade gcc
 
     # Install vcpkg dependencies
