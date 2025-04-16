@@ -1,36 +1,45 @@
 {
-  "name" : "meshcore",
-  "version-string" : "1.0.0",
-  "builtin-baseline" : "11be7f536538ace43f867c8efb3d624c43b6af54",
-  "dependencies" : [{
-    "name" : "glm",
-    "version>=" : "1.0.1#3"
-  }, {
-    "name" : "gsl",
-    "version>=" : "2.7.1#3"
-  }, {
-    "name" : "boost-random",
-    "version>=" : "1.86.0"
-  }, {
-    "name" : "glew",
-    "version>=" : "2.2.0#3"
-  }, {
-    "name" : "tbb",
-    "version>=" : "2021.10.0#2"
-  }, {
-    "name" : "giflib",
-    "version>=" : "5.2.2#0"
-  }, {
-    "name" : "gtest",
-    "version>=" : "1.16.0"
-  }, {
-    "name" : "qtbase",
-    "version>=" : "6.8.2#1"
-  }, {
-    "name" : "qtsvg",
-    "version>=" : "6.8.2"
-  }, {
-    "name" : "nlohmann-json",
-    "version>=" : "3.12.0"
-  }]
+  "name": "meshcore",
+  "version-string": "1.0.0",
+  "builtin-baseline": "11be7f536538ace43f867c8efb3d624c43b6af54",
+  "dependencies": [
+    {
+      "name": "glm",
+      "version>=": "1.0.1#3"
+    },
+    {
+      "name": "gsl",
+      "version>=": "2.7.1#3"
+    },
+    {
+      "name": "boost-random",
+      "version>=": "1.86.0"
+    },
+    {
+      "name": "glew",
+      "version>=": "2.2.0#3"
+    },
+    {
+      "name": "tbb",
+      "version>=": "2021.10.0#2"
+    },
+    {
+      "name": "giflib",
+      "version>=": "5.2.2#0"
+    },
+    {
+      "name": "gtest",
+      "version>=": "1.16.0"
+    },
+    {
+      "name": "qtbase",
+      "version>=": "6.8.2#1"
+    },
+    {
+      "name": "qtsvg",
+      "version>=": "6.8.2"
+    }, {
+      "name" : "nlohmann-json",
+      "version>=" : "3.12.0"
+    }]
 }
