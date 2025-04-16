@@ -32,16 +32,15 @@ add_subdirectory(tests)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Svg OpenGL OpenGLWidgets REQUIRED)
 find_package(OpenGL REQUIRED)
-#find_package(GLEW REQUIRED)
 find_package(GIF REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
 ### MeshCore is the complete library with UI that expands upon MeshCoreBase, requires Qt, OpenGL, ...
 file(GLOB UI_SOURCES src/rendering/*.cpp src/rendering/*.h src/external/gifencoder/*.cpp include/meshcore/rendering/*.h)
 add_library(MeshCore STATIC ${UI_SOURCES})
-target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::Svg OpenGL::GL GIF::GIF nlohmann_json::nlohmann_json)
+target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt6::Widgets Qt6::Core Qt6::Svg Qt6::OpenGL Qt6::OpenGLWidgets OpenGL::GL GIF::GIF)
 
 # Set the shader directory for the MeshCore library
 target_compile_definitions(MeshCore PRIVATE MESHCORE_SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/shaders/")
