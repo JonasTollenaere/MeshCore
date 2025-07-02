@@ -11,7 +11,6 @@
 
 class DummySolution: public AbstractSolution{
 
-private:
     std::shared_ptr<WorldSpaceMesh> item;
     std::shared_ptr<WorldSpaceMesh> container;
 

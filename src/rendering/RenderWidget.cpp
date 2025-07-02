@@ -13,6 +13,7 @@
 #include "meshcore/core/Plane.h"
 
 #include "forms/ui_renderwidget.h"
+#include "meshcore/optimization/StripPackingSolution.h"
 
 RenderWidget::RenderWidget(QWidget *parent):
     QWidget(parent), ui(new Ui::RenderWidget)
@@ -29,8 +30,10 @@ RenderWidget::RenderWidget(QWidget *parent):
         // Hide the header of the tree widget
         auto& tree = this->ui->treeWidget;
         tree->headerItem()->setHidden(true);
-//        tree->setIndentation(0);
         tree->setColumnCount(1);
+
+        // Set the default SolutionRenderCallback
+        setDefaultSolutionRenderCallback();
     }
 
 RenderWidget::~RenderWidget() {
@@ -210,7 +213,7 @@ void RenderWidget::renderLine(const std::string &group, const std::string& name,
 }
 
 void RenderWidget::notifySolution(const std::shared_ptr<const AbstractSolution>& solution) {
-    if(this->onSolutionNotified) onSolutionNotified(this, solution);
+    if(this->solutionRenderCallback) solutionRenderCallback(this, solution);
 }
 
 void RenderWidget::notifyProgress(float progress) {
@@ -282,23 +285,80 @@ void RenderWidget::notifyStatus(const std::string &status) {
     this->ui->statusLabel->setText(status);
 }
 
-void RenderWidget::observeTask(AbstractTask *task, const std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution> solution)>& onTaskSolutionNotified) {
+void RenderWidget::observeTask(AbstractTask *task) {
 
     // Clear currently observed task if needed
     if(this->currentTask!=nullptr){
         currentTask->unregisterObserver(this);
         this->clear();
         this->ui->taskSection->setVisible(false);
-        this->onSolutionNotified = {};
     }
 
     // Set and observe new task
     this->currentTask = task;
-    this->onSolutionNotified = onTaskSolutionNotified;
     if(task!=nullptr){
         currentTask->registerObserver(this);
         this->ui->taskSection->setVisible(true);
     }
+}
+
+void RenderWidget::observeTask(AbstractTask *task, const std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution> solution)>& solutionRenderCallback) {
+
+    // Clear currently observed task if needed
+    if(this->currentTask!=nullptr){
+        currentTask->unregisterObserver(this);
+        this->clear();
+        this->ui->taskSection->setVisible(false);
+        this->solutionRenderCallback = {};
+    }
+
+    // Set and observe new task
+    this->currentTask = task;
+    this->solutionRenderCallback = solutionRenderCallback;
+    if(task!=nullptr){
+        currentTask->registerObserver(this);
+        this->ui->taskSection->setVisible(true);
+    }
+}
+
+void RenderWidget::setSolutionRenderCallback(
+    const std::function<void(RenderWidget *renderWidget, const std::shared_ptr<const AbstractSolution> &solution)> &
+    solutionRenderCallback) {
+    this->solutionRenderCallback = solutionRenderCallback;
+}
+
+void RenderWidget::setDefaultSolutionRenderCallback() {
+    solutionRenderCallback = {
+        [this](RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution) {
+            if (!solution) return;
+
+            if (const auto& sol = std::dynamic_pointer_cast<const StripPackingSolution>(solution)) {
+                renderWidget->clearGroup("MinimalContainer");
+                float maximumHeight = 0.0f;
+                for (size_t itemIndex = 0; itemIndex < sol->getItems().size(); ++itemIndex) {
+                    const auto& item = sol->getItem(itemIndex);
+                    const auto& itemName = sol->getItemName(itemIndex);
+
+                    // Update the maximum height
+                    const auto& itemAABB = sol->getItemAABB(itemIndex);
+                    maximumHeight = std::max(maximumHeight,itemAABB.getMaximum().z);
+
+                    renderWidget->renderWorldSpaceMesh("Items", item, StripPackingProblem::getItemColor(itemName));
+                }
+                auto min = sol->getProblem()->getContainer().getMinimum();
+                auto max = sol->getProblem()->getContainer().getMaximum();
+
+                renderWidget->renderBox("MinimalContainer", "AABB", {min, {max.x, max.y, maximumHeight}});
+
+            }
+            /*else if (const auto& svms = std::dynamic_pointer_cast<const SingleVolumeMaximisationSolution>(solution)) {
+
+                }*/
+            else {
+                std::cout << "The default solutionRenderCallback could not resolve the solution type. Please override the callback using RenderWidget::setSolutionRenderCallback()" << std::endl;
+            }
+        }
+    };
 }
 
 void RenderWidget::startCurrentTask() {

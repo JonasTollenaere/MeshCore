@@ -10,7 +10,7 @@
 #include <atomic>
 #include <vector>
 #include "AbstractTaskObserver.h"
-#include "meshcore/localsearch/AbstractSolution.h"
+#include "meshcore/optimization/AbstractSolution.h"
 
 class AbstractTask {
 

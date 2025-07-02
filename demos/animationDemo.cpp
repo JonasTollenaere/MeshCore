@@ -18,8 +18,8 @@ int main(int argc, char *argv[]){
     auto renderWidget = window.getRenderWidget();
     auto openGLWidget = renderWidget->getOpenGLWidget();
     openGLWidget->setLightMode(true);
-    openGLWidget->setFixedWidth(1920);
-    openGLWidget->setFixedHeight(1080);
+    openGLWidget->setFixedWidth(1920/app.devicePixelRatio());
+    openGLWidget->setFixedHeight(1080/app.devicePixelRatio());
     openGLWidget->setUsePerspective(false);
     openGLWidget->update();
 

@@ -17,10 +17,11 @@ find_package(GSL REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb tbbmalloc)
 
 ### MeshCoreBase library can be used for targets that run without UI ###
-file(GLOB SOURCES src/acceleration/*.cpp src/core/*.cpp src/geometric/*.cpp src/tasks/*.cpp src/utility/*.cpp src/external/quickhull/*.cpp src/factories/*.cpp)
+file(GLOB SOURCES src/acceleration/*.cpp src/core/*.cpp src/geometric/*.cpp src/tasks/*.cpp src/utility/*.cpp src/external/quickhull/*.cpp src/factories/*.cpp src/optimization/*.cpp)
 add_library(MeshCoreBase STATIC ${SOURCES})
 target_link_libraries(MeshCoreBase PUBLIC TBB::tbb TBB::tbbmalloc Boost::boost GSL::gsl glm::glm)
 target_include_directories(MeshCoreBase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # include this directory
+target_compile_definitions(MeshCoreBase PUBLIC MESHCORE_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/datasets/")
 
 ### Tests ###
 # Only uses MeshCoreBase
@@ -34,16 +35,16 @@ find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GIF REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 ### MeshCore is the complete library with UI that expands upon MeshCoreBase, requires Qt, OpenGL, ...
 file(GLOB UI_SOURCES src/rendering/*.cpp src/rendering/*.h src/external/gifencoder/*.cpp include/meshcore/rendering/*.h)
 add_library(MeshCore STATIC ${UI_SOURCES})
-target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::Svg OpenGL::GL GLEW::GLEW GIF::GIF)
+target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::Svg OpenGL::GL GLEW::GLEW GIF::GIF nlohmann_json::nlohmann_json)
 
 # Set the shader directory for the MeshCore library
 target_compile_definitions(MeshCore PRIVATE MESHCORE_SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/shaders/")
 target_compile_definitions(MeshCore PRIVATE MESHCORE_ICON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/icons/")
-target_compile_definitions(MeshCore PUBLIC MESHCORE_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/datasets/")
 
 ### SimpleRenderDemo.exe ###
 add_executable(A-SimpleRenderDemo demos/renderDemo.cpp ${SOURCES})
@@ -68,3 +69,7 @@ target_link_libraries(E-DistanceDemo MeshCore)
 ### AnimationDemo.exe ###
 add_executable(F-AnimationDemo demos/animationDemo.cpp ${SOURCES})
 target_link_libraries(F-AnimationDemo MeshCore)
+
+### ViewStripPackingSolution.exe ###
+add_executable(G-ViewStripPackingSolution demos/viewStripPackingSolution.cpp ${SOURCES})
+target_link_libraries(G-ViewStripPackingSolution MeshCore)

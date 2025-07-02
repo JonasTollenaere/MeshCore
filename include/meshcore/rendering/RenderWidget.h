@@ -83,8 +83,13 @@ public:
 
     void addControlWidget(const std::string &group, const std::shared_ptr<AbstractRenderModel> &renderModel);
 
-    void observeTask(AbstractTask* task, const std::function<void(RenderWidget* renderWidget, std::shared_ptr<const AbstractSolution> solution)>& onSolutionNotified);
-    void startCurrentTask();
+    void observeTask(AbstractTask* task);
+    void observeTask(AbstractTask* task, const std::function<void(RenderWidget* renderWidget, std::shared_ptr<const AbstractSolution> solution)>& solutionRenderCallback);
+
+    void setSolutionRenderCallback(const std::function<void(RenderWidget *renderWidget, const std::shared_ptr<const AbstractSolution> &solution)> &solutionRenderCallback);
+    void setDefaultSolutionRenderCallback();
+
+void startCurrentTask();
     void stopCurrentTask();
 
     void notifyStarted() override;
@@ -95,7 +100,7 @@ public:
 
 private:
     AbstractTask* currentTask = nullptr;
-    std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution)> onSolutionNotified  = {};
+    std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution)> solutionRenderCallback  = {};
     std::thread timerThread{};
     std::atomic<bool> taskRunning = false;
 
