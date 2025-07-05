@@ -103,13 +103,6 @@ private:
     std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution)> solutionRenderCallback  = {};
     std::thread timerThread{};
     std::atomic<bool> taskRunning = false;
-
-private slots:
-    [[maybe_unused]] void updateProgressBarSlot(int progress);
-    [[maybe_unused]] void setStartButtonEnabledSlot(bool enabled);
-    [[maybe_unused]] void setStopButtonEnabledSlot(bool enabled);
-    [[maybe_unused]] void setStatusLabelSlot(const QString& status);
-    [[maybe_unused]] void setTimeLabelSlot(const QString& time);
 };
 
 #endif //MESHCORE_RENDERWIDGET_H

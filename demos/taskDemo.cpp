@@ -82,6 +82,9 @@ public:
             }
 
             if(i%10==0) notifyObserversProgress(i/iterations);
+
+            // Sleep 5 ms to avoid overloading render thread
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         notifyObserversProgress(1.0f);
     }

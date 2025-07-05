@@ -4,8 +4,10 @@
 
 #include <iomanip>
 #include <sstream>
+#include <qthread.h>
 
 #include "meshcore/rendering/RenderWidget.h"
+
 
 #include "RenderBoundsTree.h"
 #include "RenderModelControlWidget.h"
@@ -15,26 +17,25 @@
 #include "forms/ui_renderwidget.h"
 #include "meshcore/optimization/StripPackingSolution.h"
 
-RenderWidget::RenderWidget(QWidget *parent):
-    QWidget(parent), ui(new Ui::RenderWidget)
-    {
-        ui->setupUi(this);
-        ui->progressBar->setMinimumWidth(350);
+RenderWidget::RenderWidget(QWidget *parent): QWidget(parent), ui(new Ui::RenderWidget) {
 
-        this->ui->taskSection->setVisible(false);
+    ui->setupUi(this);
+    ui->progressBar->setMinimumWidth(350);
 
-        // Connect the start and stop buttons
-        connect(this->ui->startButton, &QPushButton::clicked, this, &RenderWidget::startCurrentTask);
-        connect(this->ui->stopButton, &QPushButton::clicked, this, &RenderWidget::stopCurrentTask);
+    this->ui->taskSection->setVisible(false);
 
-        // Hide the header of the tree widget
-        auto& tree = this->ui->treeWidget;
-        tree->headerItem()->setHidden(true);
-        tree->setColumnCount(1);
+    // Connect the start and stop buttons
+    connect(this->ui->startButton, &QPushButton::clicked, this, &RenderWidget::startCurrentTask);
+    connect(this->ui->stopButton, &QPushButton::clicked, this, &RenderWidget::stopCurrentTask);
 
-        // Set the default SolutionRenderCallback
-        setDefaultSolutionRenderCallback();
-    }
+    // Hide the header of the tree widget
+    auto& tree = this->ui->treeWidget;
+    tree->headerItem()->setHidden(true);
+    tree->setColumnCount(1);
+
+    // Set the default SolutionRenderCallback
+    setDefaultSolutionRenderCallback();
+}
 
 RenderWidget::~RenderWidget() {
     delete ui;
@@ -217,19 +218,20 @@ void RenderWidget::notifySolution(const std::shared_ptr<const AbstractSolution>&
 }
 
 void RenderWidget::notifyProgress(float progress) {
-    int value = int(100*progress);
-    QMetaObject::invokeMethod(this, "updateProgressBarSlot", Qt::AutoConnection, Q_ARG(int, value));
-}
-
-[[maybe_unused]] void RenderWidget::updateProgressBarSlot(int progress) {
-    this->ui->progressBar->setValue(progress);
+    QMetaObject::invokeMethod(this, [this,progress] {
+        const int value = static_cast<int>(100 * progress);
+        this->ui->progressBar->setValue(value);
+    });
 }
 
 void RenderWidget::notifyStarted() {
-    QMetaObject::invokeMethod(this, "setStatusLabelSlot", Qt::AutoConnection, Q_ARG(QString, QString::fromStdString("-")));
-    QMetaObject::invokeMethod(this, "updateProgressBarSlot", Qt::AutoConnection, Q_ARG(int, 0));
-    QMetaObject::invokeMethod(this, "setStopButtonEnabledSlot", Qt::AutoConnection, Q_ARG(bool, true));
-    QMetaObject::invokeMethod(this, "setStartButtonEnabledSlot", Qt::AutoConnection, Q_ARG(bool, false));
+
+    QMetaObject::invokeMethod(this, [this] {
+        this->ui->statusLabel->setText(QString::fromStdString("-"));
+        this->ui->progressBar->setValue(0);
+        this->ui->startButton->setEnabled(false);
+        this->ui->stopButton->setEnabled(true);
+    });
 
     this->taskRunning = true;
 
@@ -253,7 +255,9 @@ void RenderWidget::notifyStarted() {
                << ":" << std::setfill('0') << std::setw(2) << seconds.count();
 //               << "." << std::setfill('0') << std::setw(3) << milliseconds.count();
 
-            QMetaObject::invokeMethod(this, "setTimeLabelSlot", Qt::AutoConnection, Q_ARG(QString, QString::fromStdString(ss.str())));
+            QMetaObject::invokeMethod(this, [this, &ss] {
+                this->ui->timeLabel->setText(QString::fromStdString(ss.str()));
+            });
 
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
@@ -264,61 +268,67 @@ void RenderWidget::notifyStarted() {
 void RenderWidget::notifyFinished() {
     this->taskRunning = false;
     if(timerThread.joinable()) timerThread.join();
-    QMetaObject::invokeMethod(this, "setStopButtonEnabledSlot", Qt::AutoConnection, Q_ARG(bool, false));
-    QMetaObject::invokeMethod(this, "setStartButtonEnabledSlot", Qt::AutoConnection, Q_ARG(bool, true));
+    QMetaObject::invokeMethod(this, [this] {
+        // Update the start and stop buttons
+        this->ui->startButton->setEnabled(true);
+        this->ui->stopButton->setEnabled(false);
+    });
 }
 
 void RenderWidget::notifyStatus(const std::string &status) {
-    QString qStatus = QString::fromUtf8(status.data(), status.size());
-    QMetaObject::invokeMethod(this, "setStatusLabelSlot", Qt::AutoConnection, Q_ARG(QString, qStatus));
-}
-
-[[maybe_unused]] void RenderWidget::setStartButtonEnabledSlot(bool enabled) {
-    this->ui->startButton->setEnabled(enabled);
-}
-
-[[maybe_unused]] void RenderWidget::setStopButtonEnabledSlot(bool enabled) {
-    this->ui->stopButton->setEnabled(enabled);
-}
-
-[[maybe_unused]] void RenderWidget::setStatusLabelSlot(const QString& status) {
-    this->ui->statusLabel->setText(status);
+    QMetaObject::invokeMethod(this, [this, status] {
+        QString qStatus = QString::fromUtf8(status.data(), status.size());
+        this->ui->statusLabel->setText(qStatus);
+    });
 }
 
 void RenderWidget::observeTask(AbstractTask *task) {
 
-    // Clear currently observed task if needed
-    if(this->currentTask!=nullptr){
-        currentTask->unregisterObserver(this);
-        this->clear();
-        this->ui->taskSection->setVisible(false);
-    }
+    // Check if we're already running on the GUI thread
+    auto connectionType = QThread::currentThread() == this->thread()? Qt::AutoConnection : Qt::BlockingQueuedConnection;
 
-    // Set and observe new task
-    this->currentTask = task;
-    if(task!=nullptr){
-        currentTask->registerObserver(this);
-        this->ui->taskSection->setVisible(true);
-    }
+    // Task observation should happen on the GUI thread
+    QMetaObject::invokeMethod(this, [this,task]{
+
+        // Clear currently observed task if needed
+        if(this->currentTask!=nullptr){
+            currentTask->unregisterObserver(this);
+            this->clear();
+            this->ui->taskSection->setVisible(false);
+        }
+
+        // Set and observe new task
+        this->currentTask = task;
+        if(task!=nullptr){
+            currentTask->registerObserver(this);
+
+            this->ui->taskSection->setVisible(true); // This is not threadsafe
+        }
+    }, connectionType);
 }
 
 void RenderWidget::observeTask(AbstractTask *task, const std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution> solution)>& solutionRenderCallback) {
 
-    // Clear currently observed task if needed
-    if(this->currentTask!=nullptr){
-        currentTask->unregisterObserver(this);
-        this->clear();
-        this->ui->taskSection->setVisible(false);
-        this->solutionRenderCallback = {};
-    }
+    auto connectionType = QThread::currentThread() == this->thread()? Qt::AutoConnection : Qt::BlockingQueuedConnection;
 
-    // Set and observe new task
-    this->currentTask = task;
-    this->solutionRenderCallback = solutionRenderCallback;
-    if(task!=nullptr){
-        currentTask->registerObserver(this);
-        this->ui->taskSection->setVisible(true);
-    }
+    QMetaObject::invokeMethod(this, [this,&task,&solutionRenderCallback]{
+
+        // Clear currently observed task if needed
+        if(this->currentTask!=nullptr){
+            currentTask->unregisterObserver(this);
+            this->clear();
+            this->ui->taskSection->setVisible(false);
+            this->solutionRenderCallback = {};
+        }
+
+        // Set and observe new task
+        this->currentTask = task;
+        this->solutionRenderCallback = solutionRenderCallback;
+        if(task!=nullptr){
+            currentTask->registerObserver(this);
+            this->ui->taskSection->setVisible(true);
+        }
+    }, connectionType);
 }
 
 void RenderWidget::setSolutionRenderCallback(
@@ -396,10 +406,6 @@ void RenderWidget::captureSceneToFile(const std::string &fileName) const {
 void RenderWidget::captureAnimation() const {
     QMetaObject::invokeMethod(this->getOpenGLWidget(), "captureAnimationSlot",
                               Qt::AutoConnection);
-}
-
-[[maybe_unused]] void RenderWidget::setTimeLabelSlot(const QString &time) {
-    this->ui->timeLabel->setText(time);
 }
 
 void RenderWidget::renderRay(const std::string &group, const std::string &name, const Ray &ray, const Color &color, float widthLengthRatio) {
