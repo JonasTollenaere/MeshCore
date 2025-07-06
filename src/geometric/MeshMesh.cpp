@@ -32,6 +32,32 @@ namespace Intersection {
         const auto& simplerObject = triangleCountA < triangleCountB ? worldSpaceMeshA : worldSpaceMeshB;
         const auto& complexObject = triangleCountA < triangleCountB ? worldSpaceMeshB : worldSpaceMeshA;
 
+        const auto& simpleTransformation = simplerObject.getModelTransformation();
+        const auto& complexTransformation = complexObject.getModelTransformation();
+
+        bool equalRotation = simpleTransformation.getRotation() == complexTransformation.getRotation();
+        bool equalScaling = simpleTransformation.getScale() == complexTransformation.getScale();
+
+        if (equalRotation && equalScaling) {
+
+            // The specific case were the scaling and rotation of the items are equal
+            const auto simpleToComplexTranslation = - complexObject.getModelTransformation().getPosition() + simplerObject.getModelTransformation().getPosition();
+            const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
+            const auto& simplerObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(simplerObject.getModelSpaceMesh());
+
+            for (const auto & node : simplerObjectTree->getNodes()) {
+                if (complexObjectTree->intersectsAABB(node.bounds.getTranslated(simpleToComplexTranslation))) {
+                    for (int i = 0; i < node.triangleCount; ++i) {
+                        const VertexTriangle& triangle = simplerObjectTree->getTriangles()[node.firstChildOrTriangleIndex + i];
+                        if (complexObjectTree->intersectsTriangle(triangle.getTranslated(simpleToComplexTranslation))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // The general case where the triangles have to be transformed
         const auto simpleToComplexTransformation = complexObject.getModelTransformation().getInverse() * simplerObject.getModelTransformation();
         const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
         const auto& simplerObjectMesh = simplerObject.getModelSpaceMesh();

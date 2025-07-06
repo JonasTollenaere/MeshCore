@@ -18,12 +18,20 @@ public:
     const AABB bounds;
 
 public:
-    MC_FUNC_QUALIFIER VertexTriangle(Vertex vertex0, Vertex vertex1, Vertex vertex2):
+    MC_FUNC_QUALIFIER VertexTriangle(const Vertex vertex0, const Vertex vertex1, const Vertex vertex2):
             vertices{vertex0, vertex1, vertex2},
             edges{vertices[1]-vertices[0], vertices[2]-vertices[1], vertices[0]-vertices[2]},
             normal(glm::cross(edges[0], edges[1])),
             bounds((glm::min)((glm::min)(vertices[0], vertices[1]), vertices[2]), (glm::max)((glm::max)(vertices[0], vertices[1]), vertices[2]))
             {}
+
+    MC_FUNC_QUALIFIER VertexTriangle(Vertex vertex0, Vertex vertex1, Vertex vertex2, const glm::vec3 edges[3],
+                                     glm::vec3 normal, AABB bounds):
+        vertices{vertex0, vertex1, vertex2},
+        edges{edges[0], edges[1], edges[2]},
+        normal(normal),
+        bounds(bounds)
+    {}
 
     MC_FUNC_QUALIFIER bool operator==(const VertexTriangle &other) const {
         return this->vertices[0] == other.vertices[0] && this->vertices[1] == other.vertices[1] && this->vertices[2] == other.vertices[2];
@@ -45,6 +53,15 @@ public:
         Vertex rVertex1 = transformationMatrix * glm::vec4(this->vertices[1], 1);
         Vertex rVertex2 = transformationMatrix * glm::vec4(this->vertices[2], 1);
         return {rVertex0, rVertex1, rVertex2};
+    }
+
+    MC_FUNC_QUALIFIER [[nodiscard]] VertexTriangle getTranslated(const glm::vec3& translation) const {
+        Vertex rVertex0 = this->vertices[0] + translation;
+        Vertex rVertex1 = this->vertices[1] + translation;
+        Vertex rVertex2 = this->vertices[2] + translation;
+        AABB bounds = this->bounds.getTranslated(translation);
+        return VertexTriangle{rVertex0, rVertex1, rVertex2, &this->edges[0], this->normal, bounds};
+
     }
 
     MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(const Vertex &point) const {
