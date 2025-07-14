@@ -15,6 +15,7 @@
 #include "meshcore/core/Plane.h"
 
 #include "forms/ui_renderwidget.h"
+#include "meshcore/optimization/SingleVolumeMaximisationSolution.h"
 #include "meshcore/optimization/StripPackingSolution.h"
 
 RenderWidget::RenderWidget(QWidget *parent): QWidget(parent), ui(new Ui::RenderWidget) {
@@ -361,9 +362,10 @@ void RenderWidget::setDefaultSolutionRenderCallback() {
                 renderWidget->renderBox("MinimalContainer", "AABB", {min, {max.x, max.y, maximumHeight}});
 
             }
-            /*else if (const auto& svms = std::dynamic_pointer_cast<const SingleVolumeMaximisationSolution>(solution)) {
-
-                }*/
+            else if (const auto& svms = std::dynamic_pointer_cast<const SingleVolumeMaximisationSolution>(solution)) {
+                renderWidget->renderWorldSpaceMesh("Items", svms->getItemWorldSpaceMesh(), Color::Red());
+                renderWidget->renderWorldSpaceMesh("Container", svms->getContainerWorldSpaceMesh(), Color(1, 1, 1, 0.4));
+            }
             else {
                 std::cout << "The default solutionRenderCallback could not resolve the solution type. Please override the callback using RenderWidget::setSolutionRenderCallback()" << std::endl;
             }

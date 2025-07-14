@@ -9,13 +9,18 @@
 #include "meshcore/core/WorldSpaceMesh.h"
 
 class SingleVolumeMaximisationSolution: public AbstractSolution {
-    std::shared_ptr<WorldSpaceMesh> innerWorldSpaceMesh;
-    std::shared_ptr<WorldSpaceMesh> outerWorldSpaceMesh;
+    std::shared_ptr<WorldSpaceMesh> itemWorldSpaceMesh;
+    std::shared_ptr<WorldSpaceMesh> containerWorldSpaceMesh;
 
-    bool isFeasible() const override {
+public:
+    SingleVolumeMaximisationSolution(const std::shared_ptr<WorldSpaceMesh>& itemWorldSpaceMesh,
+                                     const std::shared_ptr<WorldSpaceMesh>& containerWorldSpaceMesh);
 
-    }
-    [[nodiscard]] virtual std::shared_ptr<AbstractSolution> clone() const = 0;
+    [[nodiscard]] const std::shared_ptr<WorldSpaceMesh>& getItemWorldSpaceMesh() const;
+    [[nodiscard]] const std::shared_ptr<WorldSpaceMesh>& getContainerWorldSpaceMesh() const;
+
+    [[nodiscard]] bool isFeasible() const override;
+    [[nodiscard]] std::shared_ptr<AbstractSolution> clone() const override;
 };
 
 
