@@ -1,0 +1,33 @@
+name: Generate Doxygen Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - github-ci
+
+jobs:
+  docs:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Doxygen and Graphviz dependencies
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+      - name: Generate Doxygen docs
+        run: doxygen docs/Doxyfile
+      - name: Upload Doxygen HTML
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/html
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
+    # Grant GITHUB_TOKEN the permissions required for a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
