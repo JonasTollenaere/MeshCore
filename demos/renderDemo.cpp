@@ -7,7 +7,6 @@
 
 #include "meshcore/rendering/ApplicationWindow.h"
 #include "meshcore/utility/FileParser.h"
-#include "src/rendering/RenderSphere.h"
 
 void run(RenderWidget* renderWidget);
 

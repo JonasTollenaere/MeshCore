@@ -6,7 +6,6 @@
 
 #include "meshcore/rendering/ApplicationWindow.h"
 #include "meshcore/utility/FileParser.h"
-#include "src/rendering/RenderSphere.h"
 #include "meshcore/utility/random.h"
 
 class DummySolution: public AbstractSolution{

@@ -2,7 +2,6 @@
 // Created by Jonas on 26/03/2023.
 //
 
-#include "datasets/StripPackingInstances.h"
 #include "meshcore/rendering/ApplicationWindow.h"
 #include "meshcore/optimization/StripPackingSolution.h"
 
