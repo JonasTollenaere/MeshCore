@@ -46,30 +46,37 @@ target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::S
 target_compile_definitions(MeshCore PRIVATE MESHCORE_SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/shaders/")
 target_compile_definitions(MeshCore PRIVATE MESHCORE_ICON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/icons/")
 
-### SimpleRenderDemo.exe ###
-add_executable(A-SimpleRenderDemo demos/renderDemo.cpp ${SOURCES})
-target_link_libraries(A-SimpleRenderDemo PRIVATE MeshCore)
+# Option to build demos, default ON
+option(MESHCORE_BUILD_DEMOS "Build demo applications" ON)
 
-### SimpleCollisionDemo.exe ###
-add_executable(B-SimpleCollisionDemo demos/collisionDemo.cpp ${SOURCES})
-target_link_libraries(B-SimpleCollisionDemo MeshCore)
+# Only include demos if MESHCORE_BUILD_DEMOS is ON
+if(MESHCORE_BUILD_DEMOS)
 
-### TaskDemo.exe ###
-add_executable(C-TaskDemo demos/taskDemo.cpp ${SOURCES})
-target_link_libraries(C-TaskDemo MeshCore)
+    ### SimpleRenderDemo.exe ###
+    add_executable(A-SimpleRenderDemo demos/renderDemo.cpp)
+    target_link_libraries(A-SimpleRenderDemo PRIVATE MeshCore)
 
-### ConvexHull.exe ###
-add_executable(D-ConvexHull demos/convexHullDemo.cpp ${SOURCES})
-target_link_libraries(D-ConvexHull MeshCore)
+    ### SimpleCollisionDemo.exe ###
+    add_executable(B-SimpleCollisionDemo demos/collisionDemo.cpp)
+    target_link_libraries(B-SimpleCollisionDemo MeshCore)
 
-### DistanceDemo.exe ###
-add_executable(E-DistanceDemo demos/distanceDemo.cpp ${SOURCES})
-target_link_libraries(E-DistanceDemo MeshCore)
+    ### TaskDemo.exe ###
+    add_executable(C-TaskDemo demos/taskDemo.cpp)
+    target_link_libraries(C-TaskDemo MeshCore)
 
-### AnimationDemo.exe ###
-add_executable(F-AnimationDemo demos/animationDemo.cpp ${SOURCES})
-target_link_libraries(F-AnimationDemo MeshCore)
+    ### ConvexHull.exe ###
+    add_executable(D-ConvexHull demos/convexHullDemo.cpp)
+    target_link_libraries(D-ConvexHull MeshCore)
 
-### ViewStripPackingSolution.exe ###
-add_executable(G-ViewStripPackingSolution demos/viewStripPackingSolution.cpp ${SOURCES})
-target_link_libraries(G-ViewStripPackingSolution MeshCore)
+    ### DistanceDemo.exe ###
+    add_executable(E-DistanceDemo demos/distanceDemo.cpp)
+    target_link_libraries(E-DistanceDemo MeshCore)
+
+    ### AnimationDemo.exe ###
+    add_executable(F-AnimationDemo demos/animationDemo.cpp)
+    target_link_libraries(F-AnimationDemo MeshCore)
+
+    ### ViewStripPackingSolution.exe ###
+    add_executable(G-ViewStripPackingSolution demos/viewStripPackingSolution.cpp)
+    target_link_libraries(G-ViewStripPackingSolution MeshCore)
+endif()
