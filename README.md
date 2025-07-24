@@ -2,7 +2,7 @@
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://jonastollenaere.github.io/MeshCore/)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](LICENSE)
 
-<img src="icons/logo4.svg" height="60" alt="MeshCore logo">
+![](icons/logo4.svg)
 
 #### A C++ library aimed at rapid prototyping of 3D irregular cutting and packing problems. Created by Jonas Tollenaere (jonas.tollenaere@kuleuven.be)
 
