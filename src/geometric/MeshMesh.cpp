@@ -55,6 +55,7 @@ namespace Intersection {
                     }
                 }
             }
+            return false;
         }
 
         // The general case where the triangles have to be transformed
