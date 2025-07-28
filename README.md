@@ -1,10 +1,11 @@
 [![Latest Release](https://img.shields.io/github/v/release/JonasTollenaere/MeshCore?label=release)](https://github.com/JonasTollenaere/MeshCore/releases)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://jonastollenaere.github.io/MeshCore/)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/311904459.svg)](https://doi.org/10.5281/zenodo.16533653)
 
 ![](icons/logo4.svg)
 
-#### A C++ library aimed at rapid prototyping of 3D irregular cutting and packing problems. Created by Jonas Tollenaere (jonas.tollenaere@kuleuven.be)
+#### A C++ library aimed at rapid prototyping of 3D irregular cutting and packing algorithms. Created by Jonas Tollenaere (jonas.tollenaere@kuleuven.be)
 
 ## General information
 
@@ -19,3 +20,6 @@ For more examples we refer to the repositories listed in the section below.
 
 ## Publicly available repositories that make use of this library:
 * [strip-milp-3d](https://github.com/JonasTollenaere/strip-milp-3d): Generator for MILP models of 3D irregular strip packing problems with convex items
+
+## Acknowledgements
+Development of this project began under [CODeS](https://numa.cs.kuleuven.be/research/combinatorial-optimization) part of NUMA, the Numerical Analysis and Applied Mathematics research unit of KU Leuven.
