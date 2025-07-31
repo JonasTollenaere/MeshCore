@@ -34,6 +34,8 @@ namespace Intersection {
 
         const auto& simpleTransformation = simplerObject.getModelTransformation();
         const auto& complexTransformation = complexObject.getModelTransformation();
+        const auto simpleToComplexTransformation = complexObject.getModelTransformation().getInverse() * simplerObject.getModelTransformation();
+        const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
 
         bool equalRotation = simpleTransformation.getRotation() == complexTransformation.getRotation();
         bool equalScaling = simpleTransformation.getScale() == complexTransformation.getScale();
@@ -41,8 +43,7 @@ namespace Intersection {
         if (equalRotation && equalScaling) {
 
             // The specific case were the scaling and rotation of the items are equal
-            const auto simpleToComplexTranslation = - complexObject.getModelTransformation().getPosition() + simplerObject.getModelTransformation().getPosition();
-            const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
+            const auto simpleToComplexTranslation = simpleToComplexTransformation.getPosition();
             const auto& simplerObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(simplerObject.getModelSpaceMesh());
 
             for (const auto & node : simplerObjectTree->getNodes()) {
@@ -59,8 +60,6 @@ namespace Intersection {
         }
 
         // The general case where the triangles have to be transformed
-        const auto simpleToComplexTransformation = complexObject.getModelTransformation().getInverse() * simplerObject.getModelTransformation();
-        const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
         const auto& simplerObjectMesh = simplerObject.getModelSpaceMesh();
 
         for (const auto & indexTriangle : simplerObjectMesh->getTriangles()) {
