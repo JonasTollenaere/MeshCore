@@ -1,5 +1,3 @@
-enable_testing()
-
 ### GTest ###
 find_package(GTest REQUIRED)
 

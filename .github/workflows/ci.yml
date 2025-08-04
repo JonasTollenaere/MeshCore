@@ -1,0 +1,35 @@
+name: ci.yml
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ macos-latest, windows-latest ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Set up the environment for the job.
+      - uses: actions/checkout@v4
+        with:
+            submodules: 'recursive'  # Fetch submodules
+
+      # Install CMake and Ninja.
+      - uses: lukka/get-cmake@latest
+
+      # Setup vcpkg: ensures vcpkg is downloaded and built.
+      - name: Setup vcpkg # anew or from cache (and does not build any package)
+        uses: lukka/run-vcpkg@v11
+
+      # Run CMake consuming CMakePreset.json and run vcpkg to build packages
+      - name: Run CMake
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          buildPreset: 'ninja-vcpkg-release'
+          testPreset: 'test-release'

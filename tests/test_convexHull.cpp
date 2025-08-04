@@ -12,9 +12,9 @@
 TEST(ConvexHullTest, TestConvexHulls) {
 
     std::vector<std::string> objectFolders;
-    objectFolders.emplace_back("../../../meshcore/datasets/Liu et al. 2015/");
-    objectFolders.emplace_back("../../../meshcore/datasets/Tollenaere, J. et al/Items");
-    objectFolders.emplace_back("../../../meshcore/datasets/Tollenaere, J. et al/Containers");
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Liu et al. 2015/"));
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Tollenaere, J. et al/Items"));
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Tollenaere, J. et al/Containers"));
 
     for (const auto &folder: objectFolders){
         for (const auto &entry : std::filesystem::directory_iterator(folder)) {

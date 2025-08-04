@@ -25,6 +25,7 @@ target_compile_definitions(MeshCoreBase PUBLIC MESHCORE_DATA_DIR="${CMAKE_CURREN
 
 ### Tests ###
 # Only uses MeshCoreBase
+enable_testing() # Should be in the top-level CMakeLists.txt
 add_subdirectory(tests)
 
 ### Dependencies for user interface: QT, OpenGL, GLEW and giflib ###
