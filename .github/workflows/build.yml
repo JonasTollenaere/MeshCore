@@ -1,0 +1,39 @@
+name: build.yml
+on:
+  push:
+    branches: [ main, feature/continuous-integration ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install libgl-dev libglu-dev '^libxcb.*-dev' libx11-xcb-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev autoconf-archive
+
+      - name: Clean apt cache
+        run: sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+
+      # Set up the environment for the job.
+      - uses: actions/checkout@v4
+
+      # Install CMake and Ninja.
+      - uses: lukka/get-cmake@latest
+
+      # Setup vcpkg: ensures vcpkg is downloaded and built.
+      - name: Setup vcpkg # anew or from cache (and does not build any package)
+        uses: lukka/run-vcpkg@v11
+
+      # Run vcpkg manually to be able to install using the --clean-after-build option to free much-needed storage space
+      - name: Manually install vcpkg
+        working-directory: '${{ github.workspace }}/vcpkg'
+        run: ./vcpkg install --clean-after-build
+
+      # Run CMake consuming CMakePreset.json and run vcpkg to build packages
+      - name: Run CMake
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          buildPreset: 'ninja-vcpkg-release'
+          testPreset: 'test-release'
