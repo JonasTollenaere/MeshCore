@@ -49,8 +49,6 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(const std::shared_ptr<ModelSpac
             }
         }
     }
-
-    std::cout << "BoundingVolumeHierarchy: " << nodes.size() << " nodes, " << triangles.size() << " triangles" << std::endl;
 }
 
 bool BoundingVolumeHierarchy::hitsBacksideFirst(const Ray &ray) const {
