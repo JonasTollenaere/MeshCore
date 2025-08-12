@@ -5,7 +5,7 @@
 #ifndef EXTENDEDMESHCORE_RENDERRAY_H
 #define EXTENDEDMESHCORE_RENDERRAY_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/Ray.h"
 
