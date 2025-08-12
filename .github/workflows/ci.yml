@@ -9,11 +9,24 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ macos-latest, windows-latest ]
+        include:
+        - name: macos-latest
+          os: macos-latest
+          deps: autoconf-archive automake libtool
+          install_cmd: HOMEBREW_NO_INSTALL_CLEANUP=1 brew install
+        - name: windows-latest
+          os: windows-latest
+          install_cmd: choco install
+          install_cmd_postfix: --yes --no-progress
 
     runs-on: ${{ matrix.os }}
 
     steps:
+      # Install required dependencies
+      - name: Install build dependencies
+        run: ${{ matrix.install_cmd }}  ${{ matrix.deps }}  ${{ matrix.install_cmd_postfix }}
+        if: matrix.deps != ''
+
       # Set up the environment for the job.
       - uses: actions/checkout@v4
         with:
