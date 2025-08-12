@@ -16,6 +16,7 @@ find_package(Boost REQUIRED)
 find_package(GSL REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb tbbmalloc)
 find_path(EARCUT_HPP_INCLUDE_DIRS "mapbox/earcut.hpp")
+find_package(nlohmann_json REQUIRED)
 
 ### MeshCoreBase library can be used for targets that run without UI ###
 file(GLOB SOURCES src/acceleration/*.cpp src/core/*.cpp src/geometric/*.cpp src/tasks/*.cpp src/utility/*.cpp src/external/quickhull/*.cpp src/factories/*.cpp src/optimization/*.cpp)
@@ -37,7 +38,6 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 COMPONENTS Core Widgets Svg OpenGL OpenGLWidgets REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GIF REQUIRED)
-find_package(nlohmann_json REQUIRED)
 
 ### MeshCore is the complete library with UI that expands upon MeshCoreBase, requires Qt, OpenGL, ...
 file(GLOB UI_SOURCES src/rendering/*.cpp src/rendering/*.h src/external/gifencoder/*.cpp include/meshcore/rendering/*.h)
