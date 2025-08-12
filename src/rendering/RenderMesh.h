@@ -6,7 +6,7 @@
 #define MESHCORE_RENDERMESH_H
 
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "RenderAABB.h"
 #include "RenderLine.h"
