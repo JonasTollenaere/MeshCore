@@ -2,10 +2,14 @@
 // Created by Jonas on 19/05/2022.
 //
 
-#include <qinputdialog.h>
-#include <iostream>
 #include "RenderModelControlWidget.h"
 #include "forms/ui_rendermodelcontrolwidget.h"
+
+#include <iostream>
+#include <Qinputdialog.h>
+#include <QLabel>
+#include <QColorDialog>
+
 
 RenderModelControlWidget::RenderModelControlWidget(const std::shared_ptr<AbstractRenderModel>& renderModel, QWidget* parent): QWidget(parent),
         ui(new Ui::RenderModelControlWidget),

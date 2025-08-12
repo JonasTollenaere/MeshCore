@@ -5,7 +5,7 @@
 #ifndef MESHCORE_RENDERSPHERE_H
 #define MESHCORE_RENDERSPHERE_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/Sphere.h"
 
