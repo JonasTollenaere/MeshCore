@@ -5,7 +5,7 @@
 #ifndef EXTENDEDMESHCORE_RENDERPLANE_H
 #define EXTENDEDMESHCORE_RENDERPLANE_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/Plane.h"
 #include "RenderRay.h"

@@ -4,6 +4,10 @@
 
 #include "RenderBoundsTree.h"
 
+#include <QGridLayout>
+#include <QLabel>
+#include <QSlider>
+
 void RenderBoundsTree::draw(const OpenGLWidget* openGLWidget, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, bool lightMode) {
     if(this->isVisible()) this->drawRecursive(openGLWidget, viewMatrix, projectionMatrix, lightMode, renderDepth);
 }

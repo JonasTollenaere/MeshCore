@@ -5,7 +5,7 @@
 #ifndef MESHCORE_RENDERAABB_H
 #define MESHCORE_RENDERAABB_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/AABB.h"
 #include "meshcore/core/WorldSpaceMesh.h"
