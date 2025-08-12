@@ -139,8 +139,6 @@ namespace Distance{
 
         const auto& modelSpaceMeshA = worldSpaceMeshA.getModelSpaceMesh();
         const auto& modelSpaceMeshB = worldSpaceMeshB.getModelSpaceMesh();
-        const auto& modelSpaceTransformationA = worldSpaceMeshA.getModelTransformation();
-        const auto& modelSpaceTransformationB = worldSpaceMeshB.getModelTransformation();
 
         // Use the GJK algorithm if both meshes are convex
         if(modelSpaceMeshA->isConvex() && modelSpaceMeshB->isConvex()){
@@ -148,51 +146,33 @@ namespace Distance{
             if(gjkResult.has_value()){
                 return glm::sqrt(gjkResult.value());
             }
-            else{
-                return 0.0f;
+            return 0.0f;
+        }
+
+        // If not convex, use methods based on BoundingVolumeHierarchy
+        const auto triangleCountA = worldSpaceMeshA.getModelSpaceMesh()->getTriangles().size();
+        const auto triangleCountB = worldSpaceMeshB.getModelSpaceMesh()->getTriangles().size();
+        const auto& simplerObject = triangleCountA < triangleCountB ? worldSpaceMeshA : worldSpaceMeshB;
+        const auto& complexObject = triangleCountA < triangleCountB ? worldSpaceMeshB : worldSpaceMeshA;
+
+        const auto& complexTransformation = complexObject.getModelTransformation();
+        const auto simpleToComplexTransformation = complexObject.getModelTransformation().getInverse() * simplerObject.getModelTransformation();
+        const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
+        const auto& simplerObjectVertices = simplerObject.getModelSpaceMesh()->getVertices();
+        const auto& simplerObjectTriangles = simplerObject.getModelSpaceMesh()->getTriangles();
+
+        BoundingVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResult;  // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
+
+        for (const auto& indexTriangle: simplerObjectTriangles) {
+            VertexTriangle triangle(simplerObjectVertices[indexTriangle.vertexIndex0], simplerObjectVertices[indexTriangle.vertexIndex1], simplerObjectVertices[indexTriangle.vertexIndex2]);
+            auto transformedTriangle = triangle.getTransformed(simpleToComplexTransformation);
+            complexObjectTree->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResult);
+            if(closestTriangleQueryResult.lowerDistanceBoundSquared <= 0.0){
+                break;
             }
         }
 
-        // If not convex, use methods based on AABBVolumeHierarchy
-        if(modelSpaceMeshA->getTriangles().size() >= modelSpaceMeshB->getTriangles().size()){
-            const auto modelBToModelASpaceTransformation = modelSpaceTransformationA.getInverseMatrix() * modelSpaceTransformationB.getMatrix();
-
-            const auto &modelBVertices = modelSpaceMeshB->getVertices();
-            const auto &treeA = CachingBoundsTreeFactory<AABBVolumeHierarchy>::getBoundsTree(modelSpaceMeshA);
-            AABBVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResultA; // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
-
-            for (const auto &triangle: modelSpaceMeshB->getTriangles()){
-                VertexTriangle vertexTriangle(modelBVertices[triangle.vertexIndex0], modelBVertices[triangle.vertexIndex1], modelBVertices[triangle.vertexIndex2]);
-                auto transformedTriangle = vertexTriangle.getTransformed(modelBToModelASpaceTransformation);
-
-                treeA->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResultA);
-
-                if(closestTriangleQueryResultA.lowerDistanceBoundSquared <= 0.0){
-                    return 0.0f;
-                }
-
-            }
-            return glm::sqrt(closestTriangleQueryResultA.lowerDistanceBoundSquared)*modelSpaceTransformationA.getScale();
-        }
-        else {
-            const auto modelAToModelBSpaceTransformation = modelSpaceTransformationB.getInverseMatrix() * modelSpaceTransformationA.getMatrix();
-            const auto &modelAVertices = modelSpaceMeshA->getVertices();
-            const auto &treeB = CachingBoundsTreeFactory<AABBVolumeHierarchy>::getBoundsTree(modelSpaceMeshB);
-            AABBVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResultB;  // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
-
-
-            for (const auto &triangle: modelSpaceMeshA->getTriangles()){
-                VertexTriangle vertexTriangle(modelAVertices[triangle.vertexIndex0], modelAVertices[triangle.vertexIndex1], modelAVertices[triangle.vertexIndex2]);
-                auto transformedTriangle = vertexTriangle.getTransformed(modelAToModelBSpaceTransformation);
-
-                treeB->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResultB);
-
-                if(closestTriangleQueryResultB.lowerDistanceBoundSquared <= 0.0){
-                    return 0.0f;
-                }
-            }
-            return glm::sqrt(closestTriangleQueryResultB.lowerDistanceBoundSquared)*modelSpaceTransformationB.getScale();
-        }
+        return glm::sqrt(closestTriangleQueryResult.lowerDistanceBoundSquared)*complexTransformation.getScale();
     }
 
     float distance(const WorldSpaceMesh& worldSpaceMeshA, const WorldSpaceMesh& worldSpaceMeshB, Vertex* closestVertexA, Vertex* closestVertexB){
@@ -208,66 +188,43 @@ namespace Distance{
                 *closestVertexB = gjkResult.value().second;
                 return glm::distance(*closestVertexA, *closestVertexB);
             }
-            else{
-                return 0.0f;
+            return 0.0f;
+        }
+
+        // If not convex, use methods based on BoundingVolumeHierarchy
+        const auto triangleCountA = worldSpaceMeshA.getModelSpaceMesh()->getTriangles().size();
+        const auto triangleCountB = worldSpaceMeshB.getModelSpaceMesh()->getTriangles().size();
+        const auto& simplerObject = triangleCountA < triangleCountB ? worldSpaceMeshA : worldSpaceMeshB;
+        const auto& complexObject = triangleCountA < triangleCountB ? worldSpaceMeshB : worldSpaceMeshA;
+
+        const auto& simpleTransformation = simplerObject.getModelTransformation();
+        const auto& complexTransformation = complexObject.getModelTransformation();
+        const auto simpleToComplexTransformation = complexObject.getModelTransformation().getInverse() * simplerObject.getModelTransformation();
+        const auto& complexObjectTree = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(complexObject.getModelSpaceMesh());
+        const auto& simplerObjectVertices = simplerObject.getModelSpaceMesh()->getVertices();
+        const auto& simplerObjectTriangles = simplerObject.getModelSpaceMesh()->getTriangles();
+
+        BoundingVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResult;  // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
+
+        for (const auto& indexTriangle: simplerObjectTriangles) {
+            VertexTriangle triangle(simplerObjectVertices[indexTriangle.vertexIndex0], simplerObjectVertices[indexTriangle.vertexIndex1], simplerObjectVertices[indexTriangle.vertexIndex2]);
+            auto transformedTriangle = triangle.getTransformed(simpleToComplexTransformation);
+
+
+            closestTriangleQueryResult.closestTriangle = nullptr;
+            complexObjectTree->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResult);
+
+            if(closestTriangleQueryResult.closestTriangle != nullptr){
+                // Closest was updated
+                *closestVertexA = complexTransformation.transformVertex(closestTriangleQueryResult.closestVertex);
+                *closestVertexB = triangle.getTransformed(simpleTransformation).getClosestPoint(*closestVertexA);
+            }
+
+            if(closestTriangleQueryResult.lowerDistanceBoundSquared <= 0.0){
+                break;
             }
         }
 
-        // If not convex, use methods based on AABBVolumeHierarchy
-        const auto& modelSpaceTransformationA = worldSpaceMeshA.getModelTransformation();
-        const auto& modelSpaceTransformationB = worldSpaceMeshB.getModelTransformation();
-        if(modelSpaceMeshA->getTriangles().size() >= modelSpaceMeshB->getTriangles().size()){
-            const auto modelBToModelASpaceTransformation = modelSpaceTransformationA.getInverseMatrix() * modelSpaceTransformationB.getMatrix();
-
-            const auto &modelBVertices = modelSpaceMeshB->getVertices();
-            const auto &treeA = CachingBoundsTreeFactory<AABBVolumeHierarchy>::getBoundsTree(modelSpaceMeshA);
-            AABBVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResultA;  // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
-
-            for (const auto &triangle: modelSpaceMeshB->getTriangles()){
-                VertexTriangle vertexTriangleB(modelBVertices[triangle.vertexIndex0], modelBVertices[triangle.vertexIndex1], modelBVertices[triangle.vertexIndex2]);
-                auto transformedTriangle = vertexTriangleB.getTransformed(modelBToModelASpaceTransformation);
-
-                closestTriangleQueryResultA.closestTriangle = nullptr;
-                treeA->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResultA);
-
-                if(closestTriangleQueryResultA.closestTriangle != nullptr){
-                    // Closest was updated
-                    *closestVertexA = modelSpaceTransformationA.transformVertex(closestTriangleQueryResultA.closestVertex);
-                    *closestVertexB = vertexTriangleB.getTransformed(modelSpaceTransformationB).getClosestPoint(*closestVertexA);
-                }
-
-                if(closestTriangleQueryResultA.lowerDistanceBoundSquared <= 0.0){
-                    break;
-                }
-            }
-
-            return glm::sqrt(closestTriangleQueryResultA.lowerDistanceBoundSquared)*modelSpaceTransformationA.getScale();
-        }
-        else {
-            const auto modelAToModelBSpaceTransformation = modelSpaceTransformationB.getInverseMatrix() * modelSpaceTransformationA.getMatrix();
-            const auto &modelAVertices = modelSpaceMeshA->getVertices();
-            const auto &treeB = CachingBoundsTreeFactory<AABBVolumeHierarchy>::getBoundsTree(modelSpaceMeshB);
-            AABBVolumeHierarchy::ClosestTriangleQueryResult closestTriangleQueryResultB;  // By keeping the minimum distance found so far, the queries can build upon each other, which is faster than querying the whole tree each time.
-
-            for (const auto &triangle: modelSpaceMeshA->getTriangles()){
-                VertexTriangle vertexTriangleA(modelAVertices[triangle.vertexIndex0], modelAVertices[triangle.vertexIndex1], modelAVertices[triangle.vertexIndex2]);
-                auto transformedTriangle = vertexTriangleA.getTransformed(modelAToModelBSpaceTransformation);
-
-                closestTriangleQueryResultB.closestTriangle = nullptr;
-                treeB->queryClosestTriangle(transformedTriangle, &closestTriangleQueryResultB);
-
-                if(closestTriangleQueryResultB.closestTriangle != nullptr){
-                    // Closest was updated
-                    *closestVertexB = modelSpaceTransformationB.transformVertex(closestTriangleQueryResultB.closestVertex);
-                    *closestVertexA = vertexTriangleA.getTransformed(modelSpaceTransformationA).getClosestPoint(*closestVertexB);
-                }
-
-                if(closestTriangleQueryResultB.lowerDistanceBoundSquared <= 0.0){
-                    break;
-                }
-            }
-
-            return glm::sqrt(closestTriangleQueryResultB.lowerDistanceBoundSquared)*modelSpaceTransformationB.getScale();
-        }
+        return glm::sqrt(closestTriangleQueryResult.lowerDistanceBoundSquared)*complexTransformation.getScale();
     }
 }

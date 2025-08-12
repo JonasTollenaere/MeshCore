@@ -91,6 +91,162 @@ bool BoundingVolumeHierarchy::containsPoint(const glm::vec3& point) const {
     return hitsBacksideFirst(Ray(point, glm::vec3(0.8255, -0.1687, 0.3645)));;
 }
 
+
+void BoundingVolumeHierarchy::queryClosestTriangle(const Vertex &vertex, ClosestTriangleQueryResult* result) const {
+
+    size_t nodeIndexStack[STACK_DEPTH];
+    float nodeDistanceStack[STACK_DEPTH];
+    int stackIndex = 0;
+    nodeIndexStack[stackIndex] = 0; // Start with the root node
+    nodeDistanceStack[stackIndex] = nodes[0].bounds.getDistanceSquaredTo(vertex);
+    stackIndex++;
+
+    while (stackIndex > 0) {
+
+        // Take the top node from the stack
+        stackIndex--;
+        const auto nodeIndex = nodeIndexStack[stackIndex];
+        assert(nodeIndex < this->nodes.size());
+        const Node node = this->nodes[nodeIndex];
+        const auto nodeDistance = nodeDistanceStack[stackIndex];
+
+        // Check if the node can still improve the shortest distance
+        // (lowerDistanceBoundSquared could have changes since the node has been put on the stack)
+        if(nodeDistance < result->lowerDistanceBoundSquared){
+
+            if (node.split) {
+                float squaredChildDistances[2];
+                size_t childIndices[2];
+
+                for(size_t i = 0; i < 2; i++) {
+                    const auto childIndex = node.firstChildOrTriangleIndex + i;
+                    assert(childIndex < this->nodes.size());
+                    const auto& childNode = this->nodes[childIndex];
+
+                    squaredChildDistances[i] = childNode.bounds.getDistanceSquaredTo(vertex);
+                    childIndices[i] = i; // Sorted later
+                }
+
+                // Sort closest distance first: switch the indices if the first child is further away than the second
+                if (squaredChildDistances[1] < squaredChildDistances[0]) {
+                    childIndices[0] = 1;
+                    childIndices[1] = 0;
+                }
+
+                // Put the children on the stack in this order, if they could improve the shortest distance
+                for (const auto &childIndex : childIndices){
+
+                    // If this node cannot improve the shortest distance, neither will the following ones
+                    if(squaredChildDistances[childIndex] >= result->lowerDistanceBoundSquared){
+                        break;
+                    }
+
+                    assert(node.split);
+                    auto childNodeIndex = node.firstChildOrTriangleIndex + childIndex;
+                    assert(childNodeIndex < this->nodes.size());
+                    assert(stackIndex < STACK_DEPTH);
+                    nodeIndexStack[stackIndex] = childNodeIndex;
+                    nodeDistanceStack[stackIndex] = squaredChildDistances[childIndex];
+                    stackIndex++;
+                }
+            }
+            else {
+                for (int i = 0; i < node.triangleCount; ++i) {
+                    auto& nodeTriangle = this->triangles[node.firstChildOrTriangleIndex + i];
+                    auto closestPoint = nodeTriangle.getClosestPoint(vertex);
+                    auto delta = closestPoint - vertex;
+                    auto distanceSquared = glm::dot(delta, delta);
+                    if(distanceSquared < result->lowerDistanceBoundSquared){ // If multiple triangles are equally close, the first one will be returned
+                        result->closestTriangle = &nodeTriangle;
+                        result->lowerDistanceBoundSquared = distanceSquared;
+                        result->closestVertex = closestPoint;
+                        if(distanceSquared <= 0.0){
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void BoundingVolumeHierarchy::queryClosestTriangle(const VertexTriangle &triangle, ClosestTriangleQueryResult* result) const {
+
+    size_t nodeIndexStack[STACK_DEPTH];
+    float nodeDistanceStack[STACK_DEPTH];
+    int stackIndex = 0;
+    nodeIndexStack[stackIndex] = 0; // Start with the root node
+    nodeDistanceStack[stackIndex] = Distance::distanceSquared(nodes[0].bounds, triangle.bounds);
+    stackIndex++;
+
+    while (stackIndex > 0) {
+
+        // Take the top node from the stack
+        stackIndex--;
+        const auto nodeIndex = nodeIndexStack[stackIndex];
+        assert(nodeIndex < this->nodes.size());
+        const Node node = this->nodes[nodeIndex];
+        const auto nodeDistance = nodeDistanceStack[stackIndex];
+
+        // Check if the node can still improve the shortest distance
+        // (lowerDistanceBoundSquared could have changes since the node has been put on the stack)
+        if(nodeDistance < result->lowerDistanceBoundSquared){
+
+            if (node.split) {
+                float squaredChildDistances[2];
+                size_t childIndices[2];
+
+                for(size_t i = 0; i < 2; i++) {
+                    const auto childIndex = node.firstChildOrTriangleIndex + i;
+                    assert(childIndex < this->nodes.size());
+                    const auto& childNode = this->nodes[childIndex];
+
+                    squaredChildDistances[i] = Distance::distanceSquared(childNode.bounds, triangle.bounds);
+                    childIndices[i] = i; // Sorted later
+                }
+
+                // Sort closest distance first: switch the indices if the first child is further away than the second
+                if (squaredChildDistances[1] < squaredChildDistances[0]) {
+                    childIndices[0] = 1;
+                    childIndices[1] = 0;
+                }
+
+                // Put the children on the stack in this order, if they could improve the shortest distance
+                for (const auto &childIndex : childIndices){
+
+                    // If this node cannot improve the shortest distance, neither will the following ones
+                    if(squaredChildDistances[childIndex] >= result->lowerDistanceBoundSquared){
+                        break;
+                    }
+
+                    assert(node.split);
+                    auto childNodeIndex = node.firstChildOrTriangleIndex + childIndex;
+                    assert(childNodeIndex < this->nodes.size());
+                    assert(stackIndex < STACK_DEPTH);
+                    nodeIndexStack[stackIndex] = childNodeIndex;
+                    nodeDistanceStack[stackIndex] = squaredChildDistances[childIndex];
+                    stackIndex++;
+                }
+            }
+            else {
+                for (int i = 0; i < node.triangleCount; ++i) {
+                    auto& nodeTriangle = this->triangles[node.firstChildOrTriangleIndex + i];
+                    Vertex closestPointTriangle, closestPointOtherTriangle;
+                    auto distanceSquared = Distance::distanceSquared(triangle, nodeTriangle, &closestPointTriangle, &closestPointOtherTriangle);
+                    if(distanceSquared < result->lowerDistanceBoundSquared){ // If multiple triangles are equally close, the first one will be returned
+                        result->closestTriangle = &nodeTriangle;
+                        result->lowerDistanceBoundSquared = distanceSquared;
+                        result->closestVertex = closestPointOtherTriangle;
+                        if(distanceSquared <= 0.0){
+                            return; // No need to continue searching if the triangles intersect
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool BoundingVolumeHierarchy::intersectsAABB(const AABB &aabb) const {
 
     unsigned int stack[STACK_DEPTH];

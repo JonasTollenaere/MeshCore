@@ -23,6 +23,12 @@ public:
         }
     };
 
+    struct ClosestTriangleQueryResult{
+        const VertexTriangle* closestTriangle = nullptr;
+        Vertex closestVertex{};
+        float lowerDistanceBoundSquared = std::numeric_limits<float>::max();
+    };
+
 private:
     std::vector<VertexTriangle> triangles;
     std::vector<Node> nodes;
@@ -31,6 +37,11 @@ public:
     [[nodiscard]] bool intersectsTriangle(const VertexTriangle &triangle) const;
     [[nodiscard]] bool intersectsAABB(const AABB &aabb) const;
     [[nodiscard]] bool containsPoint(const glm::vec3& point) const;
+    void queryClosestTriangle(const Vertex &vertex, ClosestTriangleQueryResult* result) const;
+    void queryClosestTriangle(const VertexTriangle &triangle, ClosestTriangleQueryResult* result) const;
+
+
+
     [[nodiscard]] float getShortestDistanceSquared(const glm::vec3& point) const;
     [[nodiscard]] const std::vector<Node>& getNodes() const;
     [[nodiscard]] const std::vector<VertexTriangle>& getTriangles() const;

@@ -7,6 +7,8 @@
 #include "meshcore/utility/FileParser.h"
 #include "meshcore/rendering/ApplicationWindow.h"
 #include "meshcore/acceleration/AABBOctree.h"
+#include "meshcore/acceleration/BoundingVolumeHierarchy.h"
+#include "meshcore/acceleration/CachingBoundsTreeFactory.h"
 #include "meshcore/utility/random.h"
 
 void run(RenderWidget* renderWidget);
@@ -42,12 +44,11 @@ void run(RenderWidget* renderWidget){
     renderWidget->renderWorldSpaceMesh("Items", itemWorldSpaceMesh, Color(1,1,0,1));
     renderWidget->renderWorldSpaceMesh("Container", containerWorldSpaceMesh, Color(1, 1, 1, 0.7));
 
-    // Create the Octree which will speed up intersection tests with the container
-    auto octree = std::make_shared<AABBOctree>(containerWorldSpaceMesh->getModelSpaceMesh());
-    renderWidget->renderBoundsTree("Container", "Octree", octree, containerWorldSpaceMesh->getModelTransformation());
+    // Create the Bounding Volume Hierarchy which will speed up intersection tests with the container
+    auto bvh = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(containerWorldSpaceMesh->getModelSpaceMesh());
 
     // Test new random transformations for the item
-    Random random;
+        Random random;
     for(int i=0; i<1e5; i++){
 
         // 0. Sample a random change to position and orientation
@@ -65,10 +66,8 @@ void run(RenderWidget* renderWidget){
             const auto worldSpaceVertex = itemWorldSpaceMesh->getModelTransformation().transformVertex(itemModelSpaceVertex); // This is the coordinate of the vertex where it is actually located in the world
             const auto containerModelSpaceVertex = containerWorldSpaceMesh->getModelTransformation().inverseTransformVertex(worldSpaceVertex); // This is the coordinate of the vertex when you bring it into the coordinate system of the container
 
-            // A ray that starts in this vertex should intersect the outer container an uneven number of times if it's inside the container
-            Ray ray(containerModelSpaceVertex, glm::vec3(0,0,1)); // Direction doesn't matter
-            auto numberOfIntersections = octree->getNumberOfRayIntersections(ray);
-            if(numberOfIntersections % 2 == 0){
+            // Check if this vertex lies inside the container
+            if(!bvh->containsPoint(containerModelSpaceVertex)){
                 // This position is not feasible, revert to the previous transformation and go to the next iteration
                 itemWorldSpaceMesh->getModelTransformation() = originalTransformation;
                 continue;
@@ -86,7 +85,6 @@ void run(RenderWidget* renderWidget){
 
         // 3. If we reach this point the position is feasible, update the transformation of the item and render it
         renderWidget->renderWorldSpaceMesh("Items", itemWorldSpaceMesh, Color(1,1,0,1));
-
     }
 
     std::cout << "Finished" << std::endl;
