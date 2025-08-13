@@ -12,19 +12,17 @@
 
 class Transformation {
 
-private:
     float scale;
     Quaternion rotation;
     glm::vec3 position;
 
-private:
     mutable glm::mat4 matrix;
     mutable glm::mat4 inverseMatrix;
     mutable bool validMatrix = false;
     mutable bool validInverseMatrix = false;
 
 public:
-    MC_FUNC_QUALIFIER Transformation(): position(), scale(1.0f), rotation(), matrix(), inverseMatrix() {}
+    MC_FUNC_QUALIFIER Transformation(): scale(1.0f), rotation(), position(), matrix(), inverseMatrix() {}
 
     MC_FUNC_QUALIFIER explicit Transformation(const Quaternion quaternion): position(), scale(1.0f), rotation(quaternion), matrix(), inverseMatrix() {}
 

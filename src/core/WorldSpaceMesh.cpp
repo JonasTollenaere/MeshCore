@@ -9,8 +9,8 @@
 int WorldSpaceMesh::nextId = 0;
 
 WorldSpaceMesh::WorldSpaceMesh():
-modelSpaceMesh(std::make_shared<ModelSpaceMesh>(ModelSpaceMesh())),
-id(std::to_string(nextId++))
+id(std::to_string(nextId++)),
+modelSpaceMesh(std::make_shared<ModelSpaceMesh>(ModelSpaceMesh()))
 {}
 
 WorldSpaceMesh::WorldSpaceMesh(const std::shared_ptr<ModelSpaceMesh>& modelSpaceMesh):
@@ -41,8 +41,13 @@ std::shared_ptr<WorldSpaceMesh> WorldSpaceMesh::duplicate() const {
     return returnWorldSpaceMesh;
 }
 
-void WorldSpaceMesh::setModelTransformation(Transformation transformation) {
+void WorldSpaceMesh::setModelTransformation(const Transformation &transformation) {
     this->modelTransformation = transformation;
+}
+
+float WorldSpaceMesh::getVolume() const {
+    const auto scale = this->modelTransformation.getScale();
+    return modelSpaceMesh->getVolume() * (scale * scale * scale);
 }
 
 const Transformation& WorldSpaceMesh::getModelTransformation() const {

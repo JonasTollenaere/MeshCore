@@ -57,12 +57,12 @@ public:
         return 4.0f * glm::pi<float>() * getRadiusSquared();
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] bool containsPoint(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] bool containsPoint(const Vertex& point) const {
         auto deltaCenter = point - this->center;
         return glm::dot(deltaCenter, deltaCenter) <= getRadiusSquared();
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(const Vertex& point) const {
         auto deltaCenter = point - this->center;
         auto distanceCenterSquared = glm::dot(deltaCenter, deltaCenter);
 
@@ -73,7 +73,7 @@ public:
         return  this->center + deltaCenter*glm::inversesqrt(deltaCenter) * this->radius;
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(const Vertex& point) const {
         auto deltaCenter = point - this->center;
         auto distanceCenterSquared = glm::dot(deltaCenter, deltaCenter);
 

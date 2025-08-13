@@ -58,7 +58,7 @@ public:
 private:
     // Render generic objects that extend AbstractRenderModel
     // This would imply that programmers make their own render models, which can't happen outside the main thread, this is not a good practice
-    void addOrUpdateRenderModel(const std::string& group, const std::string& id, std::shared_ptr<AbstractRenderModel> renderModel);
+    void addOrUpdateRenderModel(const std::string& group, const std::string& id, const std::shared_ptr<AbstractRenderModel> &renderModel);
 
 public:
     // Render objects with ids like meshes
@@ -89,8 +89,8 @@ public:
     void setSolutionRenderCallback(const std::function<void(RenderWidget *renderWidget, const std::shared_ptr<const AbstractSolution> &solution)> &solutionRenderCallback);
     void setDefaultSolutionRenderCallback();
 
-void startCurrentTask();
-    void stopCurrentTask();
+    void startCurrentTask() const;
+    void stopCurrentTask() const;
 
     void notifyStarted() override;
     void notifyFinished() override;

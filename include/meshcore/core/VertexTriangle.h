@@ -17,7 +17,6 @@ public:
     const glm::vec3 normal;
     const AABB bounds;
 
-public:
     MC_FUNC_QUALIFIER VertexTriangle(const Vertex vertex0, const Vertex vertex1, const Vertex vertex2):
             vertices{vertex0, vertex1, vertex2},
             edges{vertices[1]-vertices[0], vertices[2]-vertices[1], vertices[0]-vertices[2]},
@@ -56,11 +55,11 @@ public:
     }
 
     MC_FUNC_QUALIFIER [[nodiscard]] VertexTriangle getTranslated(const glm::vec3& translation) const {
-        Vertex rVertex0 = this->vertices[0] + translation;
-        Vertex rVertex1 = this->vertices[1] + translation;
-        Vertex rVertex2 = this->vertices[2] + translation;
-        AABB bounds = this->bounds.getTranslated(translation);
-        return VertexTriangle{rVertex0, rVertex1, rVertex2, &this->edges[0], this->normal, bounds};
+        const Vertex rVertex0 = this->vertices[0] + translation;
+        const Vertex rVertex1 = this->vertices[1] + translation;
+        const Vertex rVertex2 = this->vertices[2] + translation;
+        const AABB newBounds = this->bounds.getTranslated(translation);
+        return VertexTriangle{rVertex0, rVertex1, rVertex2, &this->edges[0], this->normal, newBounds};
 
     }
 

@@ -11,7 +11,7 @@
 #include <iostream>
 
 class WorldSpaceMesh: public GJKConvexShape {
-private:
+
     static int nextId;
     std::string id;
     Transformation modelTransformation;
@@ -25,7 +25,7 @@ public:
 
     WorldSpaceMesh(WorldSpaceMesh &&other) noexcept = default;
     WorldSpaceMesh& operator=(WorldSpaceMesh &&other) = default;
-    ~WorldSpaceMesh() = default;
+    ~WorldSpaceMesh() override = default;
 
     [[nodiscard]] const std::string& getId() const;
 
@@ -39,7 +39,9 @@ public:
 
     [[nodiscard]] Transformation& getModelTransformation();
     [[nodiscard]] const Transformation& getModelTransformation() const;
-    void setModelTransformation(Transformation transformation);
+    void setModelTransformation(const Transformation &transformation);
+
+    float getVolume() const;
 
     // GJKConvexShape interface
     glm::vec3 computeSupport(const glm::vec3 &direction) const override;

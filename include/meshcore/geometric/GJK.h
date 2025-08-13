@@ -16,6 +16,8 @@
 
 class GJKConvexShape {
 public:
+    virtual ~GJKConvexShape() = default;
+
     /**
      * Computes the support point of the shape in the given direction.
      * @param direction

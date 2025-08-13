@@ -10,14 +10,13 @@
 
 /** Axis Aligned Bounding Box **/
 class AABB {
-private:
     Vertex minimum;
     Vertex maximum;
 
 public:
     MC_FUNC_QUALIFIER AABB(): minimum(), maximum(){};
 
-    MC_FUNC_QUALIFIER AABB(Vertex minimum, Vertex maximum): minimum(minimum), maximum(maximum) {
+    MC_FUNC_QUALIFIER AABB(const Vertex& minimum, const Vertex& maximum): minimum(minimum), maximum(maximum) {
         assert(minimum.x <= maximum.x);
         assert(minimum.y <= maximum.y);
         assert(minimum.z <= maximum.z);
@@ -45,7 +44,7 @@ public:
     }
 
     MC_FUNC_QUALIFIER [[nodiscard]] float getVolume() const {
-        auto delta = this->maximum - this->minimum;
+        const auto delta = this->maximum - this->minimum;
         return delta.x * delta.y * delta.z;
     }
 
@@ -63,12 +62,12 @@ public:
                maximum.z >= aabb.maximum.z;
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(const Vertex& point) const {
         return glm::clamp(point, this->getMinimum(), this->getMaximum());
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(Vertex point) const {
-        auto delta = this->getClosestPoint(point) - point;
+    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(const Vertex& point) const {
+        const auto delta = this->getClosestPoint(point) - point;
         return glm::dot(delta, delta);
     }
 

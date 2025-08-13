@@ -308,11 +308,11 @@ void RenderWidget::observeTask(AbstractTask *task) {
     }, connectionType);
 }
 
-void RenderWidget::observeTask(AbstractTask *task, const std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution> solution)>& solutionRenderCallback) {
+void RenderWidget::observeTask(AbstractTask *task, const std::function<void(RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution> solution)>& newSolutionRenderCallback) {
 
     auto connectionType = QThread::currentThread() == this->thread()? Qt::AutoConnection : Qt::BlockingQueuedConnection;
 
-    QMetaObject::invokeMethod(this, [this,&task,&solutionRenderCallback]{
+    QMetaObject::invokeMethod(this, [this,&task,&newSolutionRenderCallback]{
 
         // Clear currently observed task if needed
         if(this->currentTask!=nullptr){
@@ -324,7 +324,7 @@ void RenderWidget::observeTask(AbstractTask *task, const std::function<void(Rend
 
         // Set and observe new task
         this->currentTask = task;
-        this->solutionRenderCallback = solutionRenderCallback;
+        this->solutionRenderCallback = newSolutionRenderCallback;
         if(task!=nullptr){
             currentTask->registerObserver(this);
             this->ui->taskSection->setVisible(true);
@@ -332,15 +332,14 @@ void RenderWidget::observeTask(AbstractTask *task, const std::function<void(Rend
     }, connectionType);
 }
 
-void RenderWidget::setSolutionRenderCallback(
-    const std::function<void(RenderWidget *renderWidget, const std::shared_ptr<const AbstractSolution> &solution)> &
-    solutionRenderCallback) {
-    this->solutionRenderCallback = solutionRenderCallback;
+void RenderWidget::setSolutionRenderCallback(const std::function<void(RenderWidget *renderWidget, const std::shared_ptr<const AbstractSolution> &solution)> &
+    newSolutionRenderCallback) {
+    this->solutionRenderCallback = newSolutionRenderCallback;
 }
 
 void RenderWidget::setDefaultSolutionRenderCallback() {
     solutionRenderCallback = {
-        [this](RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution) {
+        [](RenderWidget* renderWidget, const std::shared_ptr<const AbstractSolution>& solution) {
             if (!solution) return;
 
             if (const auto& sol = std::dynamic_pointer_cast<const StripPackingSolution>(solution)) {
@@ -373,15 +372,15 @@ void RenderWidget::setDefaultSolutionRenderCallback() {
     };
 }
 
-void RenderWidget::startCurrentTask() {
+void RenderWidget::startCurrentTask() const {
     if(this->currentTask!=nullptr) this->currentTask->start();
 }
 
-void RenderWidget::stopCurrentTask() {
+void RenderWidget::stopCurrentTask() const {
     if(this->currentTask!=nullptr) this->currentTask->stop();
 }
 
-void RenderWidget::addOrUpdateRenderModel(const std::string& group, const std::string& id, std::shared_ptr<AbstractRenderModel> renderModel) {
+void RenderWidget::addOrUpdateRenderModel(const std::string& group, const std::string& id, const std::shared_ptr<AbstractRenderModel> &renderModel) {
     QMetaObject::invokeMethod(this->getOpenGLWidget(), "addOrUpdateRenderModelSlot",
                               Qt::AutoConnection,
                               Q_ARG(std::string, group),

@@ -8,16 +8,15 @@
 #include "AABB.h"
 #include "Quaternion.h"
 #include "Transformation.h"
-#include <glm/gtc/epsilon.hpp>
 
 /** OBB as an AABB in its own model space, defined by a rotation only **/
 class OBB {
-private:
+
     AABB aabb;
     Quaternion rotation;
 
 public:
-    MC_FUNC_QUALIFIER OBB(): aabb(), rotation(){};
+    MC_FUNC_QUALIFIER OBB() = default;
 
     MC_FUNC_QUALIFIER OBB(const AABB& aabb, const Quaternion& rotation): aabb(aabb), rotation(rotation){}
 
@@ -44,15 +43,15 @@ public:
         return aabb;
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] bool containsPoint(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] bool containsPoint(const Vertex& point) const {
         return this->aabb.containsPoint(this->rotation.inverseRotateVertex(point));
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(const Vertex& point) const {
         return this->rotation.rotateVertex(this->aabb.getClosestPoint(this->rotation.inverseRotateVertex(point)));
     }
 
-    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(Vertex point) const {
+    MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(const Vertex& point) const {
         return this->aabb.getDistanceSquaredTo(this->rotation.inverseRotateVertex(point));
     }
 

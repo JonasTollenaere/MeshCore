@@ -18,7 +18,7 @@
 #include "meshcore/geometric/GJK.h"
 
 class ModelSpaceMesh: public GJKConvexShape {
-private:
+
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<IndexTriangle> triangles;
@@ -36,7 +36,6 @@ private:
     mutable std::shared_ptr<ModelSpaceMesh> convexHull = nullptr;
     mutable std::optional<std::vector<std::vector<size_t>>> connectedVertexIndices;
 
-private:
     void computeVolumeAndCentroid() const;
     void computeSurfaceAreaAndCentroid() const;
     void computeConvexity() const;
@@ -47,7 +46,7 @@ public:
     explicit ModelSpaceMesh(std::vector<Vertex> vertices);
     ModelSpaceMesh(std::vector<Vertex> vertices, std::vector<IndexTriangle> triangles);
     ModelSpaceMesh(const ModelSpaceMesh& other) = default;
-    ~ModelSpaceMesh() = default;
+    ~ModelSpaceMesh() override = default;
 
     [[nodiscard]] const std::vector<Vertex>& getVertices() const;
     [[nodiscard]] const std::vector<IndexTriangle>& getTriangles() const;

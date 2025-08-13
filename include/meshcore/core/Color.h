@@ -11,7 +11,7 @@ class Color: public glm::vec4 {
     using glm::vec4::vec4;
 public:
     // Define some colors as static public
-    explicit Color(glm::vec4 color): glm::vec4(color){};
+    explicit Color(const glm::vec4& color): glm::vec4(color){};
     [[maybe_unused]] static Color Red(float alpha=1.0f){return {1.0f, 0.0f, 0.0f, alpha};}
     [[maybe_unused]] static Color Green(float alpha=1.0f){return {0.0f, 1.0f, 0.0f, alpha};}
     [[maybe_unused]] static Color Blue(float alpha=1.0f){return {0.0f, 0.0f, 1.0f, alpha};}
