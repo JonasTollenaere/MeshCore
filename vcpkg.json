@@ -12,9 +12,6 @@
     "name" : "boost-random",
     "version>=" : "1.86.0"
   }, {
-    "name" : "glew",
-    "version>=" : "2.2.0#3"
-  }, {
     "name" : "tbb",
     "version>=" : "2021.10.0#2"
   }, {
