@@ -22,7 +22,9 @@
     "version>=" : "1.16.0"
   }, {
     "name" : "qtbase",
-    "version>=" : "6.8.2#1"
+    "version>=" : "6.8.2#1",
+    "default-features": false,
+    "features": [ "widgets", "opengl" ]
   }, {
     "name" : "qtsvg",
     "version>=" : "6.8.2"
