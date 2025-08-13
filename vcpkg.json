@@ -12,9 +12,6 @@
     "name" : "boost-random",
     "version>=" : "1.86.0"
   }, {
-    "name" : "glew",
-    "version>=" : "2.2.0#3"
-  }, {
     "name" : "tbb",
     "version>=" : "2021.10.0#2"
   }, {
@@ -25,7 +22,9 @@
     "version>=" : "1.16.0"
   }, {
     "name" : "qtbase",
-    "version>=" : "6.8.2#1"
+    "version>=" : "6.8.2#1",
+    "default-features": false,
+    "features": [ "widgets" ]
   }, {
     "name" : "qtsvg",
     "version>=" : "6.8.2"
