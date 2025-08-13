@@ -14,6 +14,11 @@ We recommend using vcpkg as a package manager to install the dependencies that a
 To set up a development environment, we refer to the [vcpkg documentation](https://vcpkg.io/en/getting-started).
 Our aim is to keep the library cross-platform, and is currently developed on Windows, Linux, and macOS.
 
+We suggest integrating MeshCore into your project through the CMake `FetchContent` module or as a submodule.
+Two sample projects are provided as an example:
+* [fetchcontent-sample](https://github.com/JonasTollenaere/sample-meshcore-through-cmake-fetchcontent): Minimal project that uses MeshCore through CMake's `FetchContent` module
+* [submodule-sample](https://github.com/JonasTollenaere/sample-meshcore-through-git-submodule): Minimal project that uses MeshCore as a git submodule
+
 At this point in time, the documentation is rather limited.
 The `demos` folder contains a number of example applications that demonstrate basic usage of the library. 
 For more examples we refer to the repositories listed in the section below. 
