@@ -101,101 +101,102 @@ RenderMesh::RenderMesh(const WorldSpaceMesh& worldSpaceMesh):
     GL_CALL(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (void*) (6 * sizeof(GLfloat))));
 
     // Prepare data for faces
-    std::vector<float> faceData;
-    std::vector<unsigned int> faceIndices;
-    for (const auto & i : faces){
+    if(this->numberOfFaces > 0) {
+        std::vector<float> faceData;
+        std::vector<unsigned int> faceIndices;
+        for (const auto & i : faces){
 
-        const auto& face = i;
+            const auto& face = i;
 
-        // Compute the normal using Newell's method
-        glm::vec3 normal(0.0f);
-        for (int j = 0; j < i.vertexIndices.size(); ++j){
-            auto indexA = i.vertexIndices[j];
-            auto indexB = i.vertexIndices[(j + 1) % i.vertexIndices.size()];
-            Vertex vertexA = vertices[indexA];
-            Vertex vertexB = vertices[indexB];
-            normal.x += (vertexA.y - vertexB.y) * (vertexA.z + vertexB.z);
-            normal.y += (vertexA.z - vertexB.z) * (vertexA.x + vertexB.x);
-            normal.z += (vertexA.x - vertexB.x) * (vertexA.y + vertexB.y);
-        }
-        normal = glm::normalize(normal);
+            // Compute the normal using Newell's method
+            glm::vec3 normal(0.0f);
+            for (int j = 0; j < i.vertexIndices.size(); ++j){
+                auto indexA = i.vertexIndices[j];
+                auto indexB = i.vertexIndices[(j + 1) % i.vertexIndices.size()];
+                Vertex vertexA = vertices[indexA];
+                Vertex vertexB = vertices[indexB];
+                normal.x += (vertexA.y - vertexB.y) * (vertexA.z + vertexB.z);
+                normal.y += (vertexA.z - vertexB.z) * (vertexA.x + vertexB.x);
+                normal.z += (vertexA.x - vertexB.x) * (vertexA.y + vertexB.y);
+            }
+            normal = glm::normalize(normal);
 
-        // Sample random pastel color
-        auto pastelFactor = 0.2f;
-        Color faceColor = Color((random.nextFloat()+pastelFactor)/(1+pastelFactor),
-                                (random.nextFloat()+pastelFactor)/(1+pastelFactor),
-                                (random.nextFloat()+pastelFactor)/(1+pastelFactor),
-                                1.0);
+            // Sample random pastel color
+            auto pastelFactor = 0.2f;
+            Color faceColor = Color((random.nextFloat()+pastelFactor)/(1+pastelFactor),
+                                    (random.nextFloat()+pastelFactor)/(1+pastelFactor),
+                                    (random.nextFloat()+pastelFactor)/(1+pastelFactor),
+                                    1.0);
 
-        for (const auto &faceTriangle: Triangulation::triangulateFace(vertices, face)){
-            std::array<Vertex, 3> triangleVertices{vertices[faceTriangle.vertexIndex0], vertices[faceTriangle.vertexIndex1], vertices[faceTriangle.vertexIndex2]};
-            for (const auto &triangleVertex: triangleVertices){
-                faceData.emplace_back(triangleVertex.x);
-                faceData.emplace_back(triangleVertex.y);
-                faceData.emplace_back(triangleVertex.z);
-                faceData.emplace_back(normal.x);
-                faceData.emplace_back(normal.y);
-                faceData.emplace_back(normal.z);
-                faceData.emplace_back(faceColor.r);
-                faceData.emplace_back(faceColor.g);
-                faceData.emplace_back(faceColor.b);
-                faceData.emplace_back(faceColor.w);
+            for (const auto &faceTriangle: Triangulation::triangulateFace(vertices, face)){
+                std::array<Vertex, 3> triangleVertices{vertices[faceTriangle.vertexIndex0], vertices[faceTriangle.vertexIndex1], vertices[faceTriangle.vertexIndex2]};
+                for (const auto &triangleVertex: triangleVertices){
+                    faceData.emplace_back(triangleVertex.x);
+                    faceData.emplace_back(triangleVertex.y);
+                    faceData.emplace_back(triangleVertex.z);
+                    faceData.emplace_back(normal.x);
+                    faceData.emplace_back(normal.y);
+                    faceData.emplace_back(normal.z);
+                    faceData.emplace_back(faceColor.r);
+                    faceData.emplace_back(faceColor.g);
+                    faceData.emplace_back(faceColor.b);
+                    faceData.emplace_back(faceColor.w);
 
-                faceIndices.emplace_back(faceIndices.size());
+                    faceIndices.emplace_back(faceIndices.size());
+                }
             }
         }
+
+        this->faceVertexBuffer->create();
+        this->faceVertexBuffer->bind();
+        this->faceVertexBuffer->allocate(&faceData.front(), faceData.size() * sizeof(float));
+
+        this->faceVertexArray->create();
+        this->faceVertexArray->bind();
+
+        GL_CALL(glEnableVertexAttribArray(0));
+        GL_CALL(glEnableVertexAttribArray(1));
+        GL_CALL(glEnableVertexAttribArray(2));
+
+        this->faceIndexBuffer->create();
+        this->faceIndexBuffer->bind();
+        this->faceIndexBuffer->allocate(&faceIndices.front(), faceIndices.size() * sizeof(unsigned int));
+
+        GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), nullptr));
+        GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (void*) (3 * sizeof(GLfloat))));
+        GL_CALL(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (void*) (6 * sizeof(GLfloat))));
+
+        // Data for edges
+        std::vector<float> faceEdgeData;
+        std::vector<unsigned int> faceEdgeIndices;
+        for (const auto &faceEdge: faceEdges){
+            const auto& v0 = vertices[faceEdge.vertexIndex0];
+            const auto& v1 = vertices[faceEdge.vertexIndex1];
+            faceEdgeData.emplace_back(v0.x);
+            faceEdgeData.emplace_back(v0.y);
+            faceEdgeData.emplace_back(v0.z);
+            faceEdgeIndices.emplace_back(faceEdgeIndices.size());
+            faceEdgeData.emplace_back(v1.x);
+            faceEdgeData.emplace_back(v1.y);
+            faceEdgeData.emplace_back(v1.z);
+            faceEdgeIndices.emplace_back(faceEdgeIndices.size());
+        }
+
+        this->faceEdgeVertexBuffer->create();
+        this->faceEdgeVertexBuffer->bind();
+        this->faceEdgeVertexBuffer->allocate(&faceEdgeData.front(), faceEdgeData.size() * sizeof(float));
+
+        this->faceEdgeVertexArray->create();
+        this->faceEdgeVertexArray->bind();
+
+        GL_CALL(glEnableVertexAttribArray(0));
+
+        this->faceEdgeIndexBuffer->create();
+        this->faceEdgeIndexBuffer->bind();
+        this->faceEdgeIndexBuffer->allocate(&faceEdgeIndices.front(), faceEdgeIndices.size() * sizeof(unsigned int));
+
+        GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr));
     }
-
-    this->faceVertexBuffer->create();
-    this->faceVertexBuffer->bind();
-    this->faceVertexBuffer->allocate(&faceData.front(), faceData.size() * sizeof(float));
-
-    this->faceVertexArray->create();
-    this->faceVertexArray->bind();
-
-    GL_CALL(glEnableVertexAttribArray(0));
-    GL_CALL(glEnableVertexAttribArray(1));
-    GL_CALL(glEnableVertexAttribArray(2));
-
-    this->faceIndexBuffer->create();
-    this->faceIndexBuffer->bind();
-    this->faceIndexBuffer->allocate(&faceIndices.front(), faceIndices.size() * sizeof(unsigned int));
-
-    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), nullptr));
-    GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (void*) (3 * sizeof(GLfloat))));
-    GL_CALL(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (void*) (6 * sizeof(GLfloat))));
-
-    // Data for edges
-    std::vector<float> faceEdgeData;
-    std::vector<unsigned int> faceEdgeIndices;
-    for (const auto &faceEdge: faceEdges){
-        const auto& v0 = vertices[faceEdge.vertexIndex0];
-        const auto& v1 = vertices[faceEdge.vertexIndex1];
-        faceEdgeData.emplace_back(v0.x);
-        faceEdgeData.emplace_back(v0.y);
-        faceEdgeData.emplace_back(v0.z);
-        faceEdgeIndices.emplace_back(faceEdgeIndices.size());
-        faceEdgeData.emplace_back(v1.x);
-        faceEdgeData.emplace_back(v1.y);
-        faceEdgeData.emplace_back(v1.z);
-        faceEdgeIndices.emplace_back(faceEdgeIndices.size());
-    }
-
-    this->faceEdgeVertexBuffer->create();
-    this->faceEdgeVertexBuffer->bind();
-    this->faceEdgeVertexBuffer->allocate(&faceEdgeData.front(), faceEdgeData.size() * sizeof(float));
-
-    this->faceEdgeVertexArray->create();
-    this->faceEdgeVertexArray->bind();
-
-    GL_CALL(glEnableVertexAttribArray(0));
-
-    this->faceEdgeIndexBuffer->create();
-    this->faceEdgeIndexBuffer->bind();
-    this->faceEdgeIndexBuffer->allocate(&faceEdgeIndices.front(), faceEdgeIndices.size() * sizeof(unsigned int));
-
-    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr));
-
 
     // Store the axis render line
     auto& aabb = worldSpaceMesh.getModelSpaceMesh()->getBounds();

@@ -257,7 +257,7 @@ void RenderWidget::notifyStarted() {
 //               << "." << std::setfill('0') << std::setw(3) << milliseconds.count();
 
             QMetaObject::invokeMethod(this, [this, &ss] {
-                this->ui->timeLabel->setText(QString::fromStdString(ss.str()));
+                if (this->taskRunning) this->ui->timeLabel->setText(QString::fromStdString(ss.str()));
             });
 
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
