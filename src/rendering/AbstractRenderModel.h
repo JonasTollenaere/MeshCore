@@ -9,7 +9,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
-#include <Qmenu.h>
+#include <QMenu>
 #include "RenderModelDetailDialog.h"
 #include "meshcore/rendering/PhongMaterial.h"
 #include "RenderListeners.h"
