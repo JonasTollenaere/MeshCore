@@ -6,7 +6,7 @@
 #include "forms/ui_rendermodelcontrolwidget.h"
 
 #include <iostream>
-#include <Qinputdialog.h>
+#include <QInputDialog>
 #include <QLabel>
 #include <QColorDialog>
 

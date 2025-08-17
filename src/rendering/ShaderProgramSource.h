@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <string>
-#include <Qstring.h>
+#include <QString>
 
 class ShaderProgramSource{
 public:

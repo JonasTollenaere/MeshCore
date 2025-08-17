@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.name }}
     strategy:
       matrix:
         include:
@@ -18,6 +19,10 @@ jobs:
           os: windows-latest
           install_cmd: choco install
           install_cmd_postfix: --yes --no-progress
+        - name: ubuntu-22.04
+          os: ubuntu-22.04
+          install_cmd: sudo apt-get -y install
+          deps: libgl1-mesa-dev libglu1-mesa-dev
 
     runs-on: ${{ matrix.os }}
 
