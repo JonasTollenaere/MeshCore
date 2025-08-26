@@ -5,11 +5,8 @@
 #ifndef EXTENDEDMESHCORE_RENDERRAY_H
 #define EXTENDEDMESHCORE_RENDERRAY_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/Ray.h"
-
-class RenderMesh;
 
 class RenderRay: public AbstractRenderModel {
 public:

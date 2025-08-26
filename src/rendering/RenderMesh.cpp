@@ -2,7 +2,6 @@
 // Created by Jonas on 18/05/2022.
 //
 
-
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/normal.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -10,7 +9,6 @@
 #include <QOpenGLShaderProgram>
 #include <utility>
 #include <QLabel>
-#include <QFrame>
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QComboBox>
@@ -104,15 +102,16 @@ RenderMesh::RenderMesh(const WorldSpaceMesh& worldSpaceMesh):
     if(this->numberOfFaces > 0) {
         std::vector<float> faceData;
         std::vector<unsigned int> faceIndices;
-        for (const auto & i : faces){
 
-            const auto& face = i;
+        faceIndices.reserve(this->numberOfFaces);
+        faceData.reserve(this->numberOfFaces * 10);
+        for (const auto & f : faces){
 
             // Compute the normal using Newell's method
             glm::vec3 normal(0.0f);
-            for (int j = 0; j < i.vertexIndices.size(); ++j){
-                auto indexA = i.vertexIndices[j];
-                auto indexB = i.vertexIndices[(j + 1) % i.vertexIndices.size()];
+            for (int j = 0; j < f.vertexIndices.size(); ++j){
+                auto indexA = f.vertexIndices[j];
+                auto indexB = f.vertexIndices[(j + 1) % f.vertexIndices.size()];
                 Vertex vertexA = vertices[indexA];
                 Vertex vertexB = vertices[indexB];
                 normal.x += (vertexA.y - vertexB.y) * (vertexA.z + vertexB.z);
@@ -128,7 +127,7 @@ RenderMesh::RenderMesh(const WorldSpaceMesh& worldSpaceMesh):
                                     (random.nextFloat()+pastelFactor)/(1+pastelFactor),
                                     1.0);
 
-            for (const auto &faceTriangle: Triangulation::triangulateFace(vertices, face)){
+            for (const auto &faceTriangle: Triangulation::triangulateFace(vertices, f)){
                 std::array<Vertex, 3> triangleVertices{vertices[faceTriangle.vertexIndex0], vertices[faceTriangle.vertexIndex1], vertices[faceTriangle.vertexIndex2]};
                 for (const auto &triangleVertex: triangleVertices){
                     faceData.emplace_back(triangleVertex.x);
@@ -214,17 +213,19 @@ RenderMesh::RenderMesh(const WorldSpaceMesh& worldSpaceMesh):
     }
 
     // Store the normal render models
-    normalRenderModels.reserve(triangles.size());
-    for (const auto &triangle: triangles){
-        auto vertexTriangle = VertexTriangle(vertices[triangle.vertexIndex0], vertices[triangle.vertexIndex1], vertices[triangle.vertexIndex2]);
-        auto center = vertexTriangle.getCentroid();
-        auto normal = vertexTriangle.normal;
-        normal = glm::normalize(normal) * glm::sqrt(glm::length(normal)); // Normals scale with surface, but we want them to scale with the scaling factor of the mod
-        Ray normalRay(center, normal);
-        auto renderRay = std::make_shared<RenderRay>(normalRay, this->getTransformation(), 5e-2f);
-        renderRay->setMaterial(PhongMaterial(Color::Red()));
-        renderRay->setTransformation(this->getTransformation());
-        this->normalRenderModels.emplace_back(renderRay);
+    if (numberOfFaces > 0) {
+        normalRenderModels.reserve(triangles.size());
+        for (const auto &triangle: triangles){
+            auto vertexTriangle = VertexTriangle(vertices[triangle.vertexIndex0], vertices[triangle.vertexIndex1], vertices[triangle.vertexIndex2]);
+            auto center = vertexTriangle.getCentroid();
+            auto normal = vertexTriangle.normal;
+            normal = glm::normalize(normal) * glm::sqrt(glm::length(normal)); // Normals scale with surface, but we want them to scale with the scaling factor of the mod
+            Ray normalRay(center, normal);
+            auto renderRay = std::make_shared<RenderRay>(normalRay, this->getTransformation(), 5e-2f);
+            renderRay->setMaterial(PhongMaterial(Color::Red()));
+            renderRay->setTransformation(this->getTransformation());
+            this->normalRenderModels.emplace_back(renderRay);
+        }
     }
 }
 
@@ -233,7 +234,7 @@ bool RenderMesh::isCullingEnabled() const {
 }
 
 void RenderMesh::setCullingEnabled(bool newCullingEnabled) {
-    RenderMesh::cullingEnabled = newCullingEnabled;
+    cullingEnabled = newCullingEnabled;
     for (const auto &listener: this->listeners){
         listener->notify();
     }
@@ -278,7 +279,6 @@ void RenderMesh::draw(const OpenGLWidget* openGLWidget, const glm::mat4& viewMat
             ambientShader->setUniformValue("u_ModelViewProjectionMatrix", QMatrix4x4(glm::value_ptr(modelViewProjectionMatrix)).transposed());
             QVector4D drawColor;
             auto color = this->getMaterial().getDiffuseColor();
-
 
             // Make the colors less pastel and darker
             auto pastelFactor = -0.5f;
@@ -534,13 +534,15 @@ QMenu* RenderMesh::getContextMenu() {
     axisAction->setChecked(this->isAxisEnabled());
     contextMenu->addAction(axisAction);
 
-    QAction* normalsAction = contextMenu->addAction(QString("Normals"));
-    QObject::connect(normalsAction, &QAction::triggered, [=](bool enabled){
-        this->setNormalsEnabled(enabled);
-    });
-    normalsAction->setCheckable(true);
-    normalsAction->setChecked(this->isNormalsEnabled());
-    contextMenu->addAction(normalsAction);
+    if (!normalRenderModels.empty()) {
+        QAction* normalsAction = contextMenu->addAction(QString("Normals"));
+        QObject::connect(normalsAction, &QAction::triggered, [=](bool enabled){
+            this->setNormalsEnabled(enabled);
+        });
+        normalsAction->setCheckable(true);
+        normalsAction->setChecked(this->isNormalsEnabled());
+        contextMenu->addAction(normalsAction);
+    }
 
     return contextMenu;
 }
@@ -633,14 +635,16 @@ RenderModelDetailDialog* RenderMesh::createRenderModelDetailDialog(QWidget* pare
     QObject::connect(axisCheckBox, &QCheckBox::clicked, [&](bool enabled) {
         this->setAxisEnabled(enabled);
     });
-    optionsLayout->addWidget(axisCheckBox, 4, 1);
+    optionsLayout->addWidget(axisCheckBox, 3, 1);
 
-    auto normalsCheckBox = new QCheckBox(QString("Show Normals"));
-    normalsCheckBox->setChecked(this->isNormalsEnabled());
-    QObject::connect(normalsCheckBox, &QCheckBox::clicked, [&](bool enabled) {
-        this->setNormalsEnabled(enabled);
-    });
-    optionsLayout->addWidget(normalsCheckBox, 3, 1);
+    if (!normalRenderModels.empty()) {
+        auto normalsCheckBox = new QCheckBox(QString("Show Normals"));
+        normalsCheckBox->setChecked(this->isNormalsEnabled());
+        QObject::connect(normalsCheckBox, &QCheckBox::clicked, [&](bool enabled) {
+            this->setNormalsEnabled(enabled);
+        });
+        optionsLayout->addWidget(normalsCheckBox, 4, 1);
+    }
 
     auto listener = std::make_shared<SimpleRenderModelListener>();
     this->addListener(listener);
