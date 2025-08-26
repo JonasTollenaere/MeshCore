@@ -25,8 +25,6 @@ public:
     [[nodiscard]] RenderWidget* getRenderWidget() const;
 
 protected:
-    void keyPressEvent(QKeyEvent *event) override;
-
     void loadMesh();
     void displayApplicationInfo();
 };

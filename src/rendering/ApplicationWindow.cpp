@@ -157,11 +157,6 @@ RenderWidget *ApplicationWindow::getRenderWidget() const {
     return renderWidget;
 }
 
-void ApplicationWindow::keyPressEvent(QKeyEvent* event){
-    printf("\nkey event in ApplicationWindow: %i", event->key());
-    std::cout << event->key() << std::endl;
-}
-
 void ApplicationWindow::loadMesh(){
     QString fileName = QFileDialog::getOpenFileName(this, QString("Select mesh file"), R"(C:\Users\tolle\CLionProjects\MeshCore\data\models)", QString("Mesh Files (*.stl *.obj)"));
     if(std::filesystem::exists(fileName.toStdString())){
