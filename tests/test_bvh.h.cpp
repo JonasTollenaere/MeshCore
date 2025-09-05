@@ -1,36 +1,57 @@
 //
-// Created by Jonas on 2/06/2022.
+// Created by Jonas Tollenaere on 05/09/2025.
 //
-#include <iostream>
-#include <thread>
 
-#include "meshcore/acceleration/CachingBoundsTreeFactory.h"
-#include "meshcore/utility/FileParser.h"
-#include "meshcore/rendering/ApplicationWindow.h"
-#include "meshcore/acceleration/AABBOctree.h"
+#include <filesystem>
+#include <iostream>
+#include <gtest/gtest.h>
+
 #include "meshcore/acceleration/BoundingVolumeHierarchy.h"
+#include "meshcore/acceleration/CachingBoundsTreeFactory.h"
+#include "meshcore/core/WorldSpaceMesh.h"
+#include "meshcore/utility/FileParser.h"
 #include "meshcore/utility/random.h"
 
-void run(RenderWidget* renderWidget);
+TEST(BVH, Construction) {
 
-int main(int argc, char *argv[]){
+    std::vector<std::string> objectFolders;
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Liu et al. 2015/"));
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Tollenaere, J. et al/Items"));
+    objectFolders.emplace_back(MESHCORE_DATA_DIR + std::string("Tollenaere, J. et al/Containers"));
 
-    QApplication app(argc, argv);
-    ApplicationWindow window;
-    window.show();
+    for (const auto &folder: objectFolders){
+        for (const auto &entry : std::filesystem::directory_iterator(folder)) {
 
-    std::thread thread(run, window.getRenderWidget());
-    int returnCode = QApplication::exec();
-    thread.join();
-    return returnCode;
+            auto start = std::chrono::high_resolution_clock::now();
+            auto modelSpaceMesh = FileParser::loadMeshFile(entry.path().string());
+
+            if(!modelSpaceMesh){
+                continue;
+            }
+
+            auto end = std::chrono::high_resolution_clock::now();
+            auto fileLoadingTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+            start = std::chrono::high_resolution_clock::now();
+            auto bvh = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(modelSpaceMesh);
+            end = std::chrono::high_resolution_clock::now();
+            auto convexHullTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+            std::cout << "Computed bvh for " << modelSpaceMesh->getName() << " in " << convexHullTime << " ms (File loading took " << fileLoadingTime << " ms)" << std::endl;
+
+            // The result should be convex
+            EXPECT_FALSE(bvh->getNodes().empty());
+            EXPECT_FALSE(bvh->getTriangles().empty());
+        }
+    }
 }
 
-void run(RenderWidget* renderWidget){
+TEST(BVH, RandomWalk) {
 
-    // Load the item
+    // Simple random walk of an item in a container to run the collision detection pipeline
+
+    // Load the item and container
     std::shared_ptr<WorldSpaceMesh> itemWorldSpaceMesh = std::make_shared<WorldSpaceMesh>(FileParser::loadMeshFile(MESHCORE_DATA_DIR + std::string("E. F. Silva et al. 2021/banana.stl")));
-
-    // Load a container
     std::shared_ptr<WorldSpaceMesh> containerWorldSpaceMesh = std::make_shared<WorldSpaceMesh>(FileParser::loadMeshFile(MESHCORE_DATA_DIR + std::string("E. F. Silva et al. 2021/stone_1.obj")));
 
     containerWorldSpaceMesh->getModelTransformation().factorScale(2.0f);
@@ -40,16 +61,12 @@ void run(RenderWidget* renderWidget){
     // Make the item small enough to fit inside the container
     itemWorldSpaceMesh->getModelTransformation().setScale(0.5f);
 
-    // Pas them to the renderer
-    renderWidget->renderWorldSpaceMesh("Items", itemWorldSpaceMesh, Color(1,1,0,1));
-    renderWidget->renderWorldSpaceMesh("Container", containerWorldSpaceMesh, Color(1, 1, 1, 0.7));
-
     // Create the Bounding Volume Hierarchy which will speed up intersection tests with the container
     auto bvh = CachingBoundsTreeFactory<BoundingVolumeHierarchy>::getBoundsTree(containerWorldSpaceMesh->getModelSpaceMesh());
 
     // Test new random transformations for the item
-        Random random;
-    for(int i=0; i<1e5; i++){
+    Random random;
+    for(int i=0; i<1e3; i++){
 
         // 0. Sample a random change to position and orientation
         const Transformation originalTransformation = itemWorldSpaceMesh->getModelTransformation();
@@ -82,10 +99,5 @@ void run(RenderWidget* renderWidget){
                 itemWorldSpaceMesh->getModelTransformation() = originalTransformation;
             }
         }
-
-        // 3. If we reach this point the position is feasible, update the transformation of the item and render it
-        renderWidget->renderWorldSpaceMesh("Items", itemWorldSpaceMesh, Color(1,1,0,1));
     }
-
-    std::cout << "Finished" << std::endl;
 }
