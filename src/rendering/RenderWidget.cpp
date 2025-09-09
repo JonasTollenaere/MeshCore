@@ -216,6 +216,7 @@ void RenderWidget::renderLine(const std::string &group, const std::string& name,
 
 void RenderWidget::notifySolution(const std::shared_ptr<const AbstractSolution>& solution) {
     if(this->solutionRenderCallback) solutionRenderCallback(this, solution);
+    QMetaObject::invokeMethod(this->getOpenGLWidget(), "appendAnimationSlot", Qt::AutoConnection);
 }
 
 void RenderWidget::notifyProgress(float progress) {
@@ -264,6 +265,8 @@ void RenderWidget::notifyStarted() {
         }
     });
     this->clear();
+
+    QMetaObject::invokeMethod(this->getOpenGLWidget(), "openAnimationSlot", Qt::AutoConnection, Q_ARG(std::string, "testAnimation.gif"));
 }
 
 void RenderWidget::notifyFinished() {
@@ -274,6 +277,8 @@ void RenderWidget::notifyFinished() {
         this->ui->startButton->setEnabled(true);
         this->ui->stopButton->setEnabled(false);
     });
+
+    QMetaObject::invokeMethod(this->getOpenGLWidget(), "closeAnimationSlot", Qt::AutoConnection);
 }
 
 void RenderWidget::notifyStatus(const std::string &status) {

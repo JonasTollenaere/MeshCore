@@ -65,50 +65,50 @@ ApplicationWindow::ApplicationWindow() {
 
     QAction* resetViewAction = viewMenu->addAction(QString("Reset view"));
     connect(resetViewAction, &QAction::triggered, [=]() { renderWidget->setView(0); });
-    resetViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_0));
+    resetViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));
 
     QMenu* otherViewsMenu = viewMenu->addMenu(QString("Other views"));
 
     QAction* blfViewAction = otherViewsMenu->addAction(QString("Bottom left front view"));
     connect(blfViewAction, &QAction::triggered, [=]() { renderWidget->setView(1); });
-    blfViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_1));
+    blfViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_1));
 
     QAction* bottomViewAction = otherViewsMenu->addAction(QString("Bottom view"));
     connect(bottomViewAction, &QAction::triggered, [=]() { renderWidget->setView(2); });
-    bottomViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_2));
+    bottomViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_2));
 
     QAction* brfViewAction = otherViewsMenu->addAction(QString("Bottom right front view"));
     connect(brfViewAction, &QAction::triggered, [=]() { renderWidget->setView(3); });
-    brfViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_3));
+    brfViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_3));
 
     QAction* leftViewAction = otherViewsMenu->addAction(QString("Left view"));
     connect(leftViewAction, &QAction::triggered, [=]() { renderWidget->setView(4); });
-    leftViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_4));
+    leftViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_4));
 
     QAction* frontViewAction = otherViewsMenu->addAction(QString("Front view"));
     connect(frontViewAction, &QAction::triggered, [=]() { renderWidget->setView(5); });
-    frontViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_5));
+    frontViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_5));
 
     QAction* sideViewAction = otherViewsMenu->addAction(QString("Right view"));
     connect(sideViewAction, &QAction::triggered, [=]() { renderWidget->setView(6); });
-    sideViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_6));
+    sideViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_6));
 
     QAction* tlfViewAction = otherViewsMenu->addAction(QString("Top left front view"));
     connect(tlfViewAction, &QAction::triggered, [=]() { renderWidget->setView(7); });
-    tlfViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_7));
+    tlfViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_7));
 
     QAction* topViewAction = otherViewsMenu->addAction(QString("Top view"));
     connect(topViewAction, &QAction::triggered, [=]() { renderWidget->setView(8); });
-    topViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_8));
+    topViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_8));
 
     QAction* trfViewAction = otherViewsMenu->addAction(QString("Top right front view"));
     connect(trfViewAction, &QAction::triggered, [=]() { renderWidget->setView(9); });
-    trfViewAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_9));
+    trfViewAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_9));
 
 //    QAction* toggleWireFrame = viewMenu->addAction(QString("Enable Wireframe"));
 //    connect(toggleWireFrame, &QAction::triggered, renderWidget->getOpenGLWidget(),
 //            &OpenGLWidget::toggleWireframe);
-//    toggleWireFrame->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_W));
+//    toggleWireFrame->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
 //    toggleWireFrame->setCheckable(true);
 //
 //    QAction* toggleCulling = viewMenu->addAction(QString("Enable Backface Culling"));
@@ -124,7 +124,7 @@ ApplicationWindow::ApplicationWindow() {
         });
         toggleAxis->setCheckable(true);
         toggleAxis->setChecked(renderWidget->getOpenGLWidget()->isAxisEnabled());
-        toggleAxis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_X));
+        toggleAxis->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_X));
     }
     {
         QAction* toggleLightMode = viewMenu->addAction(QString("Enable Light Mode"));
@@ -134,7 +134,7 @@ ApplicationWindow::ApplicationWindow() {
         });
         toggleLightMode->setCheckable(true);
         toggleLightMode->setChecked(renderWidget->getOpenGLWidget()->isLightMode());
-        toggleLightMode->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_L));
+        toggleLightMode->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
     }
     {
         QAction* togglePerspective = viewMenu->addAction(QString("Enable Perspective"));

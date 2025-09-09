@@ -24,6 +24,7 @@
 class AbstractRenderModel;
 class AbstractRenderGroupListener;
 class RenderWidget;
+class GifWrapper;
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 Q_OBJECT
@@ -41,10 +42,14 @@ private:
     Transformation viewTransformation;
     glm::mat4 projectionMatrix{};
 
+    // Render models
     mutable std::unordered_map<std::string, std::unordered_map<std::string, std::shared_ptr<AbstractRenderModel>>> groupedRenderModelsMap;
     std::unordered_map<std::string, std::vector<std::shared_ptr<AbstractRenderGroupListener>>> groupListeners;
     std::vector<std::shared_ptr<AbstractRenderModel>> sortedRenderModels;
     std::vector<std::shared_ptr<AbstractRenderModel>> axisRenderModels;
+
+    // Animation
+    std::shared_ptr<GifWrapper> gifWrapper;
 
 private:
     std::shared_ptr<QOpenGLShaderProgram> ambientShader;
@@ -115,6 +120,10 @@ private slots:
     void captureLinearAnimationSlot(const Transformation& initialViewTransformation, const Transformation& finalViewTransformation,
                                     const KeyFrame& initialKeyFrame, const KeyFrame& finalKeyFrame,
                                     const QString& fileName, int steps, int delay, RenderWidget* renderWidget);
+
+    void openAnimationSlot(const std::string& path);
+    void appendAnimationSlot();
+    void closeAnimationSlot();
 
 private:
     std::unordered_map<std::string, std::shared_ptr<AbstractRenderModel>>& getOrInsertRenderModelsMap(const std::string &group) const;
