@@ -11,6 +11,7 @@
 #include "include/meshcore/rendering/RenderWidget.h"
 #include "Exception.h"
 #include "src/external/gifencoder/GifEncoder.h"
+#include "GifWrapper.h"
 #include "meshcore/utility/io.h"
 #include "RenderRay.h"
 #include <glm/gtx/hash.hpp>
@@ -180,12 +181,12 @@ void OpenGLWidget::setView(size_t preset) {
         float t = float(i)/(float(steps) - 1); // Linear interpolation
         this->viewTransformation = Transformation::interpolate(initialViewTransformation, newViewTransformation, t);
 
-        QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
         this->update();
     }
 
     this->viewTransformation = newViewTransformation;
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
 }
 
@@ -208,6 +209,9 @@ void OpenGLWidget::calculateProjectionMatrix(){
 }
 
 void OpenGLWidget::paintGL() {
+
+    //
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
     if(this->axisEnabled){
         auto normalizedViewTransformation = viewTransformation;
@@ -404,26 +408,15 @@ void OpenGLWidget::captureAnimationSlot() {
     progressDialog.setWindowModality(Qt::ApplicationModal);
     progressDialog.show();
 
-    // Allocate a pixel buffer
-    std::vector<uint8_t> pixels(width * height * 4, 0);
-
     // Initialise the gif encoder
-    int quality = 10;
-    bool useGlobalColorMap = false;
-    int loop = 0;
-    int preAllocSize = width * height * 3;
-    GifEncoder gifEncoder;
-    if (!gifEncoder.open(fileName.toStdString(), width, height, quality, useGlobalColorMap, loop, preAllocSize)) {
-        fprintf(stderr, "Error opening the gif file\n");
-    }
+    GifWrapper gifWrapper(width, height);
+    gifWrapper.open(fileName.toStdString());
 
     for(int i=0;i<steps;i++){
 
         // Check if aborted
         if(progressDialog.wasCanceled()){
-            if (!gifEncoder.close()) {
-                fprintf(stderr, "Error closing the gif file\n");
-            }
+            gifWrapper.close();
             viewTransformation = initialViewTransformation;
             GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
             this->update();
@@ -435,28 +428,18 @@ void OpenGLWidget::captureAnimationSlot() {
         progressDialog.setValue(i);
 
         this->viewTransformation.factorRotation(Quaternion(viewTransformation.inverseTransformVector(cameraUp), -rotationSpeed));
-        QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
         this->update();
         auto capture = this->grabFramebuffer();
-        for (int x = 0; x < width; ++x){
-            for (int y = 0; y < height; ++y){
-                auto rgb = capture.pixel(x, y);
-                pixels[4 * (y * width + x) + 0] = (rgb >> 16) & 0xFF;
-                pixels[4 * (y * width + x) + 1] = (rgb >> 8) & 0xFF;
-                pixels[4 * (y * width + x) + 2] = (rgb >> 0) & 0xFF;
-                pixels[4 * (y * width + x) + 3] = 255;
-            }
-        }
-        gifEncoder.push(GifEncoder::PIXEL_FORMAT_RGBA, pixels.data(), width, height, delay);
+
+        gifWrapper.appendFrame(capture, delay);
     }
     progressDialog.setValue(steps);
 
     // Close the file handle and free memory.
-    if (!gifEncoder.close()) {
-        fprintf(stderr, "Error closing gif file\n");
-    }
+    gifWrapper.close();
     viewTransformation = initialViewTransformation;
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     progressDialog.close();
 }
@@ -466,7 +449,7 @@ void OpenGLWidget::captureSceneSlot() {
     this->makeCurrent();
 
     // We grab the frame before the user inputs the file name
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
 
@@ -490,7 +473,7 @@ void OpenGLWidget::captureSceneSlot() {
 
 void OpenGLWidget::captureSceneToFileSlot(const QString& fileName) {
     this->makeCurrent();
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
     std::cout<< fileName.toStdString() << std::endl;
@@ -526,6 +509,36 @@ bool OpenGLWidget::isAxisEnabled() const {
 void OpenGLWidget::setAxisEnabled(bool enabled) {
     OpenGLWidget::axisEnabled = enabled;
     this->update();
+}
+
+void OpenGLWidget::openAnimationSlot(const std::string& path) {
+    if (gifWrapper) {
+        std::cout << "Open animation is closed before creating new one." << std::endl;
+        gifWrapper->close();
+    }
+
+    gifWrapper = std::make_shared<GifWrapper>(width, height);
+    gifWrapper->open(path);
+}
+
+void OpenGLWidget::appendAnimationSlot() {
+    if (!gifWrapper) {
+        std::cout << "No animation to append to." << std::endl;
+        return;
+    }
+    auto capture = this->grabFramebuffer();
+    int delay = 5;
+    gifWrapper->appendFrame(capture, delay);
+}
+
+void OpenGLWidget::closeAnimationSlot() {
+    if (!gifWrapper) {
+        std::cout << "No animation to save." << std::endl;
+        return;
+    }
+
+    gifWrapper->close();
+    gifWrapper = nullptr;
 }
 
 std::unordered_map<std::string, std::shared_ptr<AbstractRenderModel>>& OpenGLWidget::getOrInsertRenderModelsMap(const std::string& group) const {
@@ -861,7 +874,7 @@ std::vector<uint8_t> OpenGLWidget::capturePixelBufferSlot() {
 
     this->makeCurrent();
     std::vector<uint8_t> pixelBuffer(width * height * 4, 0);
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
     for (int x = 0; x < width; ++x) {
@@ -898,26 +911,14 @@ void OpenGLWidget::captureLinearAnimationSlot(const Transformation &initialViewT
     progressDialog.setWindowModality(Qt::ApplicationModal);
     progressDialog.show();
 
-    // Allocate a pixel buffer
-    std::vector<uint8_t> pixels(width * height * 4, 0);
-
     // Initialise the gif encoder
-    int quality = 10;
-    bool useGlobalColorMap = false;
-    int loop = 0;
-    int preAllocSize = width * height * 3;
-    GifEncoder gifEncoder;
-    if (!gifEncoder.open(fileName.toStdString(), width, height, quality, useGlobalColorMap, loop, preAllocSize)) {
-        fprintf(stderr, "Error opening the gif file\n");
-    }
+    GifWrapper gifWrapper(width, height);
+    gifWrapper.open(fileName.toStdString());
 
     for(int i=0;i<steps;i++){
-
         // Check if aborted
         if(progressDialog.wasCanceled()){
-            if (!gifEncoder.close()) {
-                fprintf(stderr, "Error closing the gif file\n");
-            }
+            gifWrapper.close();
             GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
             this->update();
             QFile::remove(fileName);
@@ -950,28 +951,17 @@ void OpenGLWidget::captureLinearAnimationSlot(const Transformation &initialViewT
             renderWorldSpaceMeshSlot(group, initialKeyFrameObject.mesh, interpolatedMaterial, renderWidget);
         }
 
-        QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
         this->update();
         auto capture = this->grabFramebuffer();
-        for (int x = 0; x < width; ++x){
-            for (int y = 0; y < height; ++y){
-                auto rgb = capture.pixel(x, y);
-                pixels[4 * (y * width + x) + 0] = (rgb >> 16) & 0xFF;
-                pixels[4 * (y * width + x) + 1] = (rgb >> 8) & 0xFF;
-                pixels[4 * (y * width + x) + 2] = (rgb >> 0) & 0xFF;
-                pixels[4 * (y * width + x) + 3] = 255;
-            }
-        }
-        gifEncoder.push(GifEncoder::PIXEL_FORMAT_RGBA, pixels.data(), width, height, delay);
+        gifWrapper.appendFrame(capture, delay);
     }
     progressDialog.setValue(steps);
 
     // Close the file handle and free memory.
-    if (!gifEncoder.close()) {
-        fprintf(stderr, "Error closing the gif file\n");
-    }
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    gifWrapper.close();
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     progressDialog.close();
 }
