@@ -24,8 +24,10 @@ The `demos` folder contains a number of example applications that demonstrate ba
 For more examples we refer to the repositories listed in the section below. 
 
 ## Publicly available repositories that make use of this library:
+* [sparrow-3d](https://github.com/JonasTollenaere/sparrow-3d): Heuristic algorithms for 3D irregular strip packing problems with arbitrary items
 * [strip-milp-3d](https://github.com/JonasTollenaere/strip-milp-3d): Constructing MILP models of 3D irregular strip packing problems with convex items
 * [svmp-heuristic](https://github.com/JonasTollenaere/svmp-heuristic): Local search heuristics for single volume maximisation problems
 * [svmp-quaternion-qcp](https://github.com/JonasTollenaere/svmp-quaternion-qcp): Quadratically constrained formulations for the single volume maximisation problem
+
 ## Acknowledgements
 Development of this project began under [CODeS](https://numa.cs.kuleuven.be/research/combinatorial-optimization), part of NUMA, the Numerical Analysis and Applied Mathematics research unit of KU Leuven.
