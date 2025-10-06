@@ -63,14 +63,18 @@ public:
     }
 
     MC_FUNC_QUALIFIER [[nodiscard]] Vertex getClosestPoint(const Vertex& point) const {
-        auto deltaCenter = point - this->center;
-        auto distanceCenterSquared = glm::dot(deltaCenter, deltaCenter);
+        const auto deltaCenter = point - this->center;
+        const auto distanceCenterSquared = glm::dot(deltaCenter, deltaCenter);
 
         // Return the point itself if it is inside the sphere
         if(distanceCenterSquared <= getRadiusSquared()){
             return point;
         }
-        return  this->center + deltaCenter*glm::inversesqrt(deltaCenter) * this->radius;
+
+        // Normalize the deltaCenter vector
+        const auto deltaCenterNormalized = deltaCenter * glm::inversesqrt(distanceCenterSquared);
+
+        return  this->center + deltaCenterNormalized * this->radius;
     }
 
     MC_FUNC_QUALIFIER [[nodiscard]] float getDistanceSquaredTo(const Vertex& point) const {
