@@ -76,9 +76,14 @@ void AbstractTask::notifyObserversFinished() const {
 }
 
 void AbstractTask::notifyObserversStarted() const {
+    auto taskName = this->getTaskName();
     for(AbstractTaskObserver* observer: taskObservers){
-        observer->notifyStarted();
+        observer->notifyStarted(taskName);
     }
+}
+
+std::string AbstractTask::getTaskName() const {
+    return "-";
 }
 
 void AbstractTask::notifyObserversStatus(const std::string& status) const {

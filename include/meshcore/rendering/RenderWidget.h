@@ -92,7 +92,7 @@ public:
     void startCurrentTask() const;
     void stopCurrentTask() const;
 
-    void notifyStarted() override;
+    void notifyStarted(const std::string& taskName) override;
     void notifyFinished() override;
     void notifyProgress(float progress) override;
     void notifyStatus(const std::string &status) override;

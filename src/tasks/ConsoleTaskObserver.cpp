@@ -18,7 +18,8 @@ void ConsoleTaskObserver::notifyProgress(float newProgress) {
     this->update();
 }
 
-void ConsoleTaskObserver::notifyStarted() {
+void ConsoleTaskObserver::notifyStarted(const std::string& taskName) {
+    std::cout << "Starting task: " << taskName << std::endl;
     this->progress = 0.0f;
     this->update();
 }

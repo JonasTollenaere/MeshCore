@@ -87,6 +87,10 @@ public:
         }
         notifyObserversProgress(1.0f);
     }
+
+    std::string getTaskName() const override { // Optional, default implementation shows "-" as task name
+        return "Dummy Task";
+    }
 };
 
 int main(int argc, char *argv[]){

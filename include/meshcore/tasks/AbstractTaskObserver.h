@@ -25,7 +25,7 @@ public:
         std::cout << "This notifyFinished should be overridden!" << std::endl;
     }
 
-    virtual void notifyStarted() {
+    virtual void notifyStarted(const std::string& taskName) {
         std::cout << "This notifyStarted should be overridden!" << std::endl;
     }
 

@@ -36,6 +36,7 @@ public:
     void notifyObserversProgress(float progress) const;
     void notifyObserversStatus(const std::string& status) const;
     void notifyObserversSolution(const std::shared_ptr<const AbstractSolution>& solution) const;
+    virtual std::string getTaskName() const;
 private:
     static void run_static(AbstractTask *task);
     void notifyObserversFinished() const;

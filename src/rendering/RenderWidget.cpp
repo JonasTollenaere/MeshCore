@@ -225,10 +225,11 @@ void RenderWidget::notifyProgress(float progress) {
     });
 }
 
-void RenderWidget::notifyStarted() {
+void RenderWidget::notifyStarted(const std::string& taskName) {
 
-    QMetaObject::invokeMethod(this, [this] {
+    QMetaObject::invokeMethod(this, [this, taskName] {
         this->ui->statusLabel->setText(QString::fromStdString("-"));
+        this->ui->taskNameLabel->setText(QString::fromStdString(taskName));
         this->ui->progressBar->setValue(0);
         this->ui->startButton->setEnabled(false);
         this->ui->stopButton->setEnabled(true);
