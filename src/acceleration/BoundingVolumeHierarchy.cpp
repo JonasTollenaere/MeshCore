@@ -16,10 +16,10 @@
 BoundingVolumeHierarchy::BoundingVolumeHierarchy(const std::shared_ptr<ModelSpaceMesh> &mesh) {
 
     // We use the default MeshCore BVH to construct this performance oriented one
-    auto root = CachingBoundsTreeFactory<AABBVolumeHierarchy>::getBoundsTree(mesh);
+    auto root = AABBVolumeHierarchy(mesh);
 
     std::stack<std::pair<AbstractBoundsTree<AABB,2, true>*, size_t>> stack;
-    stack.emplace(root.get(), nodes.size());
+    stack.emplace(&root, nodes.size());
     nodes.emplace_back();
 
     while (!stack.empty()) {
@@ -86,7 +86,7 @@ bool BoundingVolumeHierarchy::hitsBacksideFirst(const Ray &ray) const {
 
 
 bool BoundingVolumeHierarchy::containsPoint(const glm::vec3& point) const {
-    return hitsBacksideFirst(Ray(point, glm::vec3(0.8255, -0.1687, 0.3645)));;
+    return hitsBacksideFirst(Ray(point, glm::vec3(0.8255, -0.1687, 0.3645)));
 }
 
 

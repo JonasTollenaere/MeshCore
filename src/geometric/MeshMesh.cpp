@@ -2,6 +2,8 @@
 // Created by Jonas on 5/11/2021.
 //
 
+#include <iostream>
+
 #include "meshcore/geometric/Intersection.h"
 #include "meshcore/geometric/GJK.h"
 #include "meshcore/acceleration/CachingBoundsTreeFactory.h"

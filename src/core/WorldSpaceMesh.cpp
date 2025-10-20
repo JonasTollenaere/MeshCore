@@ -14,9 +14,8 @@ modelSpaceMesh(std::make_shared<ModelSpaceMesh>(ModelSpaceMesh()))
 {}
 
 WorldSpaceMesh::WorldSpaceMesh(const std::shared_ptr<ModelSpaceMesh>& modelSpaceMesh):
-        modelSpaceMesh(modelSpaceMesh),
-        modelTransformation(),
-        id(std::to_string(nextId++))
+        id(std::to_string(nextId++)),
+        modelSpaceMesh(modelSpaceMesh)
 {}
 
 const std::string& WorldSpaceMesh::getId() const {

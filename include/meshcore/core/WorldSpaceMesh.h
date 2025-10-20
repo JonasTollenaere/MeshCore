@@ -8,7 +8,6 @@
 #include "ModelSpaceMesh.h"
 #include "Transformation.h"
 #include <memory>
-#include <iostream>
 
 class WorldSpaceMesh: public GJKConvexShape {
 

@@ -6,6 +6,7 @@
 
 #include "meshcore/geometric/Intersection.h"
 #include <fstream>
+#include <iostream>
 
 StripPackingSolution::StripPackingSolution(const std::shared_ptr<StripPackingProblem> &problem):
     problem(problem), cachedAABBs(problem->getTotalNumberOfItems(), std::nullopt) {

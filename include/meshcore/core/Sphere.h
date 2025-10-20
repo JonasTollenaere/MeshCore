@@ -26,7 +26,7 @@ public:
         return radiusSquared;
     }
 
-    MC_FUNC_QUALIFIER Sphere(): center(0.0f), radius(0.0f), radiusSquared(0.0f){}
+    MC_FUNC_QUALIFIER Sphere(): center(0.0f), radius(1.0f), radiusSquared(1.0f){}
 
     MC_FUNC_QUALIFIER Sphere(Vertex center, float radius): center(center), radius(radius), radiusSquared(radius * radius){
         assert(radius>=0.0f);
