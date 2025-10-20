@@ -15,6 +15,8 @@
 #define MESHCORE_ICON_DIR ""
 #endif
 
+[[maybe_unused]] static ApplicationInitializer initializer;
+
 ApplicationWindow::ApplicationWindow() {
 
     auto icon = QIcon(QString::fromStdString(MESHCORE_ICON_DIR + std::string("logo3.svg")));
