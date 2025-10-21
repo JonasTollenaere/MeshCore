@@ -99,7 +99,7 @@ private slots:
     void clearGroup(const std::string &group);
     void setViewTransformation(const Transformation &newViewTransformation);
     void setGroupVisible(const std::string &group, bool visible);
-    void renderWorldSpaceMeshSlot(const std::string &group, const std::shared_ptr<WorldSpaceMesh> &worldSpaceMesh, const PhongMaterial &material, RenderWidget* renderWidget);
+    void renderWorldSpaceMeshSlot(const std::string &group, const WorldSpaceMesh &worldSpaceMesh, const PhongMaterial &material, RenderWidget* renderWidget);
     void renderPlaneSlot(const std::string &group, const std::string &name, const Plane &plane, const PhongMaterial& material, RenderWidget* renderWidget);
     void renderBoxSlot(const std::string &group, const std::string &name, const AABB &aabb, const Transformation& transformation, const PhongMaterial& material, RenderWidget *renderWidget);
     void renderRaySlot(const std::string &group, const std::string &name, const Ray &ray, const PhongMaterial& material, float widthLengthRatio, RenderWidget* renderWidget);

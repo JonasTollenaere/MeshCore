@@ -25,7 +25,7 @@
 Q_DECLARE_METATYPE(Color)
 Q_DECLARE_METATYPE(PhongMaterial)
 Q_DECLARE_METATYPE(std::string)
-Q_DECLARE_METATYPE(std::shared_ptr<WorldSpaceMesh>)
+Q_DECLARE_METATYPE(WorldSpaceMesh)
 Q_DECLARE_METATYPE(RenderWidget*)
 Q_DECLARE_METATYPE(AABB)
 Q_DECLARE_METATYPE(Sphere)
@@ -43,7 +43,7 @@ void OpenGLWidget::initializeGL() {
     qRegisterMetaType<Color>();
     qRegisterMetaType<PhongMaterial>();
     qRegisterMetaType<std::string>();
-    qRegisterMetaType<std::shared_ptr<WorldSpaceMesh>>();
+    qRegisterMetaType<WorldSpaceMesh>();
     qRegisterMetaType<RenderWidget*>();
     qRegisterMetaType<AABB>();
     qRegisterMetaType<Transformation>();
@@ -540,22 +540,22 @@ std::unordered_map<std::string, std::shared_ptr<AbstractRenderModel>>& OpenGLWid
     return iterator->second;
 }
 
-void OpenGLWidget::renderWorldSpaceMeshSlot(const std::string &group, const std::shared_ptr<WorldSpaceMesh> &worldSpaceMesh, const PhongMaterial &material, RenderWidget* renderWidget){
+void OpenGLWidget::renderWorldSpaceMeshSlot(const std::string &group, const WorldSpaceMesh &worldSpaceMesh, const PhongMaterial &material, RenderWidget* renderWidget){
 
     // Find the group
     auto& renderModelsMap = this->getOrInsertRenderModelsMap(group);
 
     // Find the model in this group
-    auto modelIterator = renderModelsMap.find(worldSpaceMesh->getId());
+    auto modelIterator = renderModelsMap.find(worldSpaceMesh.getId());
     if(modelIterator == renderModelsMap.end()){
 
         this->makeCurrent();
 
         // No entry present yet, create new render Model
-        auto renderMesh = std::make_shared<RenderMesh>(*worldSpaceMesh);
+        auto renderMesh = std::make_shared<RenderMesh>(worldSpaceMesh);
 
         // Insert it in the renderModelsMap
-        modelIterator = renderModelsMap.insert({worldSpaceMesh->getId(), renderMesh}).first;
+        modelIterator = renderModelsMap.insert({worldSpaceMesh.getId(), renderMesh}).first;
 
         // Add required listeners
         this->addRenderModelListeners(group, renderMesh);
@@ -570,7 +570,7 @@ void OpenGLWidget::renderWorldSpaceMeshSlot(const std::string &group, const std:
     modelIterator->second->setMaterial(material);
 
     // Update the transformation
-    modelIterator->second->setTransformation(worldSpaceMesh->getModelTransformation());
+    modelIterator->second->setTransformation(worldSpaceMesh.getModelTransformation());
 
     this->update();
 }
@@ -947,7 +947,7 @@ void OpenGLWidget::captureLinearAnimationSlot(const Transformation &initialViewT
             auto interpolatedTransformation = Transformation::interpolate(initialKeyFrameObject.transformation, finalKeyFrameObject.transformation, t);
             mesh->setModelTransformation(interpolatedTransformation);
 
-            renderWorldSpaceMeshSlot(group, initialKeyFrameObject.mesh, interpolatedMaterial, renderWidget);
+            renderWorldSpaceMeshSlot(group, *initialKeyFrameObject.mesh, interpolatedMaterial, renderWidget);
         }
 
         QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
