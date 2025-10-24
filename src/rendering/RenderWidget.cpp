@@ -53,15 +53,23 @@ OpenGLWidget *RenderWidget::getOpenGLWidget() const {
     return ui->openGLWidget;
 }
 
-void RenderWidget::renderWorldSpaceMesh(const std::string &group, const std::shared_ptr<WorldSpaceMesh> &worldSpaceMesh,  const Color& color) {
-    renderWorldSpaceMesh(group, worldSpaceMesh, PhongMaterial(color));
+void RenderWidget::renderWorldSpaceMesh(const std::string &group, const std::shared_ptr<WorldSpaceMesh> &worldSpaceMesh, const Color& color) {
+    renderWorldSpaceMesh(group, *worldSpaceMesh, PhongMaterial(color));
 }
 
 void RenderWidget::renderWorldSpaceMesh(const std::string &group, const std::shared_ptr<WorldSpaceMesh> &worldSpaceMesh,  const PhongMaterial& material) {
+    renderWorldSpaceMesh(group, *worldSpaceMesh, material);
+}
+
+void RenderWidget::renderWorldSpaceMesh(const std::string &group, const WorldSpaceMesh &worldSpaceMesh,  const Color& color) {
+    renderWorldSpaceMesh(group, worldSpaceMesh, PhongMaterial(color));
+}
+
+void RenderWidget::renderWorldSpaceMesh(const std::string &group, const WorldSpaceMesh &worldSpaceMesh,  const PhongMaterial& material) {
     QMetaObject::invokeMethod(this->getOpenGLWidget(), "renderWorldSpaceMeshSlot",
                               Qt::AutoConnection,
                               Q_ARG(std::string, group),
-                              Q_ARG(std::shared_ptr<WorldSpaceMesh>, std::make_shared<WorldSpaceMesh>(*worldSpaceMesh)), // We should copy the actual worldSpaceMesh object here, otherwise the transformation could change before the render thread reads it
+                              Q_ARG(WorldSpaceMesh, WorldSpaceMesh(worldSpaceMesh)), // We should copy the actual worldSpaceMesh object here, otherwise the transformation could change before the render thread reads it
                               Q_ARG(PhongMaterial, material),
                               Q_ARG(RenderWidget*, this));
 }

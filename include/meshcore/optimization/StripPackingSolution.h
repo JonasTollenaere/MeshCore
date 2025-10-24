@@ -17,7 +17,7 @@
 class StripPackingSolution: public AbstractSolution {
 
     std::shared_ptr<StripPackingProblem> problem;
-    std::vector<std::shared_ptr<WorldSpaceMesh>> items;
+    std::vector<WorldSpaceMesh> items;
     std::vector<std::string> itemNames;
     mutable std::vector<std::optional<AABB>> cachedAABBs;
 
@@ -25,8 +25,8 @@ public:
     explicit StripPackingSolution(const std::shared_ptr<StripPackingProblem>& problem);
     StripPackingSolution(const StripPackingSolution& other);
 
-    [[nodiscard]] const std::vector<std::shared_ptr<WorldSpaceMesh>>& getItems() const;
-    [[nodiscard]] const std::shared_ptr<WorldSpaceMesh>& getItem(size_t itemIndex) const;
+    [[nodiscard]] const std::vector<WorldSpaceMesh>& getItems() const;
+    [[nodiscard]] const WorldSpaceMesh& getItem(size_t itemIndex) const;
     [[nodiscard]] const std::string& getItemName(size_t itemIndex) const;
     [[nodiscard]] const AABB& getItemAABB(size_t itemIndex) const;
     [[nodiscard]] const std::shared_ptr<StripPackingProblem>& getProblem() const;

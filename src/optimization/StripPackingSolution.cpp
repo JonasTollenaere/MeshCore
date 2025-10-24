@@ -14,7 +14,7 @@ StripPackingSolution::StripPackingSolution(const std::shared_ptr<StripPackingPro
     items.reserve(problem->getTotalNumberOfItems());
     itemNames.reserve(problem->getTotalNumberOfItems());
     for (const auto& mesh : problem->listRequiredItems()) {
-        items.push_back(std::make_shared<WorldSpaceMesh>(mesh));
+        items.emplace_back(mesh); // Emplace back constructs a WorldSpaceMesh with identity transformation
         itemNames.push_back(mesh->getName());
     }
 }
@@ -22,15 +22,15 @@ StripPackingSolution::StripPackingSolution(const std::shared_ptr<StripPackingPro
 StripPackingSolution::StripPackingSolution(const StripPackingSolution &other): problem(other.problem), itemNames(other.itemNames), cachedAABBs(other.cachedAABBs) {
     items.reserve(other.items.size());
     for (const auto& item : other.items) {
-        items.push_back(item->clone());
+        items.emplace_back(item);
     }
 }
 
-const std::vector<std::shared_ptr<WorldSpaceMesh>> & StripPackingSolution::getItems() const {
+const std::vector<WorldSpaceMesh>& StripPackingSolution::getItems() const {
     return items;
 }
 
-const std::shared_ptr<WorldSpaceMesh> & StripPackingSolution::getItem(size_t itemIndex) const {
+const WorldSpaceMesh& StripPackingSolution::getItem(size_t itemIndex) const {
     return items[itemIndex];
 }
 
@@ -45,10 +45,10 @@ const AABB & StripPackingSolution::getItemAABB(size_t itemIndex) const {
         const auto& item = items[itemIndex];
 
         // Considering the vertices on the convex hull suffices for computing the AABB
-        const auto& modelSpaceVertices = item->getModelSpaceMesh()->getConvexHull()->getVertices();
+        const auto& modelSpaceVertices = item.getModelSpaceMesh()->getConvexHull()->getVertices();
 
         // Compute the AABB from these vertices and the item transformation
-        cachedAABBs[itemIndex] = AABBFactory::createAABB(modelSpaceVertices, item->getModelTransformation());
+        cachedAABBs[itemIndex] = AABBFactory::createAABB(modelSpaceVertices, item.getModelTransformation());
     }
 
     // Return the reference to the cached AABB
@@ -60,13 +60,13 @@ const std::shared_ptr<StripPackingProblem> & StripPackingSolution::getProblem() 
 }
 
 const Transformation & StripPackingSolution::getItemTransformation(size_t itemIndex) const {
-    return items[itemIndex]->getModelTransformation();
+    return items[itemIndex].getModelTransformation();
 }
 
 void StripPackingSolution::setItemTransformation(size_t itemIndex, const Transformation &transformation) {
     // Reset cached AABB when the transformation is updated
     cachedAABBs[itemIndex].reset();
-    items[itemIndex]->setModelTransformation(transformation);
+    items[itemIndex].setModelTransformation(transformation);
 }
 
 float StripPackingSolution::computeTotalHeight() const {
@@ -105,7 +105,7 @@ bool StripPackingSolution::isFeasible() const {
             }
 
             // Mesh intersection check
-            if (Intersection::intersect(*firstItem, *secondItem)) {
+            if (Intersection::intersect(firstItem, secondItem)) {
                 return false;
             }
         }
@@ -140,7 +140,7 @@ std::shared_ptr<StripPackingSolution> StripPackingSolution::fromJson(nlohmann::o
 
     for (size_t itemIndex = 0; itemIndex < solution->getItems().size(); ++itemIndex) {
         const auto& item = solution->getItems()[itemIndex];
-        auto name = item->getModelSpaceMesh()->getName();
+        auto name = item.getModelSpaceMesh()->getName();
         if(itemIndexMap.find(name) == itemIndexMap.end()){
             itemIndexMap[name] = std::vector<size_t>();
         }
