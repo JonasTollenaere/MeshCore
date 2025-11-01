@@ -6,11 +6,8 @@
 #define MESHCORE_SHADERPROGRAMSOURCE_H
 
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <sstream>
-#include <qt5/QtCore/qstring.h>
-#include <unordered_map>
+#include <QString>
 
 class ShaderProgramSource{
 public:

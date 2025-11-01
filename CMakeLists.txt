@@ -1,5 +1,5 @@
-project("MeshCore")
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+project("MeshCore")
 
 ### CPP ###
 set(CMAKE_CXX_STANDARD 17)
@@ -15,6 +15,7 @@ find_package(glm REQUIRED)
 find_package(Boost REQUIRED)
 find_package(GSL REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb tbbmalloc)
+find_package(nlohmann_json REQUIRED)
 
 ### MeshCoreBase library can be used for targets that run without UI ###
 file(GLOB SOURCES src/acceleration/*.cpp src/core/*.cpp src/geometric/*.cpp src/tasks/*.cpp src/utility/*.cpp src/external/quickhull/*.cpp src/factories/*.cpp src/optimization/*.cpp)
@@ -32,20 +33,20 @@ add_subdirectory(tests)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Svg OpenGL OpenGLWidgets REQUIRED)
 find_package(OpenGL REQUIRED)
-#find_package(GLEW REQUIRED)
 find_package(GIF REQUIRED)
-find_package(nlohmann_json REQUIRED)
+qt_standard_project_setup()
 
 ### MeshCore is the complete library with UI that expands upon MeshCoreBase, requires Qt, OpenGL, ...
 file(GLOB UI_SOURCES src/rendering/*.cpp src/rendering/*.h src/external/gifencoder/*.cpp include/meshcore/rendering/*.h)
-add_library(MeshCore STATIC ${UI_SOURCES})
-target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt5::Widgets Qt5::Core Qt5::Svg OpenGL::GL GIF::GIF nlohmann_json::nlohmann_json)
+qt_add_library(MeshCore STATIC ${UI_SOURCES})
+target_link_libraries(MeshCore PUBLIC MeshCoreBase Qt6::Widgets Qt6::Core Qt6::Svg Qt6::OpenGL Qt6::OpenGLWidgets OpenGL::GL GIF::GIF)
 
 # Set the shader directory for the MeshCore library
 target_compile_definitions(MeshCore PRIVATE MESHCORE_SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/shaders/")
 target_compile_definitions(MeshCore PRIVATE MESHCORE_ICON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/icons/")
+target_compile_definitions(MeshCore PRIVATE MESHCORE_PLUGIN_DIR PUBLIC MESHCORE_PLUGIN_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 
 # Option to build demos, default ON
 option(MESHCORE_BUILD_DEMOS "Build demo applications" ON)
@@ -54,3 +55,10 @@ option(MESHCORE_BUILD_DEMOS "Build demo applications" ON)
 if(MESHCORE_BUILD_DEMOS)
     add_subdirectory(demos)
 endif()
+
+if(WIN32)
+    # Dirty workaround to deploy plugins when developing: Add a dummy executable that is build at configuration time and force windeployqt to run
+    add_executable(DeployQtPlugins demos/dummy.cpp)
+    target_link_libraries(DeployQtPlugins Qt6::Core Qt6::Widgets)
+    add_custom_command(TARGET MeshCore POST_BUILD COMMAND Qt6::windeployqt "$<TARGET_FILE:DeployQtPlugins>")
+endif ()

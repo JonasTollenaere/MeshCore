@@ -4,6 +4,7 @@
 
 #include "AbstractRenderModel.h"
 #include <iostream>
+#include <QColorDialog>
 
 bool AbstractRenderModel::isVisible() const {
     return visible;

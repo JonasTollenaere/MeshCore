@@ -180,12 +180,12 @@ void OpenGLWidget::setView(size_t preset) {
         float t = float(i)/(float(steps) - 1); // Linear interpolation
         this->viewTransformation = Transformation::interpolate(initialViewTransformation, newViewTransformation, t);
 
-        QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
         this->update();
     }
 
     this->viewTransformation = newViewTransformation;
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
 }
 
@@ -208,6 +208,9 @@ void OpenGLWidget::calculateProjectionMatrix(){
 }
 
 void OpenGLWidget::paintGL() {
+
+    //
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
     if(this->axisEnabled){
         auto normalizedViewTransformation = viewTransformation;
@@ -456,7 +459,7 @@ void OpenGLWidget::captureAnimationSlot() {
         fprintf(stderr, "Error closing gif file\n");
     }
     viewTransformation = initialViewTransformation;
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     progressDialog.close();
 }
@@ -466,7 +469,7 @@ void OpenGLWidget::captureSceneSlot() {
     this->makeCurrent();
 
     // We grab the frame before the user inputs the file name
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
 
@@ -490,7 +493,7 @@ void OpenGLWidget::captureSceneSlot() {
 
 void OpenGLWidget::captureSceneToFileSlot(const QString& fileName) {
     this->makeCurrent();
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
     std::cout<< fileName.toStdString() << std::endl;
@@ -861,7 +864,7 @@ std::vector<uint8_t> OpenGLWidget::capturePixelBufferSlot() {
 
     this->makeCurrent();
     std::vector<uint8_t> pixelBuffer(width * height * 4, 0);
-    QOpenGLFunctions::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     this->update();
     auto capture = this->grabFramebuffer();
     for (int x = 0; x < width; ++x) {

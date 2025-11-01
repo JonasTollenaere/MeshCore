@@ -5,13 +5,11 @@
 #ifndef MESHCORE_ABSTRACTRENDERMODEL_H
 #define MESHCORE_ABSTRACTRENDERMODEL_H
 
-#include <qt5/QtGui/QOpenGLFunctions>
 #include <glm/glm.hpp>
-#include <qt5/QtGui/QOpenGLBuffer>
-#include <qt5/QtGui/QOpenGLVertexArrayObject>
-#include <qt5/QtWidgets/qmenu.h>
-#include <qt5/QtWidgets/qaction.h>
-#include <qt5/QtWidgets/qcolordialog.h>
+#include <QOpenGLFunctions>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QMenu>
 #include "RenderModelDetailDialog.h"
 #include "meshcore/rendering/PhongMaterial.h"
 #include "RenderListeners.h"
