@@ -17,30 +17,10 @@ std::vector<IndexTriangle> Triangulation::triangulateFace(const std::vector<Vert
     }
 
     // TransformUtil the vertices to a plane with constant z coordinates
-    glm::vec3 facetNormal(0.0f);
-
-    // Newell's Method to calculate the facet normal
-    for (auto current = indices.begin(); current != indices.end(); current++) {
-        auto next = std::next(current);
-        if(next==indices.end()) next = indices.begin(); // If wrapped
-
-        unsigned int indexA = *current;
-        unsigned int indexB = *next;
-
-        Vertex vertexA = vertices[indexA];
-        Vertex vertexB = vertices[indexB];
-
-        facetNormal.x += (vertexA.y - vertexB.y) * (vertexA.z + vertexB.z);
-        facetNormal.y += (vertexA.z - vertexB.z) * (vertexA.x + vertexB.x);
-        facetNormal.z += (vertexA.x - vertexB.x) * (vertexA.y + vertexB.y);
-    }
-
-    facetNormal = glm::normalize(facetNormal);
+    auto facetNormal = glm::normalize(computeFaceNormal(vertices, face));
 
     // Find the rotation for which the z-coordinates of all vertices are equal
     // (the rotation that maps the normal to the z-axis)
-
-
     glm::vec3 zAxis(0, 0, 1);
     float angle = glm::angle(zAxis, facetNormal);
     glm::vec3 cross = glm::cross(facetNormal, zAxis);
@@ -49,7 +29,6 @@ std::vector<IndexTriangle> Triangulation::triangulateFace(const std::vector<Vert
         cross = glm::vec3(1,0,0);
     }
     glm::mat4 transformation = glm::rotate(angle, cross);
-
 
     // Pass the projected vertices as 2D to the mapbox earcut heuristics
     std::vector<std::vector<std::array<float, 2>>> polygon;
@@ -70,4 +49,26 @@ std::vector<IndexTriangle> Triangulation::triangulateFace(const std::vector<Vert
         triangles.emplace_back(IndexTriangle{indices[*iterator++], indices[*iterator++], indices[*iterator]});
     }
     return triangles;
+}
+
+glm::vec3 Triangulation::computeFaceNormal(const std::vector<Vertex>& vertices, const IndexFace& face){
+    glm::vec3 facetNormal(0.0f);
+
+    // Newell's Method to calculate the facet normal
+    const auto& indices = face.vertexIndices;
+    for (auto current = indices.begin(); current != indices.end(); ++current) {
+        auto next = std::next(current);
+        if(next==indices.end()) next = indices.begin(); // If wrapped
+
+        unsigned int indexA = *current;
+        unsigned int indexB = *next;
+
+        Vertex vertexA = vertices[indexA];
+        Vertex vertexB = vertices[indexB];
+
+        facetNormal.x += (vertexA.y - vertexB.y) * (vertexA.z + vertexB.z);
+        facetNormal.y += (vertexA.z - vertexB.z) * (vertexA.x + vertexB.x);
+        facetNormal.z += (vertexA.x - vertexB.x) * (vertexA.y + vertexB.y);
+    }
+    return glm::normalize(facetNormal);
 }

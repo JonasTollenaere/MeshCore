@@ -13,6 +13,7 @@
 class Triangulation{
 public:
     static std::vector<IndexTriangle> triangulateFace(const std::vector<Vertex>& vertices, const IndexFace& face);
+    static glm::vec3 computeFaceNormal(const std::vector<Vertex>& vertices, const IndexFace& face);
 };
 
 #endif //MESHCORE_TRIANGULATE_H

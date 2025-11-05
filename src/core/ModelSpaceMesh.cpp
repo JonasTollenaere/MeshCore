@@ -10,6 +10,7 @@
 #include "src/external/quickhull/QuickHull.hpp"
 #include "src/external/mapbox/earcut.hpp"
 #include "meshcore/core/Plane.h"
+#include "meshcore/utility/hash.h"
 
 #define EPSILON 1e-4
 
@@ -64,12 +65,7 @@ const std::vector<IndexEdge>& ModelSpaceMesh::getFaceEdges() const {
 
         // Determine unique edges
         {
-            // Set up the hash and equals in a way that the order of vertexIndex0 and vertexIndex1 doesn't matter
-            auto hash = [](const IndexEdge& edge) { return std::hash<unsigned int>()(edge.vertexIndex0 + edge.vertexIndex1); }; // Hashes should remain equal if vertices are swapped
-            auto equal = [](const IndexEdge& edge1, const IndexEdge& edge2) {
-                return (edge1.vertexIndex0 == edge2.vertexIndex0 && edge1.vertexIndex1 == edge2.vertexIndex1) ||
-                       (edge1.vertexIndex1 == edge2.vertexIndex0 && edge1.vertexIndex0 == edge2.vertexIndex1); };
-            std::unordered_set<IndexEdge, decltype(hash), decltype(equal)> edgeSet(8, hash, equal);
+            std::unordered_set<IndexEdge> edgeSet;
             for(const IndexFace& face: this->faces.value()){
                 for (int i = 0; i < face.vertexIndices.size(); ++i){
                     edgeSet.insert(IndexEdge{face.vertexIndices[i], face.vertexIndices[(i + 1)%face.vertexIndices.size()]});
@@ -83,17 +79,10 @@ const std::vector<IndexEdge>& ModelSpaceMesh::getFaceEdges() const {
 }
 
 std::vector<IndexEdge> ModelSpaceMesh::getSufficientIntersectionEdges() const {
-    // Set up the hash and equals in a way that the order of vertexIndex0 and vertexIndex1 doesn't matter
-    auto hash = [](const IndexEdge& edge) { return std::hash<unsigned int>()(edge.vertexIndex0 + edge.vertexIndex1); }; // Hashes should remain equal if vertices are swapped
-    auto equal = [](const IndexEdge& edgeA, const IndexEdge& edgeB) {
 
-        bool equal = (edgeA.vertexIndex0 == edgeB.vertexIndex0 && edgeA.vertexIndex1 == edgeB.vertexIndex1) ||
-                     (edgeA.vertexIndex1 == edgeB.vertexIndex0 && edgeA.vertexIndex0 == edgeB.vertexIndex1);
-        return equal;
-    };
-    std::unordered_set<IndexEdge, decltype(hash), decltype(equal)> edgeSet(8, hash, equal);
-    std::unordered_set<IndexEdge, decltype(hash), decltype(equal)> preferNotUsed(8, hash, equal);
-    for(IndexTriangle triangle: this->triangles){
+    std::unordered_set<IndexEdge> edgeSet;
+    std::unordered_set<IndexEdge> preferNotUsed;
+    for(const IndexTriangle& triangle: this->triangles){
 
         auto edge0 = IndexEdge{triangle.vertexIndex0, triangle.vertexIndex1};
         auto edge1 = IndexEdge{triangle.vertexIndex1, triangle.vertexIndex2};
