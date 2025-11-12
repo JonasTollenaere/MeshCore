@@ -14,6 +14,7 @@
 #include <glm/gtx/hash.hpp>
 #include <array>
 #include <cstring>
+#include <sstream>
 
 std::mutex FileParser::cacheMapMutex{};
 std::unordered_map<std::string, std::weak_ptr<ModelSpaceMesh>> FileParser::meshCacheMap{};
@@ -122,53 +123,59 @@ std::shared_ptr<ModelSpaceMesh> FileParser::parseFileOBJ(const std::string &file
             line = line.substr(0, commentStartIndex);
         }
 
-        // Remove trailing whitespace
-        auto lastWhiteSpace = line.find_last_of(' ');
-        while(lastWhiteSpace!=std::string::npos && lastWhiteSpace == line.size() - 1){
-            line = line.substr(0, line.size() - 1);
-            lastWhiteSpace = line.find_last_of(' ');
+        // Trim leading and trailing whitespace (spaces, tabs, CR, LF)
+        auto firstNot = line.find_first_not_of(" \t\r\n");
+        if(firstNot == std::string::npos) continue; // empty or comment-only line
+        auto lastNot = line.find_last_not_of(" \t\r\n");
+        line = line.substr(firstNot, lastNot - firstNot + 1);
+
+        // Use an istringstream to extract the type token and remaining tokens. This handles any amount/kind of whitespace.
+        std::istringstream lineIss(line);
+        std::string type;
+        if(!(lineIss >> type)) continue; // nothing to read
+
+        if(type == "v"){
+            float value0, value1, value2;
+            if(!(lineIss >> value0 >> value1 >> value2)){
+                // Malformed vertex line; skip
+                continue;
+            }
+            vertices.emplace_back(value0, value1, value2);
         }
+        else if(type == "f"){
 
-        auto typeLength = line.find_first_of(' ');
-        if(typeLength != std::string::npos){
-            std::string type = line.substr(0, typeLength);
-            std::string content = line.substr(typeLength + 1);
-
-            if(type == "v"){
-                auto whitespace0 = content.find_first_of(' ');
-                auto whitespace1 = content.find_last_of(' ');
-                float value0 = std::stof(content.substr(0, whitespace0));
-                float value1 = std::stof(content.substr(whitespace0 + 1, whitespace1 - whitespace0 - 1));
-                float value2 = std::stof(content.substr(whitespace1 + 1));
-                vertices.emplace_back(value0, value1, value2);
-            }
-            else if (type == "f"){
-
-                std::vector<size_t> indices;
-                auto whitespace = content.find_first_of(' ');
-                while(whitespace!=std::string::npos){
-                    auto string = content.substr(0, whitespace);
-                    indices.emplace_back(stoul(string) - 1);
-                    content = content.substr(whitespace + 1);
-                    whitespace = content.find_first_of(' ');
+            std::vector<size_t> indices;
+            std::string token;
+            while(lineIss >> token){
+                // token may be of form "v", "v/t", "v//n", or "v/t/n". Extract leading vertex index before any '/'.
+                auto slashPos = token.find('/');
+                std::string indexStr = (slashPos == std::string::npos) ? token : token.substr(0, slashPos);
+                if(indexStr.empty()) continue; // defensive
+                try{
+                    indices.emplace_back(std::stoul(indexStr) - 1);
                 }
-                indices.emplace_back(stoul(content) - 1);
-
-                for(const IndexTriangle& triangle: Triangulation::triangulateFace(vertices, IndexFace{indices})){
-                    triangles.emplace_back(triangle);
+                catch(...){
+                    // malformed index; skip
+                    continue;
                 }
-
             }
+
+            if(indices.size() < 3) continue; // not a valid face
+
+            for(const IndexTriangle& triangle: Triangulation::triangulateFace(vertices, IndexFace{indices})){
+                triangles.emplace_back(triangle);
+            }
+
+        }
 #if !NDEBUG
-            else if (type == "vp") {
-                std::cout << "vp strings in .obj files not supported" << std::endl;
-            }
-            else if (type == "l"){
-                std::cout << "l strings in .obj files not supported" << std::endl;
-            }
+        else if (type == "vp") {
+            std::cout << "vp strings in .obj files not supported" << std::endl;
+        }
+        else if (type == "l"){
+            std::cout << "l strings in .obj files not supported" << std::endl;
+        }
 #endif
 
-        }
     }
 //    return {vertices, triangles};
 
@@ -287,9 +294,8 @@ std::shared_ptr<ModelSpaceMesh> FileParser::parseFileSTL(const std::string &file
             assert(indices.size()==3);
             triangles.emplace_back(indices[0], indices[1], indices[2]);
 
-            VertexTriangle triangle{vertices[indices[0]], vertices[indices[1]], vertices[indices[2]]};
-
 #if !NDEBUG
+            VertexTriangle triangle{vertices[indices[0]], vertices[indices[1]], vertices[indices[2]]};
             auto calculatedUnitNormal = glm::normalize(triangle.normal);
             if(!glm::all(glm::epsilonEqual(calculatedUnitNormal,facetNormal, 1e-3f))){
                 std::cout << "Warning: Parsed normal and calculated normals not equal:" << std::endl;
