@@ -4,7 +4,7 @@
 
 #include "meshcore/utility/Triangulation.h"
 
-#include "src/external/mapbox/earcut.hpp"
+#include <mapbox/earcut.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <array>
 

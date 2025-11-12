@@ -4,11 +4,11 @@
 
 #include "meshcore/core/ModelSpaceMesh.h"
 
+#include <algorithm>
 #include <utility>
 #include <unordered_set>
 #include "meshcore/factories/AABBFactory.h"
 #include "src/external/quickhull/QuickHull.hpp"
-#include "src/external/mapbox/earcut.hpp"
 #include "meshcore/core/Plane.h"
 #include "meshcore/utility/hash.h"
 

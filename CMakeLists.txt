@@ -15,11 +15,13 @@ find_package(glm REQUIRED)
 find_package(Boost REQUIRED)
 find_package(GSL REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb tbbmalloc)
+find_path(EARCUT_HPP_INCLUDE_DIRS "mapbox/earcut.hpp")
 
 ### MeshCoreBase library can be used for targets that run without UI ###
 file(GLOB SOURCES src/acceleration/*.cpp src/core/*.cpp src/geometric/*.cpp src/tasks/*.cpp src/utility/*.cpp src/external/quickhull/*.cpp src/factories/*.cpp src/optimization/*.cpp)
 add_library(MeshCoreBase STATIC ${SOURCES})
 target_link_libraries(MeshCoreBase PUBLIC TBB::tbb TBB::tbbmalloc Boost::boost GSL::gsl glm::glm)
+target_include_directories(MeshCoreBase PRIVATE ${EARCUT_HPP_INCLUDE_DIRS})
 target_include_directories(MeshCoreBase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # include this directory
 target_compile_definitions(MeshCoreBase PUBLIC MESHCORE_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/datasets/")
 

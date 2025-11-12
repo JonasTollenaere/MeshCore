@@ -23,12 +23,15 @@
   }, {
     "name" : "qt5-base",
     "version>=" : "5.15.16#0",
-    "default-features": false
+    "default-features" : false
   }, {
     "name" : "qt5-svg",
     "version>=" : "5.15.16#0"
   }, {
     "name" : "nlohmann-json",
     "version>=" : "3.12.0"
+  }, {
+    "name" : "earcut-hpp",
+    "version>=" : "2.2.4"
   } ]
 }
