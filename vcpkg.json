@@ -1,7 +1,7 @@
 {
   "name" : "meshcore",
   "version-string" : "1.0.0",
-  "builtin-baseline" : "dd3097e305afa53f7b4312371f62058d2e665320",
+  "builtin-baseline" : "1d611efb49276c65d69fb6d010c2aaaf039322b0",
   "dependencies" : [ {
     "name" : "glm",
     "version>=" : "1.0.1#3"
@@ -22,12 +22,12 @@
     "version>=" : "1.16.0"
   }, {
     "name" : "qtbase",
-    "version>=" : "6.8.2#1",
+    "version>=" : "6.9.2",
     "default-features": false,
     "features": [ "widgets", "opengl" ]
   }, {
     "name" : "qtsvg",
-    "version>=" : "6.8.2"
+    "version>=" : "6.9.2"
   }, {
     "name" : "nlohmann-json",
     "version>=" : "3.12.0"
