@@ -22,7 +22,7 @@ jobs:
         - name: ubuntu-22.04
           os: ubuntu-22.04
           install_cmd: sudo apt-get -y install
-          deps: libgl1-mesa-dev libglu1-mesa-dev
+          deps: libgl1-mesa-dev libglu1-mesa-dev autoconf autoconf-archive automake libtool
 
     runs-on: ${{ matrix.os }}
 
