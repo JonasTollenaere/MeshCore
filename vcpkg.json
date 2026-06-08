@@ -1,7 +1,7 @@
 {
   "name" : "meshcore",
   "version-string" : "1.0.0",
-  "builtin-baseline" : "1d611efb49276c65d69fb6d010c2aaaf039322b0",
+  "builtin-baseline" : "6bbea753e7f56a86b1d7bfe548810d6beafb4c81",
   "dependencies" : [
     "glm",
     "gsl",
