@@ -206,7 +206,7 @@ bool GifEncoder::close() {
     auto *savedImages = m_gifFile->SavedImages;
 
     int error;
-    if (EGifSpew(m_gifFile) == GIF_ERROR) {
+    if (EGifSpew(m_gifFile, &error) == GIF_ERROR) {
         EGifCloseFile(m_gifFile, &error);
         m_gifFileHandler = nullptr;
         return false;
