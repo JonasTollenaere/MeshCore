@@ -2,37 +2,20 @@
   "name" : "meshcore",
   "version-string" : "1.0.0",
   "builtin-baseline" : "1d611efb49276c65d69fb6d010c2aaaf039322b0",
-  "dependencies" : [ {
-    "name" : "glm",
-    "version>=" : "1.0.1#3"
-  }, {
-    "name" : "gsl",
-    "version>=" : "2.7.1#3"
-  }, {
-    "name" : "boost-random",
-    "version>=" : "1.86.0"
-  }, {
-    "name" : "tbb",
-    "version>=" : "2021.10.0#2"
-  }, {
-    "name" : "giflib",
-    "version>=" : "5.2.2#0"
-  }, {
-    "name" : "gtest",
-    "version>=" : "1.16.0"
-  }, {
-    "name" : "qtbase",
-    "version>=" : "6.9.2",
-    "default-features": false,
-    "features": [ "widgets", "opengl" ]
-  }, {
-    "name" : "qtsvg",
-    "version>=" : "6.9.2"
-  }, {
-    "name" : "nlohmann-json",
-    "version>=" : "3.12.0"
-  }, {
-    "name" : "earcut-hpp",
-    "version>=" : "2.2.4"
-  } ]
+  "dependencies" : [
+    "glm",
+    "gsl",
+    "boost-random",
+    "tbb",
+    "giflib",
+    "gtest",
+    {
+      "name" : "qtbase",
+      "default-features": false,
+      "features": [ "widgets", "opengl" ]
+    },
+    "qtsvg",
+    "nlohmann-json",
+    "earcut-hpp"
+  ]
 }
