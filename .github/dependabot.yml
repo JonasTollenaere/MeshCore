@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Maintain dependencies for vcpkg
+  - package-ecosystem: "vcpkg"
+    directory: "/" # Location of the vcpkg.json file
+    schedule:
+      interval: "weekly"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
