@@ -12,7 +12,14 @@
     {
       "name" : "qtbase",
       "default-features": false,
-      "features": [ "widgets", "opengl" ]
+      "features": [ "widgets", "opengl", "windeployqt" ],
+      "platform": "windows"
+    },
+    {
+      "name" : "qtbase",
+      "default-features": false,
+      "features": [ "widgets", "opengl" ],
+      "platform": "!windows"
     },
     "qtsvg",
     "nlohmann-json",
