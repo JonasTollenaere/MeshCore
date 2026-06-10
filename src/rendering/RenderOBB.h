@@ -5,7 +5,7 @@
 #ifndef MESHCORE_RENDEROBB_H
 #define MESHCORE_RENDEROBB_H
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 #include "meshcore/core/OBB.h"
 

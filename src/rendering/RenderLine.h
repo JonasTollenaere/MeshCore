@@ -6,7 +6,7 @@
 #define MESHCORE_RENDERLINE_H
 
 
-#include <qt5/QtGui/QOpenGLShaderProgram>
+#include <QOpenGLShaderProgram>
 #include "AbstractRenderModel.h"
 
 class RenderLine: public AbstractRenderModel  {

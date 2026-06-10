@@ -16,6 +16,17 @@ class QMenu;
 class QMenuBar;
 QT_END_NAMESPACE
 
+
+class ApplicationInitializer {
+public:
+    ApplicationInitializer() {
+
+        // Static initializer before any other Qt functions or constructors are called
+        // Necessary to find deployed plugins when developing on windows using vcpkg
+        QCoreApplication::addLibraryPath(MESHCORE_PLUGIN_DIR);
+    }
+};
+
 class ApplicationWindow: public QMainWindow {
 private:
     QMenuBar *menuBar;
