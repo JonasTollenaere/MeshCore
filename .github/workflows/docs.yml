@@ -16,7 +16,7 @@ jobs:
     environment:
       name: github-pages
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout doxygen-awesome-css submodule only
