@@ -10,10 +10,7 @@
 #include "RenderAABB.h"
 #include "RenderOBB.h"
 #include "RenderSphere.h"
-#include <qt5/QtWidgets/QCheckBox>
-#include <qt5/QtWidgets/QSlider>
-#include <qt5/QtWidgets/QLabel>
-#include <qt5/QtWidgets/QGridLayout>
+#include <QCheckBox>
 #include <thread>
 
 class RenderBoundsTree: public AbstractRenderModel{

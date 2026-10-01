@@ -4,6 +4,9 @@
 
 #include "ShaderProgramSource.h"
 
+#include <fstream>
+#include <sstream>
+
 ShaderProgramSource ShaderProgramSource::parseShader(const std::string& filepath){
     std::ifstream stream(filepath);
 
