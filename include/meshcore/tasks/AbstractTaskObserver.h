@@ -11,6 +11,8 @@
 
 class AbstractTaskObserver {
 public:
+    virtual ~AbstractTaskObserver() = default;
+
     virtual void notify() {
         std::cout << "This notify should be overridden!" << std::endl;
     };
